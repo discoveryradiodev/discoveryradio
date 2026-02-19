@@ -13,7 +13,7 @@ export default function AboutPage() {
 
           <p>This isn't a brand. It isn't a playlist. It isn't content.</p>
 
-          <p style={{ fontWeight: 600 }}>It's refusal.</p>
+          <p>It's refusal.</p>
 
           <p>Refusal to be ranked, optimized, diluted, or decided for.<br />Refusal to let machines tell us what matters.</p>
 
