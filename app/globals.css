@@ -13,8 +13,8 @@ html,body,#root{
 html, body {
   padding: 0;
   margin: 0;
-  font-family: var(--font-inter);
-  font-weight: 600;
+  font-family: var(--font-inter) !important;
+  font-weight: 600 !important;
   background-color: transparent;
   color: var(--text-primary);
   -webkit-font-smoothing: antialiased;
@@ -23,8 +23,13 @@ html, body {
 }
 
 h1, h2, h3, h4, h5, h6 {
-  font-family: var(--font-permanent-marker);
+  font-family: var(--font-permanent-marker) !important;
+  color: var(--text-accent);
   text-shadow: 0 3px 16px rgba(0,0,0,0.85);
+}
+
+* {
+  font-family: inherit !important;
 }
 
 /* Background vibe: subtle blue + purple radial glows */
@@ -212,7 +217,7 @@ main{
 
 .hero-section h1{
   font-size: 3.5rem;
-  color: var(--text-primary);
+  color: var(--text-accent);
   margin: 0 0 20px 0;
   line-height: 1.2;
   font-weight: 400;
@@ -220,10 +225,10 @@ main{
 }
 
 .hero-subline{
-  font-size: 1.3rem;
-  color: var(--text-secondary);
+  font-size: 1.2rem;
+  color: var(--text-primary);
   margin: 0;
-  font-weight: 400;
+  font-weight: 600;
   line-height: 1.5;
   position: relative;
 }
@@ -236,7 +241,7 @@ main{
 
 .what-happens-section h2{
   font-size: 1.8rem;
-  color: var(--text-primary);
+  color: var(--text-accent);
   margin: 0 0 24px 0;
   font-weight: 400;
   position: relative;
@@ -250,11 +255,11 @@ main{
 }
 
 .what-happens-section li{
-  color: var(--text-secondary);
-  font-size: 1.05rem;
+  color: var(--text-primary);
+  font-size: 1.2rem;
   margin: 0 0 8px 0;
   line-height: 1.6;
-  font-weight: 400;
+  font-weight: 600;
 }
 
 .right-now-section{
@@ -265,18 +270,18 @@ main{
 
 .right-now-section h2{
   font-size: 1.8rem;
-  color: var(--text-primary);
+  color: var(--text-accent);
   margin: 0 0 16px 0;
   font-weight: 400;
   position: relative;
 }
 
 .right-now-section p{
-  font-size: 1.05rem;
-  color: var(--text-secondary);
+  font-size: 1.2rem;
+  color: var(--text-primary);
   margin: 0 0 8px 0;
   line-height: 1.6;
-  font-weight: 400;
+  font-weight: 600;
   position: relative;
 }
 
@@ -285,10 +290,11 @@ main{
 }
 
 .subtle-supporting{
-  font-size: 0.95rem;
-  color: var(--text-secondary);
+  font-size: 1.2rem;
+  color: var(--text-primary);
   font-style: italic;
   margin-top: 16px;
+  font-weight: 600;
 }
 
 .grounding-section{
@@ -298,11 +304,11 @@ main{
 }
 
 .grounding-section p{
-  font-size: 1.05rem;
-  color: var(--text-secondary);
+  font-size: 1.2rem;
+  color: var(--text-primary);
   margin: 0 0 8px 0;
   line-height: 1.6;
-  font-weight: 400;
+  font-weight: 600;
   position: relative;
 }
 
