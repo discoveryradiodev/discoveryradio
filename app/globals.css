@@ -1,9 +1,9 @@
 :root{
-  --bg-dark: #07060a;
-  --panel: rgba(255,255,255,0.04);
-  --glass: rgba(255,255,255,0.06);
-  --accent-blue: rgba(86,153,255,0.12);
-  --accent-purple: rgba(152,102,255,0.12);
+  --text-primary: #F2F2F2;
+  --text-secondary: #CFCFCF;
+  --text-accent: #F2C94C;
+  --font-inter: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+  --font-permanent-marker: "Permanent Marker", cursive;
 }
 
 html,body,#root{
@@ -13,11 +13,17 @@ html,body,#root{
 html, body {
   padding: 0;
   margin: 0;
-  font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+  font-family: var(--font-inter);
   background-color: transparent;
-  color: #fff;
+  color: var(--text-primary);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  text-shadow: 0 2px 14px rgba(0,0,0,0.75);
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-permanent-marker);
+  text-shadow: 0 3px 16px rgba(0,0,0,0.85);
 }
 
 /* Background vibe: subtle blue + purple radial glows */
@@ -69,10 +75,10 @@ html::before{
   margin:0 auto;
 }
 .brand{
-  font-weight:700;
-  font-size:1.05rem;
-  color: #fff;
-  text-decoration:none;
+  font-weight: 600;
+  font-size: 1.05rem;
+  color: var(--text-primary);
+  text-decoration: none;
 }
 
 .nav-links{
@@ -81,16 +87,18 @@ html::before{
   gap:10px;
 }
 .btn{
-  color:#e9eefb;
-  text-decoration:none;
-  padding:8px 12px;
-  border-radius:8px;
-  font-size:0.93rem;
+  color: var(--text-secondary);
+  text-decoration: none;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 0.93rem;
+  font-weight: 500;
   transition: background .15s ease, transform .08s ease;
 }
 .btn:hover{
-  background: rgba(255,255,255,0.03);
+  background: rgba(242,242,242,0.08);
   transform: translateY(-1px);
+  color: var(--text-primary);
 }
 
 main{
@@ -105,22 +113,16 @@ main{
 }
 
 .panel{
-  background: radial-gradient(1000px 300px at 0% 0%, rgba(86,153,255,0.02), transparent),
-              rgba(255,255,255,0.02);
-  border-radius:12px;
   padding: 48px;
   min-height: 320px;
-  box-shadow: 0 6px 30px rgba(2,6,23,0.6);
-  border: 1px solid rgba(255,255,255,0.03);
-  color: #fff;
 }
 
 /* Footer */
 .footer-wrap{
-  border-top: 1px solid rgba(255,255,255,0.05);
+  border-top: 1px solid rgba(242,242,242,0.08);
   margin-top: auto;
   padding: 32px 20px;
-  background: rgba(0,0,0,0.3);
+  background: linear-gradient(180deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.45) 100%);
 }
 
 .footer-inner{
@@ -135,13 +137,13 @@ main{
 .footer-logo{
   font-weight: 600;
   font-size: 0.9rem;
-  color: #e9eefb;
+  color: var(--text-primary);
   text-decoration: none;
   transition: color .15s ease;
 }
 
 .footer-logo:hover{
-  color: #fff;
+  color: var(--text-accent);
 }
 
 .footer-links{
@@ -151,13 +153,161 @@ main{
 
 .footer-link{
   font-size: 0.85rem;
-  color: #a0afc0;
+  color: var(--text-secondary);
   text-decoration: none;
   transition: color .15s ease;
 }
 
 .footer-link:hover{
-  color: #e9eefb;
+  color: var(--text-primary);
+}
+
+/* Mission Statement / Manifesto */
+.mission-statement{
+  line-height: 1.6;
+  position: relative;
+}
+
+.mission-statement::before{
+  content: "";
+  position: absolute;
+  inset: -20px;
+  background: linear-gradient(180deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.45) 100%);
+  backdrop-filter: blur(4px);
+  border-radius: 12px;
+  pointer-events: none;
+  z-index: -1;
+}
+
+.mission-statement h2{
+  font-size: 2rem;
+  margin: 0 0 12px 0;
+  color: var(--text-accent);
+}
+
+.mission-statement p{
+  margin: 0 0 8px 0;
+  color: var(--text-primary);
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+.mission-statement p:last-child{
+  margin-bottom: 0;
+}
+
+/* Homepage Sections */
+.homepage-blur-wrapper{
+  backdrop-filter: blur(3px);
+  background: rgba(0, 0, 0, 0.22);
+  padding: 40px;
+  border-radius: 0;
+}
+
+.hero-section{
+  margin-bottom: 80px;
+  padding: 0;
+  position: relative;
+}
+
+.hero-section h1{
+  font-size: 3.5rem;
+  color: var(--text-primary);
+  margin: 0 0 20px 0;
+  line-height: 1.2;
+  font-weight: 400;
+  position: relative;
+}
+
+.hero-subline{
+  font-size: 1.3rem;
+  color: var(--text-secondary);
+  margin: 0;
+  font-weight: 400;
+  line-height: 1.5;
+  position: relative;
+}
+
+.what-happens-section{
+  margin-bottom: 80px;
+  padding: 0;
+  position: relative;
+}
+
+.what-happens-section h2{
+  font-size: 1.8rem;
+  color: var(--text-primary);
+  margin: 0 0 24px 0;
+  font-weight: 400;
+  position: relative;
+}
+
+.what-happens-section ul{
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  position: relative;
+}
+
+.what-happens-section li{
+  color: var(--text-secondary);
+  font-size: 1.05rem;
+  margin: 0 0 8px 0;
+  line-height: 1.6;
+  font-weight: 400;
+}
+
+.right-now-section{
+  margin-bottom: 80px;
+  padding: 0;
+  position: relative;
+}
+
+.right-now-section h2{
+  font-size: 1.8rem;
+  color: var(--text-primary);
+  margin: 0 0 16px 0;
+  font-weight: 400;
+  position: relative;
+}
+
+.right-now-section p{
+  font-size: 1.05rem;
+  color: var(--text-secondary);
+  margin: 0 0 8px 0;
+  line-height: 1.6;
+  font-weight: 400;
+  position: relative;
+}
+
+.right-now-section p:last-child{
+  margin-bottom: 0;
+}
+
+.subtle-supporting{
+  font-size: 0.95rem;
+  color: var(--text-secondary);
+  font-style: italic;
+  margin-top: 16px;
+}
+
+.grounding-section{
+  margin-bottom: 0;
+  padding: 0;
+  position: relative;
+}
+
+.grounding-section p{
+  font-size: 1.05rem;
+  color: var(--text-secondary);
+  margin: 0 0 8px 0;
+  line-height: 1.6;
+  font-weight: 400;
+  position: relative;
+}
+
+.grounding-section p:last-child{
+  margin-bottom: 0;
 }
 
 /* Responsive tweaks */
@@ -166,4 +316,8 @@ main{
   .panel{ padding:28px }
   .footer-inner{ flex-direction: column; gap: 12px }
   .footer-links{ width: 100%; justify-content: center }
+  .hero-section h1{ font-size: 2.2rem }
+  .hero-subline{ font-size: 1.1rem }
+  .what-happens-section h2{ font-size: 1.4rem }
+  .right-now-section h2{ font-size: 1.4rem }
 }
