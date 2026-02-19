@@ -39,7 +39,7 @@ html::before{
   content:"";
   position: fixed;
   inset: 0;
-  background-image: url('/discoveryradio_logo.png');
+  background-image: url('/discoveryradio_logo.PNG');
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
