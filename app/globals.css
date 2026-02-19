@@ -1,0 +1,169 @@
+:root{
+  --bg-dark: #07060a;
+  --panel: rgba(255,255,255,0.04);
+  --glass: rgba(255,255,255,0.06);
+  --accent-blue: rgba(86,153,255,0.12);
+  --accent-purple: rgba(152,102,255,0.12);
+}
+
+html,body,#root{
+  height:100%;
+}
+
+html, body {
+  padding: 0;
+  margin: 0;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+  background-color: transparent;
+  color: #fff;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Background vibe: subtle blue + purple radial glows */
+body::before,
+body::after{
+  display: none;
+}
+
+/* Removed: overlay gradients covering the logo - now logo is the focus */
+
+/* Logo background layer - full page, only visual element */
+html::before{
+  content:"";
+  position: fixed;
+  inset: 0;
+  background-image: url('/discoveryradio_logo.png');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  opacity: 1;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.app-root{
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  z-index: 1;
+}
+
+/* Sticky navbar */
+.nav-wrap{
+  position:sticky;
+  top:0;
+  z-index:30;
+  backdrop-filter: blur(8px);
+  background: linear-gradient(180deg, rgba(10,12,20,0.6), rgba(10,12,20,0.45));
+  border-bottom: 1px solid rgba(255,255,255,0.03);
+}
+.nav-inner{
+  display:flex;
+  align-items:center;
+  gap:16px;
+  padding:12px 20px;
+  max-width:1100px;
+  margin:0 auto;
+}
+.brand{
+  font-weight:700;
+  font-size:1.05rem;
+  color: #fff;
+  text-decoration:none;
+}
+
+.nav-links{
+  margin-left: auto;
+  display:flex;
+  gap:10px;
+}
+.btn{
+  color:#e9eefb;
+  text-decoration:none;
+  padding:8px 12px;
+  border-radius:8px;
+  font-size:0.93rem;
+  transition: background .15s ease, transform .08s ease;
+}
+.btn:hover{
+  background: rgba(255,255,255,0.03);
+  transform: translateY(-1px);
+}
+
+main{
+  flex: 1;
+}
+
+.container{
+  max-width:1100px;
+  margin: 48px auto;
+  padding: 0 20px;
+  width:100%;
+}
+
+.panel{
+  background: radial-gradient(1000px 300px at 0% 0%, rgba(86,153,255,0.02), transparent),
+              rgba(255,255,255,0.02);
+  border-radius:12px;
+  padding: 48px;
+  min-height: 320px;
+  box-shadow: 0 6px 30px rgba(2,6,23,0.6);
+  border: 1px solid rgba(255,255,255,0.03);
+  color: #fff;
+}
+
+/* Footer */
+.footer-wrap{
+  border-top: 1px solid rgba(255,255,255,0.05);
+  margin-top: auto;
+  padding: 32px 20px;
+  background: rgba(0,0,0,0.3);
+}
+
+.footer-inner{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  max-width: 1100px;
+  margin: 0 auto;
+  gap: 20px;
+}
+
+.footer-logo{
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: #e9eefb;
+  text-decoration: none;
+  transition: color .15s ease;
+}
+
+.footer-logo:hover{
+  color: #fff;
+}
+
+.footer-links{
+  display: flex;
+  gap: 20px;
+}
+
+.footer-link{
+  font-size: 0.85rem;
+  color: #a0afc0;
+  text-decoration: none;
+  transition: color .15s ease;
+}
+
+.footer-link:hover{
+  color: #e9eefb;
+}
+
+/* Responsive tweaks */
+@media (max-width:640px){
+  .nav-inner{ padding:10px 16px }
+  .panel{ padding:28px }
+  .footer-inner{ flex-direction: column; gap: 12px }
+  .footer-links{ width: 100%; justify-content: center }
+}
