@@ -1,16 +1,15 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useEffect, useRef } from "react";
 
 function useScrollReveal() {
-  const [isVisible, setIsVisible] = useState(false);
   const ref = useRef<HTMLElement>(null);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
-          setIsVisible(true);
+          entry.target.classList.add("is-visible");
           observer.unobserve(entry.target);
         }
       },
@@ -28,37 +27,62 @@ function useScrollReveal() {
     };
   }, []);
 
-  return { ref, isVisible };
+  return ref;
 }
 
 export default function HomePage() {
-  const [email, setEmail] = useState("");
-  const [submitted, setSubmitted] = useState(false);
-  const [error, setError] = useState("");
-
   const placeholderReveal = useScrollReveal();
   const mailingListReveal = useScrollReveal();
   const whatHappensReveal = useScrollReveal();
   const ctaReveal = useScrollReveal();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleBrevoSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setError("");
+    
+    const form = e.currentTarget;
+    const emailInput = form.querySelector<HTMLInputElement>("#EMAIL");
+    const submitButton = form.querySelector<HTMLButtonElement>("button[type='submit']");
+    
+    if (!emailInput) return;
 
-    const trimmedEmail = email.trim();
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+    const formData = new URLSearchParams({
+      EMAIL: emailInput.value,
+      email_address_check: "",
+      locale: "en",
+      html_type: "simple",
+    });
 
-    if (!emailRegex.test(trimmedEmail)) {
-      setError("Enter a valid email.");
-      return;
+    if (submitButton) {
+      submitButton.disabled = true;
+      submitButton.textContent = "Subscribing...";
     }
 
-    // Success state
-    setSubmitted(true);
-    setEmail("");
-    
-    // Clear success message after 5 seconds (user can see it, then transitions)
-    setTimeout(() => setSubmitted(false), 5000);
+    try {
+      const response = await fetch(form.action, {
+        method: "POST",
+        body: formData,
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+      });
+
+      if (response.ok) {
+        form.reset();
+        if (submitButton) {
+          submitButton.textContent = "Subscribed!";
+          setTimeout(() => {
+            submitButton.textContent = "SUBSCRIBE";
+            submitButton.disabled = false;
+          }, 3000);
+        }
+      }
+    } catch (error) {
+      console.error("Submission error:", error);
+      if (submitButton) {
+        submitButton.textContent = "SUBSCRIBE";
+        submitButton.disabled = false;
+      }
+    }
   };
 
   return (
@@ -66,8 +90,8 @@ export default function HomePage() {
       <div className="homepage-overlay"></div>
       
       <section
-        ref={placeholderReveal.ref}
-        className={`interview-placeholder scroll-reveal ${placeholderReveal.isVisible ? "is-visible" : ""}`}
+        ref={placeholderReveal}
+        className="interview-placeholder scroll-reveal"
       >
         <p>Coming soon — live interviews & clips.</p>
       </section>
@@ -78,34 +102,48 @@ export default function HomePage() {
       </section>
 
       <section
-        ref={mailingListReveal.ref}
-        className={`mailing-list-section scroll-reveal ${mailingListReveal.isVisible ? "is-visible" : ""}`}
+        ref={mailingListReveal}
+        className="mailing-list-section scroll-reveal"
       >
         <h3>Mailing List</h3>
-        <p className="mailing-list-copy">Get the next interview drop. No spam.</p>
-        
-        {submitted ? (
-          <div className="mailing-list-success">You're on the list.</div>
-        ) : (
-          <form onSubmit={handleSubmit} className="mailing-list-form">
+        <form
+          id="sib-form"
+          method="POST"
+          action="https://5ada1973.sibforms.com/serve/MUIFACyOSYZnXeTuIFx9LF2GdkeZRVPurnc6joAzTh17VjnR4vRM_uwkWf6WOPqqAHnp0ra-WNORJaxOCiQzuUECL7IZdzDHFNiMerH5qKX0HGoIkuPRuLinAqu4i5Bj0LREjFX1DNpiAhkssqJ1m5GWa738o1L89q3pm01Cq8zdyRjZZdM5UZi0jZokL_fWU2JvEEF_GMBbFbU9WQ=="
+          onSubmit={handleBrevoSubmit}
+          className="brevo-form"
+        >
+          <p className="brevo-form__text">I dont store emails or sell them, just want ya to know when we go live mate :)</p>
+          
+          <div className="brevo-form__field-group">
+            <label htmlFor="EMAIL" className="brevo-form__label">
+              Subscribe to get a weekly newsletter with updates and more
+            </label>
             <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="you@domain.com"
-              className="mailing-list-input"
+              type="text"
+              id="EMAIL"
+              name="EMAIL"
+              autoComplete="off"
+              placeholder="EMAIL"
+              required
+              className="brevo-form__input"
             />
-            <button type="submit" className="mailing-list-button">Join</button>
-            {error && <p className="mailing-list-error">{error}</p>}
-          </form>
-        )}
-        
-        <p className="mailing-list-note">Unsubscribe anytime.</p>
+            <p className="brevo-form__hint">Provide your email address to subscribe. For e.g abc@xyz.com</p>
+          </div>
+
+          <button type="submit" className="brevo-form__button">
+            SUBSCRIBE
+          </button>
+
+          <input type="text" name="email_address_check" value="" style={{ display: "none" }} readOnly />
+          <input type="hidden" name="locale" value="en" />
+          <input type="hidden" name="html_type" value="simple" />
+        </form>
       </section>
 
       <section
-        ref={whatHappensReveal.ref}
-        className={`what-happens-section scroll-reveal ${whatHappensReveal.isVisible ? "is-visible" : ""}`}
+        ref={whatHappensReveal}
+        className="what-happens-section scroll-reveal"
       >
         <h3>What Happens on Discovery Radio</h3>
         <ul className="what-happens-list">
@@ -117,8 +155,8 @@ export default function HomePage() {
       </section>
 
       <section
-        ref={ctaReveal.ref}
-        className={`cta-statement scroll-reveal ${ctaReveal.isVisible ? "is-visible" : ""}`}
+        ref={ctaReveal}
+        className="cta-statement scroll-reveal"
       >
         <p>A free, open platform for artists and industry alike — where artists are defined by people, not systems.</p>
       </section>
