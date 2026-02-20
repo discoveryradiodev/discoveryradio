@@ -7,3 +7,6 @@ out/
 .DS_Store
 .idea/
 .vscode/
+# Video files
+public/*.mov
+public/*.mp4
