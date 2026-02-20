@@ -1,13 +1,12 @@
 import "./globals.css";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import { Inter, Permanent_Marker } from "next/font/google";
+import { Inter, Space_Grotesk } from "next/font/google";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter", display: "swap" });
-const permanentMarker = Permanent_Marker({
-  weight: "400",
+const spaceGrotesk = Space_Grotesk({
   subsets: ["latin"],
-  variable: "--font-permanent-marker",
+  variable: "--font-space-grotesk",
   display: "swap",
 });
 
@@ -18,7 +17,7 @@ export const metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${inter.variable} ${permanentMarker.variable}`}>
+    <html lang="en" className={`${inter.variable} ${spaceGrotesk.variable}`}>
       <body className="app-root">
         <Navbar />
         <main>

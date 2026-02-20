@@ -11,7 +11,6 @@ export default function Navbar() {
 
         <nav className="nav-links" aria-label="Main navigation">
           <Link href="/" className="btn">Home</Link>
-          <Link href="/about" className="btn">About</Link>
           <Link href="/contact" className="btn">Contact</Link>
         </nav>
       </div>
