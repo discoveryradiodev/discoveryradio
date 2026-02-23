@@ -93,7 +93,29 @@ export default function HomePage() {
         ref={placeholderReveal}
         className="interview-placeholder scroll-reveal"
       >
-        <p>Coming soon — live interviews & clips.</p>
+        <div
+          style={{
+            position: "relative",
+            width: "100%",
+            paddingTop: "56.25%",
+            overflow: "hidden",
+            borderRadius: "inherit",
+          }}
+        >
+          <iframe
+            src="https://www.youtube.com/embed/FQFGy_KpvaY?autoplay=1&mute=1&controls=1&loop=1&playlist=FQFGy_KpvaY&playsinline=1&rel=0&modestbranding=1"
+            title="This is Discovery Radio"
+            allow="autoplay; encrypted-media; picture-in-picture"
+            allowFullScreen
+            style={{
+              position: "absolute",
+              inset: 0,
+              width: "100%",
+              height: "100%",
+              border: 0,
+            }}
+          />
+        </div>
       </section>
 
       <section className="quote-section">
