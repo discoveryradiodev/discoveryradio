@@ -32,58 +32,8 @@ function useScrollReveal() {
 
 export default function HomePage() {
   const placeholderReveal = useScrollReveal();
-  const mailingListReveal = useScrollReveal();
   const whatHappensReveal = useScrollReveal();
   const ctaReveal = useScrollReveal();
-
-  const handleBrevoSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    
-    const form = e.currentTarget;
-    const emailInput = form.querySelector<HTMLInputElement>("#EMAIL");
-    const submitButton = form.querySelector<HTMLButtonElement>("button[type='submit']");
-    
-    if (!emailInput) return;
-
-    const formData = new URLSearchParams({
-      EMAIL: emailInput.value,
-      email_address_check: "",
-      locale: "en",
-      html_type: "simple",
-    });
-
-    if (submitButton) {
-      submitButton.disabled = true;
-      submitButton.textContent = "Subscribing...";
-    }
-
-    try {
-      const response = await fetch(form.action, {
-        method: "POST",
-        body: formData,
-        headers: {
-          "Content-Type": "application/x-www-form-urlencoded",
-        },
-      });
-
-      if (response.ok) {
-        form.reset();
-        if (submitButton) {
-          submitButton.textContent = "Subscribed!";
-          setTimeout(() => {
-            submitButton.textContent = "SUBSCRIBE";
-            submitButton.disabled = false;
-          }, 3000);
-        }
-      }
-    } catch (error) {
-      console.error("Submission error:", error);
-      if (submitButton) {
-        submitButton.textContent = "SUBSCRIBE";
-        submitButton.disabled = false;
-      }
-    }
-  };
 
   return (
     <div className="container">
@@ -121,46 +71,6 @@ export default function HomePage() {
       <section className="quote-section">
         <p>"I made Discovery Radio because I was tired of hearing the same shit on TikTok. Everything feels so fucking copy and paste nowadays, and it's hard to filter out the noise from the actual talent."</p>
         <p className="quote-attribution">Xayne, Founder and Host</p>
-      </section>
-
-      <section
-        ref={mailingListReveal}
-        className="mailing-list-section scroll-reveal"
-      >
-        <h3>Mailing List</h3>
-        <form
-          id="sib-form"
-          method="POST"
-          action="https://5ada1973.sibforms.com/serve/MUIFACyOSYZnXeTuIFx9LF2GdkeZRVPurnc6joAzTh17VjnR4vRM_uwkWf6WOPqqAHnp0ra-WNORJaxOCiQzuUECL7IZdzDHFNiMerH5qKX0HGoIkuPRuLinAqu4i5Bj0LREjFX1DNpiAhkssqJ1m5GWa738o1L89q3pm01Cq8zdyRjZZdM5UZi0jZokL_fWU2JvEEF_GMBbFbU9WQ=="
-          onSubmit={handleBrevoSubmit}
-          className="brevo-form"
-        >
-          <p className="brevo-form__text">I dont store emails or sell them, just want ya to know when we go live mate :)</p>
-          
-          <div className="brevo-form__field-group">
-            <label htmlFor="EMAIL" className="brevo-form__label">
-              Subscribe to get a weekly newsletter with updates and more
-            </label>
-            <input
-              type="text"
-              id="EMAIL"
-              name="EMAIL"
-              autoComplete="off"
-              placeholder="EMAIL"
-              required
-              className="brevo-form__input"
-            />
-            <p className="brevo-form__hint">Provide your email address to subscribe. For e.g abc@xyz.com</p>
-          </div>
-
-          <button type="submit" className="brevo-form__button">
-            SUBSCRIBE
-          </button>
-
-          <input type="text" name="email_address_check" value="" style={{ display: "none" }} readOnly />
-          <input type="hidden" name="locale" value="en" />
-          <input type="hidden" name="html_type" value="simple" />
-        </form>
       </section>
 
       <section

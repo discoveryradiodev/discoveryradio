@@ -49,7 +49,6 @@ html::before{
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
-  background-attachment: fixed;
   opacity: 1;
   pointer-events: none;
   z-index: 0;
@@ -614,144 +613,6 @@ main{
   }
 }
 
-/* Brevo Form Styles */
-@font-face {
-  font-display: block;
-  font-family: Roboto;
-  src: url(https://assets.brevo.com/font/Roboto/Latin/normal/normal/7529907e9eaf8ebb5220c5f9850e3811.woff2) format("woff2"),
-       url(https://assets.brevo.com/font/Roboto/Latin/normal/normal/25c678feafdc175a70922a116c9be3e7.woff) format("woff");
-}
-
-@font-face {
-  font-display: fallback;
-  font-family: Roboto;
-  font-weight: 600;
-  src: url(https://assets.brevo.com/font/Roboto/Latin/medium/normal/6e9caeeafb1f3491be3e32744bc30440.woff2) format("woff2"),
-       url(https://assets.brevo.com/font/Roboto/Latin/medium/normal/71501f0d8d5aa95960f6475d5487d4c2.woff) format("woff");
-}
-
-@font-face {
-  font-display: fallback;
-  font-family: Roboto;
-  font-weight: 700;
-  src: url(https://assets.brevo.com/font/Roboto/Latin/bold/normal/3ef7cf158f310cf752d5ad08cd0e7e60.woff2) format("woff2"),
-       url(https://assets.brevo.com/font/Roboto/Latin/bold/normal/ece3a1d82f18b60bcce0211725c476aa.woff) format("woff");
-}
-
-#sib-container input:-ms-input-placeholder {
-  text-align: left;
-  font-family: Helvetica, sans-serif;
-  color: #c0ccda;
-}
-
-#sib-container input::placeholder {
-  text-align: left;
-  font-family: Helvetica, sans-serif;
-  color: #c0ccda;
-}
-
-#sib-container a {
-  text-decoration: underline;
-  color: #2BB2FC;
-}
-
-/* Brevo Form Site Integration */
-.brevo-form {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  margin-top: 24px;
-  padding: 0;
-  background: transparent;
-}
-
-.brevo-form__text {
-  font-size: 1rem;
-  color: #4a5568;
-  margin: 0;
-  line-height: 1.6;
-  font-weight: 600;
-  text-shadow: none;
-}
-
-.brevo-form__field-group {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.brevo-form__label {
-  font-size: 0.95rem;
-  color: #2d3748;
-  font-weight: 600;
-  margin: 0;
-  line-height: 1.6;
-  text-shadow: none;
-}
-
-.brevo-form__input {
-  font-size: 0.95rem;
-  font-family: var(--font-inter) !important;
-  color: #2d3748;
-  background: #ffffff;
-  border: 1px solid #cbd5e0;
-  border-radius: 4px;
-  padding: 12px 16px;
-  outline: none;
-  transition: border-color .15s ease, background .15s ease;
-}
-
-.brevo-form__input::placeholder {
-  color: #a0aec0;
-}
-
-.brevo-form__input:focus {
-  border-color: #4299e1;
-  background: #ffffff;
-}
-
-.brevo-form__hint {
-  font-size: 0.85rem;
-  color: #718096;
-  margin: 0;
-  line-height: 1.5;
-}
-
-.brevo-form__button {
-  align-self: flex-start;
-  padding: 12px 28px;
-  font-size: 0.95rem;
-  font-weight: 500;
-  font-family: var(--font-inter) !important;
-  color: #ffffff;
-  background: #2d3748;
-  border: 1px solid #2d3748;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: background .15s ease, border-color .15s ease, transform .08s ease;
-}
-
-.brevo-form__button:hover {
-  background: #1a202c;
-  border-color: #1a202c;
-  transform: translateY(-1px);
-}
-
-.brevo-form__button:active {
-  transform: translateY(0);
-}
-
-@media (max-width:640px) {
-  .brevo-form {
-    gap: 12px;
-  }
-
-  .brevo-form__button {
-    width: 100%;
-    align-self: auto;
-  }
-}
-
 @keyframes fadeIn {
   from {
     opacity: 0;
@@ -870,5 +731,29 @@ main{
 
   .contact-value {
     font-size: 1.05rem;
+  }
+}
+
+/* Mobile-only fix: Prevent horizontal scrolling */
+@media (max-width: 480px) {
+  html, body {
+    width: 100%;
+    overflow-x: hidden;
+  }
+
+  /* Prevent long links/text (emails, URLs) from forcing overflow */
+  a, p, h1, h2, h3, h4, h5, h6, span, div {
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+
+  /* Ensure common layout wrappers don't exceed viewport */
+  main, section, header, footer {
+    max-width: 100%;
+  }
+
+  /* Avoid 100vw causing overflow due to scrollbar/padding */
+  * {
+    box-sizing: border-box;
   }
 }
