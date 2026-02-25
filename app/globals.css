@@ -734,6 +734,11 @@ main{
   }
 }
 
+.mailing-list-section {
+  color: #2b3a55;
+  text-shadow: none;
+}
+
 /* Mobile-only fix: Prevent horizontal scrolling */
 @media (max-width: 480px) {
   html, body {

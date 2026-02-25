@@ -35,6 +35,70 @@ export default function HomePage() {
   const whatHappensReveal = useScrollReveal();
   const ctaReveal = useScrollReveal();
 
+  // Single-flight guard state (persists across re-renders for this component instance)
+  const signupFlightRef = useRef({ inFlight: false, lastSubmittedEmail: "", lastSubmittedAt: 0 });
+
+  const handleMailingListSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const form = e.currentTarget;
+    const emailInput = form.elements.namedItem("email") as HTMLInputElement;
+    const submitButton = form.elements.namedItem("submit") as HTMLButtonElement;
+    const email = emailInput.value.trim().toLowerCase();
+
+    const flight = signupFlightRef.current;
+
+    // Block if request already in flight
+    if (flight.inFlight) {
+      return;
+    }
+
+    // Check if same email submitted within 60 seconds
+    const now = Date.now();
+    if (email === flight.lastSubmittedEmail && now - flight.lastSubmittedAt < 60000) {
+      return;
+    }
+
+    // Mark as in-flight and disable button
+    flight.inFlight = true;
+    if (submitButton) {
+      submitButton.disabled = true;
+    }
+
+    try {
+      // Call Next.js API route (server-side, no CORS)
+      const response = await fetch('/api/signup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email })
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        // Update flight state with this submission
+        flight.lastSubmittedEmail = email;
+        flight.lastSubmittedAt = now;
+
+        form.reset();
+        alert("thanks mate :)");
+      } else if (data.message === 'duplicate') {
+        alert("You're already on the list!");
+      } else {
+        console.error("Signup failed:", data.error);
+        alert("Something went wrong. Please try again.");
+      }
+    } catch (error) {
+      console.error("Signup error:", error);
+      alert("Network error. Please try again.");
+    } finally {
+      // Re-enable button and mark as not in-flight
+      flight.inFlight = false;
+      if (submitButton) {
+        submitButton.disabled = false;
+      }
+    }
+  };
+
   return (
     <div className="container">
       <div className="homepage-overlay"></div>
@@ -72,7 +136,22 @@ export default function HomePage() {
         <p>"I made Discovery Radio because I was tired of hearing the same shit on TikTok. Everything feels so fucking copy and paste nowadays, and it's hard to filter out the noise from the actual talent."</p>
         <p className="quote-attribution">Xayne, Founder and Host</p>
       </section>
+<section className="mailing-list-section">
+  <h3>Mailing List</h3>
+  <p>Get a heads-up when we go live. No algorithms. No spam.</p>
 
+  <form
+    onSubmit={handleMailingListSubmit}
+  >
+    <input
+      type="email"
+      name="email"
+      placeholder="your@email.com"
+      required
+    />
+    <button type="submit" name="submit">Join</button>
+  </form>
+</section>
       <section
         ref={whatHappensReveal}
         className="what-happens-section scroll-reveal"
