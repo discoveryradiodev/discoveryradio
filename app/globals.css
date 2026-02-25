@@ -702,6 +702,58 @@ main{
   text-decoration: underline;
 }
 
+/* Artists Section */
+.artists-section {
+  max-width: 720px;
+  width: 100%;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  border-radius: 8px;
+  padding: 48px 56px;
+  position: relative;
+  z-index: 1;
+  margin-top: 48px;
+}
+
+.artists-heading {
+  font-size: 2.5rem;
+  color: var(--text-accent);
+  margin: 0 0 16px 0;
+  font-weight: 600;
+  font-family: var(--font-space-grotesk) !important;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.45);
+}
+
+.artists-intro {
+  font-size: 1.05rem;
+  color: var(--text-primary);
+  margin: 0 0 32px 0;
+  line-height: 1.7;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+}
+
+.artists-cta {
+  display: inline-block;
+  padding: 10px 20px;
+  background: rgba(242, 201, 76, 0.12);
+  color: var(--text-accent);
+  text-decoration: none;
+  border: 1px solid rgba(242, 201, 76, 0.4);
+  border-radius: 6px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  transition: all 0.2s ease;
+  text-transform: capitalize;
+}
+
+.artists-cta:hover {
+  background: rgba(242, 201, 76, 0.2);
+  border-color: rgba(242, 201, 76, 0.6);
+  transform: translateY(-2px);
+}
+
 /* Mobile responsive */
 @media (max-width: 640px) {
   .contact-overlay-container {
@@ -731,6 +783,26 @@ main{
 
   .contact-value {
     font-size: 1.05rem;
+  }
+
+  .artists-section {
+    padding: 32px 28px;
+    margin-top: 32px;
+  }
+
+  .artists-heading {
+    font-size: 2rem;
+  }
+
+  .artists-intro {
+    font-size: 1rem;
+    margin-bottom: 24px;
+    line-height: 1.6;
+  }
+
+  .artists-cta {
+    font-size: 0.9rem;
+    padding: 9px 18px;
   }
 }
 

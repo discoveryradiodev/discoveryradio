@@ -58,6 +58,20 @@ export default function ContactPage() {
             </div>
           </div>
         </div>
+
+        <div className="artists-section">
+          <h2 className="artists-heading">Artists</h2>
+          <p className="artists-intro">
+            If you're an artist and want to be considered for Discovery Radio, this is the place.
+            <br />
+            No paywalls. No gimmicks. No algorithm games.
+            <br />
+            If it resonates, we'll reach out.
+          </p>
+          <a href="#artist-submission" className="artists-cta">
+            Submit your work
+          </a>
+        </div>
       </div>
     </div>
   );
