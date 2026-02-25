@@ -625,19 +625,23 @@ main{
 /* Contact Page Styles */
 .contact-overlay-container {
   display: flex;
+  flex-direction: row;
   justify-content: center;
-  align-items: flex-start;
+  align-items: stretch;
   padding: 80px 20px;
   min-height: 60vh;
+  gap: 0;
 }
 
 .contact-section {
-  max-width: 720px;
-  width: 100%;
+  flex: 1;
+  min-width: 0;
+  max-width: 400px;
   background: rgba(0, 0, 0, 0.55);
   backdrop-filter: blur(8px);
   border: 1px solid rgba(255, 255, 255, 0.10);
-  border-radius: 8px;
+  border-right: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 8px 0 0 8px;
   padding: 48px 56px;
   position: relative;
   z-index: 1;
@@ -704,16 +708,17 @@ main{
 
 /* Artists Section */
 .artists-section {
-  max-width: 720px;
-  width: 100%;
+  flex: 1;
+  min-width: 0;
+  max-width: 400px;
   background: rgba(0, 0, 0, 0.55);
   backdrop-filter: blur(8px);
   border: 1px solid rgba(255, 255, 255, 0.10);
-  border-radius: 8px;
+  border-radius: 0 8px 8px 0;
   padding: 48px 56px;
   position: relative;
   z-index: 1;
-  margin-top: 48px;
+  margin-top: 0;
 }
 
 .artists-heading {
@@ -732,6 +737,22 @@ main{
   line-height: 1.7;
   font-weight: 500;
   letter-spacing: 0.02em;
+}
+
+.artists-intro-punchy {
+  margin: 0 0 24px 0;
+  font-weight: 600;
+}
+
+.artists-values {
+  font-size: 0.95rem;
+  color: var(--text-secondary);
+  margin: 0 0 32px 0;
+  line-height: 1.6;
+  font-weight: 400;
+  font-style: italic;
+  letter-spacing: 0.01em;
+  opacity: 0.65;
 }
 
 .artists-cta {
@@ -757,11 +778,17 @@ main{
 /* Mobile responsive */
 @media (max-width: 640px) {
   .contact-overlay-container {
+    flex-direction: column;
+    align-items: flex-start;
     padding: 40px 16px;
   }
 
   .contact-section {
+    max-width: 720px;
+    width: 100%;
     padding: 32px 28px;
+    border-radius: 8px;
+    border-right: 1px solid rgba(255, 255, 255, 0.10);
   }
 
   .contact-heading {
@@ -786,8 +813,11 @@ main{
   }
 
   .artists-section {
+    max-width: 720px;
+    width: 100%;
     padding: 32px 28px;
-    margin-top: 32px;
+    border-radius: 8px;
+    margin-top: 48px;
   }
 
   .artists-heading {
@@ -798,6 +828,15 @@ main{
     font-size: 1rem;
     margin-bottom: 24px;
     line-height: 1.6;
+  }
+
+  .artists-intro-punchy {
+    margin-bottom: 18px;
+  }
+
+  .artists-values {
+    font-size: 0.9rem;
+    margin-bottom: 24px;
   }
 
   .artists-cta {

@@ -63,12 +63,15 @@ export default function ContactPage() {
           <h2 className="artists-heading">Artists</h2>
           <p className="artists-intro">
             If you're an artist and want to be considered for Discovery Radio, this is the place.
-            <br />
+          </p>
+          <p className="artists-intro artists-intro-punchy">
             No paywalls. No gimmicks. No algorithm games.
-            <br />
+          </p>
+          <p className="artists-intro">
             If it resonates, we'll reach out.
           </p>
-          <a href="#artist-submission" className="artists-cta">
+          <p className="artists-values">Money doesn't buy placement. Authenticity does.</p>
+          <a href="/submit" className="artists-cta">
             Submit your work
           </a>
         </div>
