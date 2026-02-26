@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const APPS_SCRIPT_URL = process.env.GOOGLE_SCRIPT_EXEC_URL!;
+const APPS_SCRIPT_URL = process.env.DR_SIGNUP_SCRIPT_URL!;
 export async function POST(request: NextRequest) {
   try {
     const { email } = await request.json();
@@ -10,14 +10,16 @@ export async function POST(request: NextRequest) {
     }
 
     const normalizedEmail = email.trim().toLowerCase();
+
+    const appsScriptUrl = process.env.GOOGLE_SCRIPT_EXEC_URL;
+    if (!appsScriptUrl) {
+      return NextResponse.json({ success: false, error: "missing GOOGLE_SCRIPT_EXEC_URL" }, { status: 500 });
+    }
     
     // Call Apps Script server-side (no CORS issues)
-    const url = `${APPS_SCRIPT_URL}?email=${encodeURIComponent(normalizedEmail)}&t=${Date.now()}`;
-   if (!process.env.GOOGLE_SCRIPT_EXEC_URL) {
-  return NextResponse.json({ success: false, error: 'missing GOOGLE_SCRIPT_EXEC_URL' }, { status: 500 });
-}
+    const url = `${appsScriptUrl}?email=${encodeURIComponent(normalizedEmail)}&t=${Date.now()}`;
 
-const response = await fetch(url, { method: 'GET', cache: 'no-store' });
+    const response = await fetch(url, { method: 'GET', cache: 'no-store' });
     const text = await response.text();
 
     // Parse response from Apps Script
