@@ -850,6 +850,168 @@ main{
   text-shadow: none;
 }
 
+/* MOBILE-LITE MODE: CSS-only optimization for max-width 768px */
+@media (max-width: 768px) {
+  /* ===== DISABLE ALL ANIMATIONS & TRANSITIONS ===== */
+  /* Removes all motion-based effects for better mobile performance */
+  * {
+    animation: none !important;
+    animation-duration: 0s !important;
+    animation-delay: 0s !important;
+    transition: none !important;
+    transition-duration: 0s !important;
+    transition-delay: 0s !important;
+  }
+
+  /* ===== FIX VIEWPORT OVERFLOW ===== */
+  /* Force single-column layout and prevent horizontal scrolling */
+  html, body {
+    width: 100%;
+    overflow-x: hidden;
+    box-sizing: border-box;
+  }
+
+  body {
+    overflow-x: hidden !important;
+  }
+
+  /* Ensure no content extends beyond viewport width */
+  main, section, header, footer, .container, .panel {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
+    box-sizing: border-box;
+  }
+
+  /* ===== BACKGROUND-ATTACHMENT OVERRIDE ===== */
+  /* Keep background visible while preventing parallax issues on mobile */
+  html::before {
+    position: fixed !important;
+    inset: 0 !important;
+    display: block !important;
+    opacity: 1 !important;
+    pointer-events: none !important;
+    z-index: 0 !important;
+    background-size: cover !important;
+    background-position: center !important;
+    background-repeat: no-repeat !important;
+  }
+
+  body::before,
+  body::after {
+    display: none !important;
+  }
+
+  .homepage-overlay {
+    position: static !important;
+    display: none;
+  }
+
+  /* ===== TEXT OVERFLOW HANDLING ===== */
+  /* Prevent long links/text (emails, URLs) from forcing horizontal scroll */
+  a, p, h1, h2, h3, h4, h5, h6, span, div, button, li {
+    overflow-wrap: break-word;
+    word-break: break-word;
+    word-wrap: break-word;
+  }
+
+  /* Ensure proper wrapping for special elements */
+  button, input, textarea, select {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  /* ===== LAYOUT OPTIMIZATION ===== */
+  /* Stack all flex/grid layouts vertically */
+  .nav-inner {
+    flex-wrap: wrap;
+  }
+
+  .footer-inner {
+    flex-direction: column;
+  }
+
+  .contact-overlay-container {
+    flex-direction: column;
+    padding: 40px 16px;
+  }
+
+  .contact-section,
+  .artists-section {
+    max-width: 100%;
+    width: 100%;
+    border-radius: 8px;
+    margin-top: 0;
+  }
+
+  .mailing-list-form {
+    flex-direction: column;
+  }
+
+  /* ===== VIEWPORT UNIT FIXES ===== */
+  /* Replace 100vh with auto to avoid scroll issues on mobile browsers */
+  [style*="100vh"],
+  [style*="min-height: 100vh"],
+  [style*="height: 100vh"] {
+    min-height: auto !important;
+    height: auto !important;
+  }
+
+  [style*="60vh"],
+  [style*="min-height: 60vh"] {
+    min-height: auto !important;
+  }
+
+  /* ===== SCROLLING PERFORMANCE ===== */
+  /* Optimize scrolling on iOS Safari */
+  body {
+    -webkit-overflow-scrolling: touch;
+  }
+
+  * {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* ===== PREVENT TOUCH DELAYS ===== */
+  a, button, input, textarea, select {
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
+  /* ===== FORM OPTIMIZATION ===== */
+  input, textarea, select {
+    font-size: 16px;
+  }
+
+  /* ===== IFRAME & EMBEDDED CONTENT ===== */
+  iframe {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  /* ===== ENSURE FIXED POSITIONING DOESN'T CAUSE OVERFLOW ===== */
+  [style*="position: fixed"] {
+    position: relative !important;
+  }
+
+  /* ===== REDUCE SHADOW & BLUR FOR PERFORMANCE ===== */
+  * {
+    box-shadow: none !important;
+    filter: none !important;
+    -webkit-filter: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+
+  /* Restore critical backdrop filters if needed for design */
+  .contact-section,
+  .artists-section,
+  .mailing-list-section {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+}
+
 /* Mobile-only fix: Prevent horizontal scrolling */
 @media (max-width: 480px) {
   html, body {
