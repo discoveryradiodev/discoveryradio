@@ -64,6 +64,8 @@ export default function HomePage() {
       submitButton.disabled = true;
     }
 
+    emailInput.setCustomValidity("");
+
     try {
       // Call Next.js API route (server-side, no CORS)
       const response = await fetch('/api/signup', {
@@ -73,18 +75,23 @@ export default function HomePage() {
       });
 
       const data = await response.json();
+      const isDuplicate = data.message === 'duplicate';
+      const isSuccess = data.success === true;
 
-      if (data.success) {
+      if (isSuccess) {
         // Update flight state with this submission
         flight.lastSubmittedEmail = email;
         flight.lastSubmittedAt = now;
 
-        form.reset();
-        alert("thanks mate :)");
-      } else if (data.message === 'duplicate') {
-        alert("You're already on the list!");
+        if (isDuplicate) {
+          emailInput.setCustomValidity("You're already on the list.");
+          form.reportValidity();
+        } else {
+          form.reset();
+          alert("thanks mate :)");
+        }
       } else {
-        console.error("Signup failed:", data.error);
+        console.error("Signup failed:", data.error || data.detail || data.message || 'unknown error');
         alert("Something went wrong. Please try again.");
       }
     } catch (error) {

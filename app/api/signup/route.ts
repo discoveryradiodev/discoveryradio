@@ -20,17 +20,18 @@ export async function POST(request: NextRequest) {
     const url = `${appsScriptUrl}?email=${encodeURIComponent(normalizedEmail)}&t=${Date.now()}`;
 
     const response = await fetch(url, { method: 'GET', cache: 'no-store' });
-    const text = await response.text();
+    const raw = (await response.text()).trim();
 
     // Parse response from Apps Script
-    if (text.startsWith('ok|')) {
-      return NextResponse.json({ success: true, reqId: text.split('|')[1] });
-    } else if (text === 'duplicate') {
-      return NextResponse.json({ success: false, message: 'duplicate' }, { status: 200 });
-    } else if (text.startsWith('error|')) {
-      return NextResponse.json({ success: false, error: text }, { status: 500 });
+    if (raw === 'duplicate') {
+      return NextResponse.json({ success: true, message: 'duplicate' }, { status: 200 });
+    } else if (raw === 'ok' || raw.startsWith('ok|')) {
+      return NextResponse.json({ success: true, message: 'ok' }, { status: 200 });
+    } else if (raw.startsWith('error|')) {
+      const errorMsg = raw.slice('error|'.length);
+      return NextResponse.json({ success: false, error: errorMsg }, { status: 400 });
     } else {
-      return NextResponse.json({ success: false, error: text }, { status: 500 });
+      return NextResponse.json({ success: false, error: 'unexpected_apps_script_response', detail: raw }, { status: 500 });
     }
   } catch (error) {
     console.error('API signup error:', error);
