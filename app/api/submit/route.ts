@@ -6,7 +6,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
 
     // Validate required fields
-    const { artistName, email, primaryLink, spotifyLink, soundcloudLink, location, genre, numberOfYears, instagram, tiktok, bio, whyDiscoveryRadio } = body;
+    const { artistName, email, primaryLink, spotifyLink, soundcloudLink, location, numberOfYears, instagram, tiktok, bio, whyDiscoveryRadio } = body;
 
     if (!artistName || typeof artistName !== "string" || !artistName.trim()) {
       return NextResponse.json(
@@ -37,18 +37,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Validate genre
-    if (!genre || typeof genre !== "string" || !genre.trim()) {
-      return NextResponse.json(
-        { error: "Please include a genre.\nThis helps me understand how you frame your own work." },
-        { status: 400 }
-      );
-    }
-
     // Validate numberOfYears
-    if (!numberOfYears || (typeof numberOfYears !== "string" && typeof numberOfYears !== "number") || (typeof numberOfYears === "string" && !numberOfYears.trim())) {
+    const hasNumberOfYears =
+      typeof numberOfYears === "number" ||
+      (typeof numberOfYears === "string" && numberOfYears.trim().length > 0);
+    if (!hasNumberOfYears) {
       return NextResponse.json(
-        { error: "Let me know how long you've been at this.\nExperience gives important context to your work." },
+        { error: "Let me know how long you’ve been at this.\nExperience gives important context to your work." },
         { status: 400 }
       );
     }
@@ -104,7 +99,10 @@ export async function POST(request: NextRequest) {
       location: body.location?.trim() || "",
       genre: body.genre?.trim() || "",
       bio: body.bio?.trim() || "",
-      number_of_years: body.numberOfYears?.trim() || "",
+      number_of_years:
+        typeof body.numberOfYears === "number"
+          ? String(body.numberOfYears)
+          : body.numberOfYears?.trim() || "",
       best_song_link: primaryLink.trim(),
       spotify_link: body.spotifyLink?.trim() || "",
       soundcloud_link: body.soundcloudLink?.trim() || "",

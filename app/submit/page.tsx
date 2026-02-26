@@ -48,7 +48,6 @@ export default function SubmitPage() {
     email.trim().length > 0 &&
     primaryLink.trim().length > 0 &&
     location.trim().length > 0 &&
-    genre.trim().length > 0 &&
     numberOfYears.trim().length > 0 &&
     (spotifyLink.trim().length > 0 || soundcloudLink.trim().length > 0) &&
     (instagram.trim().length > 0 || tiktok.trim().length > 0) &&
@@ -57,7 +56,6 @@ export default function SubmitPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!canSubmit) return;
 
     setFormState({ status: "submitting" });
 
@@ -199,6 +197,7 @@ export default function SubmitPage() {
     border: "1px solid rgba(220, 85, 85, 0.4)",
     borderRadius: "6px",
     color: "#F4A5A5",
+    whiteSpace: "pre-line",
   };
 
   const helperTextStyle: React.CSSProperties = {
@@ -259,7 +258,7 @@ export default function SubmitPage() {
           </div>
         ) : (
           <>
-            <form onSubmit={handleSubmit}>
+            <form noValidate onSubmit={handleSubmit}>
               {isError && (
                 <div style={errorMessageStyle}>
                   <strong>Error:</strong> {formState.message}
@@ -352,21 +351,18 @@ export default function SubmitPage() {
               </label>
 
               <label style={labelStyle}>
-                <span style={labelTextStyle}>
-                  Genre <span style={requiredStyle}>*</span>
-                </span>
+                <span style={labelTextStyle}>Genre</span>
                 <input
                   type="text"
                   value={genre}
                   onChange={(e) => setGenre(e.target.value)}
                   placeholder="Your primary genre"
                   style={fieldStyle}
-                  required
                 />
               </label>
 
               <label style={labelStyle}>
-                <span style={labelTextStyle}>Bio</span>
+                <span style={labelTextStyle}>Bio (or Why Discovery Radio)</span>
                 <textarea
                   value={bio}
                   onChange={(e) => setBio(e.target.value)}
@@ -399,7 +395,7 @@ export default function SubmitPage() {
               <h2 style={sectionHeadingStyle}>Music & Links</h2>
 
               <label style={labelStyle}>
-                <span style={labelTextStyle}>Spotify</span>
+                <span style={labelTextStyle}>Spotify (or SoundCloud)</span>
                 <input
                   type="url"
                   value={spotifyLink}
@@ -413,7 +409,7 @@ export default function SubmitPage() {
               </label>
 
               <label style={labelStyle}>
-                <span style={labelTextStyle}>SoundCloud</span>
+                <span style={labelTextStyle}>SoundCloud (or Spotify)</span>
                 <input
                   type="url"
                   value={soundcloudLink}
@@ -441,7 +437,7 @@ export default function SubmitPage() {
               <h2 style={sectionHeadingStyle}>Social</h2>
 
               <label style={labelStyle}>
-                <span style={labelTextStyle}>Instagram</span>
+                <span style={labelTextStyle}>Instagram (or TikTok)</span>
                 <input
                   type="text"
                   value={instagram}
@@ -455,7 +451,7 @@ export default function SubmitPage() {
               </label>
 
               <label style={labelStyle}>
-                <span style={labelTextStyle}>TikTok</span>
+                <span style={labelTextStyle}>TikTok (or Instagram)</span>
                 <input
                   type="text"
                   value={tiktok}
@@ -472,7 +468,7 @@ export default function SubmitPage() {
               <h2 style={sectionHeadingStyle}>Why Discovery Radio?</h2>
 
               <label style={labelStyle}>
-                <span style={labelTextStyle}>Why Discovery Radio?</span>
+                <span style={labelTextStyle}>Why Discovery Radio? (or Bio)</span>
                 <textarea
                   value={whyDiscoveryRadio}
                   onChange={(e) => setWhyDiscoveryRadio(e.target.value)}
@@ -499,6 +495,51 @@ export default function SubmitPage() {
                   Most artists will leave this empty. That's fine.
                 </div>
               </label>
+
+              <div style={{ marginTop: "16px", marginBottom: "8px", fontSize: "0.85rem", opacity: 0.85 }}>
+                <ul style={{ margin: "8px 0 0 16px", padding: 0 }}>
+                  {!artistName.trim() && (
+                    <li>
+                      ❌ <span style={{ whiteSpace: "pre-line" }}>Tell me what name you go by as an artist.</span>
+                    </li>
+                  )}
+                  {!email.trim() && (
+                    <li>
+                      ❌ <span style={{ whiteSpace: "pre-line" }}>Drop your email so I can reach you if I need anything else.</span>
+                    </li>
+                  )}
+                  {!primaryLink.trim() && (
+                    <li>
+                      ❌ <span style={{ whiteSpace: "pre-line" }}>Link your best song — the one you’d bet on.</span>
+                    </li>
+                  )}
+                  {!location.trim() && (
+                    <li>
+                      ❌ <span style={{ whiteSpace: "pre-line" }}>{"Please include your location.\nContext and scene help me understand where your work is coming from."}</span>
+                    </li>
+                  )}
+                  {!numberOfYears.trim() && (
+                    <li>
+                      ❌ <span style={{ whiteSpace: "pre-line" }}>{"Let me know how long you’ve been at this.\nExperience gives important context to your work."}</span>
+                    </li>
+                  )}
+                  {!spotifyLink.trim() && !soundcloudLink.trim() && (
+                    <li>
+                      ❌ <span style={{ whiteSpace: "pre-line" }}>{"Please include a Spotify or SoundCloud link.\nThis helps me understand your commitment to putting music out into the world."}</span>
+                    </li>
+                  )}
+                  {!instagram.trim() && !tiktok.trim() && (
+                    <li>
+                      ❌ <span style={{ whiteSpace: "pre-line" }}>{"I need at least one social handle (Instagram or TikTok).\nThis helps me understand how you present yourself as an artist."}</span>
+                    </li>
+                  )}
+                  {!bio.trim() && !whyDiscoveryRadio.trim() && (
+                    <li>
+                      ❌ <span style={{ whiteSpace: "pre-line" }}>{"Tell me who you are or why Discovery Radio matters to you.\nOne of these helps me understand the intent behind the submission."}</span>
+                    </li>
+                  )}
+                </ul>
+              </div>
 
               <button
                 type="submit"
