@@ -82,7 +82,7 @@ export async function POST(request: NextRequest) {
     const normalizedEmail = email.trim().toLowerCase();
 
     // Check for Apps Script URL
-    const appsScriptUrl = process.env.APPS_SCRIPT_SUBMIT_URL;
+    const appsScriptUrl = process.env.DR_SUBMIT_SCRIPT_URL;
     if (!appsScriptUrl) {
       return NextResponse.json(
         { error: "Apps Script URL is not configured" },
