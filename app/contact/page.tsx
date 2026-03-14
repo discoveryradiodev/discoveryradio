@@ -68,7 +68,7 @@ export default function ContactPage() {
             No paywalls. No gimmicks. No algorithm games.
           </p>
           <p className="artists-intro">
-            If it resonates, we'll reach out.
+            If it resonates, We'll reach out.
           </p>
           <p className="artists-values">Money doesn't buy placement. Authenticity does.</p>
           <a href="/submit" className="artists-cta">

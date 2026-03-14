@@ -953,9 +953,10 @@ main{
   }
 
   .homepage-overlay {
-    position: static !important;
-    display: none;
-  }
+  position: fixed !important;
+  inset: 0;
+  display: block !important;
+}
 
   /* ===== TEXT OVERFLOW HANDLING ===== */
   /* Prevent long links/text (emails, URLs) from forcing horizontal scroll */
