@@ -36,12 +36,12 @@ export default function ContactPage() {
             <div className="contact-row">
               <div className="contact-label">TikTok (Live happens here)</div>
               <a 
-                href="https://www.tiktok.com/@double_odanger2.0" 
+                href="https://www.tiktok.com/@doubleodanger2.0" 
                 target="_blank" 
                 rel="noopener noreferrer"
                 className="contact-value"
               >
-                @double_odanger2.0
+                @doubleodanger2.0
               </a>
             </div>
 

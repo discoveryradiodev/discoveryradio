@@ -139,6 +139,12 @@ export default function HomePage() {
         </div>
       </section>
 
+      <div className="homepage-submit-cta-wrap">
+        <a href="/submit" className="artists-cta homepage-submit-cta">
+          Submit your work
+        </a>
+      </div>
+
       <section className="quote-section">
         <p>"I made Discovery Radio because I was tired of hearing the same shit on TikTok. Everything feels so fucking copy and paste nowadays, and it's hard to filter out the noise from the actual talent."</p>
         <p className="quote-attribution">Xayne, Founder and Host</p>
@@ -167,8 +173,8 @@ export default function HomePage() {
         <ul className="what-happens-list">
           <li>Artists become part of a growing network of hungry fans and industry heads</li>
           <li>Deep dives into artists' personal lives</li>
-          <li>Producer "Live Takeover" nights — beats built live in front of viewers using sampling machines</li>
-          <li>Digest & dissect sessions — breaking down lyrics line by line, live</li>
+          <li>Producer takeover nights: taking producers work out of the studio and into the spotlight</li>
+          <li>Digest & dissect sessions — breaking down lyrics line by line</li>
         </ul>
       </section>
 

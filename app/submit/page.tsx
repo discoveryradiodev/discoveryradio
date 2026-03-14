@@ -228,10 +228,10 @@ export default function SubmitPage() {
           Submit your work
         </h1>
         <p style={{ opacity: 0.8, marginBottom: "8px" }}>
-          No paywalls. No gimmicks. No algorithm games.
+          I get it, its long. But the more you share, the better I can understand your work, intent and what you're about.
         </p>
         <p style={{ opacity: 0.65, fontStyle: "italic", marginBottom: "32px" }}>
-          Money doesn't buy placement. Authenticity does.
+        We will never charge an artist to use this platform.
         </p>
 
         {isSuccess ? (
@@ -356,7 +356,7 @@ export default function SubmitPage() {
                   type="text"
                   value={genre}
                   onChange={(e) => setGenre(e.target.value)}
-                  placeholder="Your primary genre"
+                  placeholder="Describe your sound (optional)"
                   style={fieldStyle}
                 />
               </label>
@@ -370,7 +370,7 @@ export default function SubmitPage() {
                   style={textareaStyle}
                 />
                 <div style={helperTextStyle}>
-                  Bio or Why Discovery Radio (at least one required)
+                  Please enter a bio or explain why you chose Discovery Radio (at least one required)
                 </div>
               </label>
 
