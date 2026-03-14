@@ -107,8 +107,7 @@ export default function HomePage() {
   };
 
   return (
-    <div className="container">
-      <div className="homepage-overlay"></div>
+    <div className="container homepage-root">
       
       <section
         ref={placeholderReveal}

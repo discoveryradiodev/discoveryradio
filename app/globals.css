@@ -1,5 +1,5 @@
 :root{
-  --text-primary: #F2F2F2;
+  --text-primary: #ffffff;
   --text-secondary: #CFCFCF;
   --text-accent: #F2C94C;
   --font-inter: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
@@ -19,13 +19,13 @@ html, body {
   color: var(--text-primary);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  text-shadow: 0 2px 14px rgba(0,0,0,0.75);
+  text-shadow: 0 2px 14px rgba(54, 54, 54, 0.75);
 }
 
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-space-grotesk) !important;
   color: var(--text-accent);
-  text-shadow: 0 3px 16px rgba(0,0,0,0.85);
+  text-shadow: 0 3px 16px rgb(56, 56, 56);
 }
 
 * {
@@ -52,6 +52,10 @@ html::before{
   opacity: 1;
   pointer-events: none;
   z-index: 0;
+}
+
+html:has(.homepage-root)::before {
+  filter: brightness(0.5);
 }
 
 .app-root{
@@ -341,15 +345,6 @@ main{
   .hero-subline{ font-size: 1.1rem }
   .what-happens-section h2{ font-size: 1.4rem }
   .right-now-section h2{ font-size: 1.4rem }
-}
-
-/* Homepage Sections */
-.homepage-overlay{
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.35);
-  pointer-events: none;
-  z-index: 0;
 }
 
 .interview-placeholder{
@@ -952,12 +947,6 @@ main{
     display: none !important;
   }
 
-  .homepage-overlay {
-  position: fixed !important;
-  inset: 0;
-  display: block !important;
-}
-
   /* ===== TEXT OVERFLOW HANDLING ===== */
   /* Prevent long links/text (emails, URLs) from forcing horizontal scroll */
   a, p, h1, h2, h3, h4, h5, h6, span, div, button, li {
@@ -1017,7 +1006,7 @@ main{
   /* Optimize scrolling on iOS Safari */
   body {
     -webkit-overflow-scrolling: touch;
-  }
+  }  
 
   * {
     -webkit-tap-highlight-color: transparent;
