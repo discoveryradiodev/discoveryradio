@@ -11,7 +11,8 @@ export default function Navbar() {
 
         <nav className="nav-links" aria-label="Main navigation">
           <Link href="/" className="btn">Home</Link>
-          <Link href="/contact" className="btn">Contact</Link>
+          <Link href="/the-feed" className="btn"> The Feed</Link>
+          <Link href="/contact" className="btn">Submissions</Link>
         </nav>
       </div>
     </header>

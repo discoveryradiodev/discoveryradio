@@ -13,6 +13,7 @@ html,body,#root{
 html, body {
   padding: 0;
   margin: 0;
+  overflow-x: hidden;
   font-family: var(--font-inter) !important;
   font-weight: 600 !important;
   background-color: transparent;
@@ -58,6 +59,12 @@ html:has(.homepage-root)::before {
   filter: brightness(0.5);
 }
 
+@media (min-width: 768px) {
+  html:has([data-feed-page="true"])::before {
+    display: none;
+  }
+}
+
 .app-root{
   min-height: 100vh;
   display: flex;
@@ -68,12 +75,37 @@ html:has(.homepage-root)::before {
 
 /* Sticky navbar */
 .nav-wrap{
-  position:sticky;
-  top:0;
   z-index:30;
   background: linear-gradient(180deg, rgba(10,12,20,0.6), rgba(10,12,20,0.45));
   border-bottom: 1px solid rgba(255,255,255,0.03);
 }
+
+@media (min-width: 768px) {
+  .nav-wrap {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
+    transform: translateY(calc(-100% + 12px));
+    transition: transform 0.28s ease;
+  }
+
+  .nav-wrap:hover,
+  .nav-wrap:has(:focus-visible) {
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 767px) {
+  .nav-wrap {
+    position: sticky;
+    top: 0;
+    transform: none;
+    transition: none;
+  }
+}
+
 .nav-inner{
   display:flex;
   align-items:center;

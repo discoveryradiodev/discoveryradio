@@ -2,75 +2,18 @@ export default function ContactPage() {
   return (
     <div className="container">
       <div className="contact-overlay-container">
-        <div className="contact-section">
-          <h1 className="contact-heading">Contact</h1>
-          <p className="contact-intro">Wanna work with us? Reach out here</p>
-
-          <div className="contact-grid">
-            <div className="contact-row">
-              <div className="contact-label">Email</div>
-              <a href="mailto:xaynehackley@gmail.com" className="contact-value">
-                xaynehackley@gmail.com
-              </a>
-            </div>
-
-            <div className="contact-row">
-              <div className="contact-label">Phone</div>
-              <a href="tel:+16814651809" className="contact-value">
-                (681) 465 1809
-              </a>
-            </div>
-
-            <div className="contact-row">
-              <div className="contact-label">TikTok</div>
-              <a 
-                href="https://www.tiktok.com/@discoveryradioinc" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="contact-value"
-              >
-                @discoveryradioinc
-              </a>
-            </div>
-
-            <div className="contact-row">
-              <div className="contact-label">TikTok (Live happens here)</div>
-              <a 
-                href="https://www.tiktok.com/@doubleodanger2.0" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="contact-value"
-              >
-                @doubleodanger2.0
-              </a>
-            </div>
-
-            <div className="contact-row">
-              <div className="contact-label">Join our community!</div>
-              <a 
-                href="https://discord.gg/bDqYZDwh7K" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="contact-value"
-              >
-                Discord
-              </a>
-            </div>
-          </div>
-        </div>
-
         <div className="artists-section">
-          <h2 className="artists-heading">Artists</h2>
+          <h2 className="artists-heading">Enter for a chance to be interviewed!</h2>
           <p className="artists-intro">
-            If you're an artist and want to be considered for Discovery Radio, this is the place.
+            Want to be interviewed? Featured on "The Feed"? Fill out the form and we'll be in touch! 
           </p>
           <p className="artists-intro artists-intro-punchy">
-            No paywalls. No gimmicks. No algorithm games.
+            Every Artist goes through the same process, no matter how big or small.
           </p>
           <p className="artists-intro">
-            If it resonates, We'll reach out.
+            This form helps us understand your music and how we can best support you. We look forward to hearing from you!
           </p>
-          <p className="artists-values">Money doesn't buy placement. Authenticity does.</p>
+          <p className="artists-values">Submitting does not guarantee placement.</p>
           <a href="/submit" className="artists-cta">
             Submit your work
           </a>
