@@ -51,17 +51,19 @@ export const mockFeedData: FeedPageData = {
   archive: [
     {
       id: "archive-001",
-      title: "Previous Artist Spotlight",
-      slug: "previous-artist-spotlight",
-      type: "spotlight",
-      publishedAt: "2026-03-01T00:00:00.000Z",
+      title: "Discovery Radio Session: Placeholder Artist Live",
+      type: "youtube",
+      publishedAt: "2026-03-24T00:00:00.000Z",
+      href: "https://www.youtube.com/watch?v=aqz-KE-bpKQ",
     },
     {
       id: "archive-002",
-      title: "Previous Weekly Blog",
-      slug: "previous-weekly-blog",
-      type: "blog",
-      publishedAt: "2026-03-24T00:00:00.000Z",
+      title: "March 2026 — Lost Broadcast",
+      type: "youtube",
+      publishedAt: "2026-03-01T00:00:00.000Z",
+      href: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+      description:
+        "Recovered from the March archive. Signal quality cannot be guaranteed. The content of this transmission is unverified. Proceed accordingly.",
     },
   ],
 

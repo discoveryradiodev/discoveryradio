@@ -1,0 +1,255 @@
+.page {
+  position: relative;
+  width: 100%;
+  padding: 2.75rem 1.25rem 3rem;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.inner {
+  max-width: 1120px;
+  margin: 0 auto;
+  position: relative;
+  z-index: 1;
+}
+
+.logoImage {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) clamp(180px, 28vw, 310px);
+  align-items: start;
+  gap: clamp(1rem, 2vw, 2rem);
+  margin-bottom: 2.25rem;
+}
+
+.headerContent {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+
+.logoBlock {
+  width: 100%;
+  max-width: 310px;
+  justify-self: end;
+  align-self: center;
+  aspect-ratio: 1 / 1;
+  opacity: 0.62;
+  pointer-events: none;
+  user-select: none;
+  filter: drop-shadow(0 16px 36px rgba(2, 6, 23, 0.44));
+}
+
+.eyebrow {
+  margin: 0;
+  color: rgba(242, 201, 76, 0.88);
+  font-size: 0.85rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.title {
+  margin: 0;
+  max-width: 700px;
+  font-size: clamp(2.5rem, 5vw, 4rem);
+  line-height: 1.05;
+  color: #f8fafc;
+}
+
+.intro {
+  margin: 0;
+  max-width: 720px;
+  color: rgba(226, 232, 240, 0.8);
+  line-height: 1.6;
+}
+
+.actions {
+  margin-top: 0.25rem;
+}
+
+.backLink {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.75rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid rgba(148, 163, 184, 0.28);
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.46);
+  color: #f8fafc;
+  text-decoration: none;
+}
+
+.section {
+  margin-top: 2rem;
+  padding: 1.2rem;
+  border: 1px solid rgba(148, 163, 184, 0.12);
+  border-radius: 1.25rem;
+  background: linear-gradient(180deg, rgba(15, 23, 42, 0.68), rgba(10, 16, 26, 0.92));
+  box-shadow: 0 20px 60px rgba(2, 6, 23, 0.28);
+}
+
+.sectionHeader {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1.1rem;
+}
+
+.sectionTitle {
+  margin: 0;
+  color: #f8fafc;
+  font-size: clamp(1.35rem, 2vw, 1.9rem);
+}
+
+.sectionTitleLink {
+  color: inherit;
+  text-decoration: none;
+}
+
+.sectionTitleLink:hover {
+  color: #f2c94c;
+}
+
+.sectionCopy {
+  margin: 0;
+  color: rgba(226, 232, 240, 0.74);
+  line-height: 1.55;
+}
+
+.videoList {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.9rem;
+}
+
+.videoCard,
+.featureCard {
+  border: 1px solid rgba(148, 163, 184, 0.12);
+  border-radius: 1rem;
+  background: rgba(15, 23, 42, 0.56);
+}
+
+.videoCard {
+  padding: 1rem;
+}
+
+.featureCard {
+  display: grid;
+  grid-template-columns: 1fr;
+  overflow: hidden;
+}
+
+.featureImage {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  object-fit: cover;
+  background: rgba(15, 23, 42, 0.8);
+}
+
+.featureBody {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  padding: 1rem;
+}
+
+.metaLabel {
+  margin: 0;
+  color: rgba(242, 201, 76, 0.88);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.cardTitle {
+  margin: 0;
+  font-size: 1.25rem;
+  line-height: 1.25;
+}
+
+.cardLink {
+  color: #f8fafc;
+  text-decoration: none;
+}
+
+.cardLink:hover {
+  color: #f2c94c;
+}
+
+.cardMeta {
+  margin: 0;
+  color: rgba(148, 163, 184, 0.95);
+  font-size: 0.92rem;
+}
+
+.cardDescription {
+  margin: 0.5rem 0 0;
+  color: rgba(226, 232, 240, 0.7);
+  font-size: 0.9rem;
+  line-height: 1.55;
+  font-style: italic;
+}
+
+.artistMeta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.85rem;
+  margin: 0;
+  color: rgba(226, 232, 240, 0.8);
+  font-size: 0.95rem;
+}
+
+.excerpt {
+  margin: 0;
+  color: rgba(226, 232, 240, 0.88);
+  line-height: 1.6;
+}
+
+@media (min-width: 760px) {
+  .page {
+    padding: 3.5rem 2rem 4rem;
+  }
+
+  .section {
+    padding: 1.5rem;
+  }
+
+  .featureCard {
+    grid-template-columns: minmax(260px, 340px) minmax(0, 1fr);
+  }
+
+  .featureImage {
+    aspect-ratio: auto;
+    height: 100%;
+    min-height: 100%;
+  }
+
+  .featureBody {
+    padding: 1.35rem;
+  }
+
+  .videoList {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 759px) {
+  .header {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .logoBlock {
+    width: clamp(145px, 45vw, 225px);
+    justify-self: start;
+    opacity: 0.54;
+  }
+}

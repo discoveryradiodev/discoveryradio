@@ -1,6 +1,9 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { mockFeedData } from "@/lib/feed/mock-data";
+import { ArticleBlocks } from "@/components/feed/ArticleBlocks";
+import { getArtistSpotlightArticleBlocks } from "@/lib/feed/get-article-blocks";
+import { getArchivedArtistSpotlightBySlug, getArtistSpotlightBySlug } from "@/lib/feed/get-feed-data";
+import styles from "./page.module.css";
 
 type SpotlightPageProps = {
   params: {
@@ -8,10 +11,12 @@ type SpotlightPageProps = {
   };
 };
 
-export default function SpotlightPage({ params }: SpotlightPageProps) {
-  const spotlight = mockFeedData.artistSpotlight;
+export default async function SpotlightPage({ params }: SpotlightPageProps) {
+  const liveSpotlight = await getArtistSpotlightBySlug(params.slug);
+  const spotlight = liveSpotlight ?? (await getArchivedArtistSpotlightBySlug(params.slug));
+  const blocks = await getArtistSpotlightArticleBlocks(params.slug);
 
-  if (params.slug !== spotlight.slug) {
+  if (spotlight === null || blocks === null) {
     notFound();
   }
 
@@ -23,37 +28,36 @@ export default function SpotlightPage({ params }: SpotlightPageProps) {
   });
 
   return (
-    <main style={{ maxWidth: 780, margin: "0 auto", padding: "2rem 1rem 3rem" }}>
-      <article>
-        <header style={{ marginBottom: "1.5rem" }}>
-          <h1 style={{ margin: 0, lineHeight: 1.2 }}>{spotlight.title}</h1>
-          <p style={{ margin: "0.75rem 0 0", fontWeight: 600 }}>{spotlight.artistName}</p>
-          {artistMeta ? <p style={{ margin: "0.4rem 0 0" }}>{artistMeta}</p> : null}
-          <p style={{ margin: "0.4rem 0 0", opacity: 0.8 }}>Published: {publishedDate}</p>
-        </header>
+    <main className={styles.page}>
+      <div className={styles.inner}>
+        <article>
+          <header className={styles.header}>
+            <p className={styles.eyebrow}>Artist Spotlight</p>
+            <h1 className={styles.title}>{spotlight.title}</h1>
+            <p className={styles.artistName}>{spotlight.artistName}</p>
+            {artistMeta ? <p className={styles.artistMeta}>{artistMeta}</p> : null}
+            <p className={styles.dateMeta}>Published {publishedDate}</p>
+            <p className={styles.excerpt}>{spotlight.excerpt}</p>
+          </header>
 
-        <div style={{ marginBottom: "1.5rem" }}>
-          <img
-            src={spotlight.headshotUrl}
-            alt={spotlight.headshotAlt}
-            style={{
-              display: "block",
-              width: "100%",
-              maxWidth: 420,
-              borderRadius: 8,
-              border: "1px solid #ddd",
-            }}
-          />
-        </div>
+          <div className={styles.imageWrapper}>
+            <img
+              src={spotlight.headshotUrl}
+              alt={spotlight.headshotAlt}
+              className={styles.image}
+            />
+          </div>
 
-        <section style={{ lineHeight: 1.7 }}>
-          <p>{spotlight.excerpt}</p>
-        </section>
+          <section className={styles.body}>
+            <ArticleBlocks blocks={blocks} />
+          </section>
 
-        <nav style={{ marginTop: "2rem" }}>
-          <Link href="/the-feed">Back to The Feed</Link>
-        </nav>
-      </article>
+          <nav className={styles.backNav}>
+            <Link href="/the-feed/archive" className={styles.backLink}>Back to Archive</Link>
+            <Link href="/the-feed" className={styles.backLink}>Back to The Feed</Link>
+          </nav>
+        </article>
+      </div>
     </main>
   );
 }

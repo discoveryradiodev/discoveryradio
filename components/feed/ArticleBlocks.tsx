@@ -1,4 +1,4 @@
-import type { ArticleBlock } from "@/types/article.ts";
+import type { ArticleBlock } from "@/types/article";
 
 type Props = {
   blocks: ArticleBlock[];

@@ -1,0 +1,143 @@
+.page {
+  width: 100%;
+  padding: 2.75rem 1.25rem 4.5rem;
+  box-sizing: border-box;
+}
+
+.inner {
+  max-width: 1040px;
+  margin: 0 auto;
+}
+
+.header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  margin-bottom: 1.6rem;
+}
+
+.eyebrow {
+  margin: 0;
+  color: rgba(242, 201, 76, 0.88);
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.title {
+  margin: 0;
+  color: #f8fafc;
+  font-size: clamp(2rem, 4.5vw, 3rem);
+  line-height: 1.1;
+}
+
+.intro {
+  margin: 0;
+  color: rgba(226, 232, 240, 0.8);
+  line-height: 1.6;
+}
+
+.list {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+}
+
+.card {
+  display: grid;
+  grid-template-columns: 1fr;
+  border: 1px solid rgba(148, 163, 184, 0.14);
+  border-radius: 1rem;
+  overflow: hidden;
+  background: rgba(15, 23, 42, 0.58);
+}
+
+.image {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  object-fit: cover;
+  background: rgba(15, 23, 42, 0.8);
+}
+
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  padding: 1rem;
+}
+
+.metaLabel {
+  margin: 0;
+  color: rgba(242, 201, 76, 0.88);
+  font-size: 0.76rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.cardTitle {
+  margin: 0;
+  color: #f8fafc;
+  font-size: 1.2rem;
+  line-height: 1.28;
+}
+
+.cardLink {
+  color: #f8fafc;
+  text-decoration: none;
+}
+
+.cardLink:hover {
+  color: #f2c94c;
+}
+
+.dateMeta {
+  margin: 0;
+  color: rgba(148, 163, 184, 0.95);
+  font-size: 0.9rem;
+}
+
+.excerpt {
+  margin: 0;
+  color: rgba(226, 232, 240, 0.82);
+  line-height: 1.58;
+}
+
+.backNav {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-top: 2rem;
+}
+
+.backLink {
+  color: rgba(226, 232, 240, 0.82);
+  text-decoration: none;
+  font-size: 0.9rem;
+}
+
+.backLink:hover {
+  color: #f2c94c;
+}
+
+@media (min-width: 760px) {
+  .page {
+    padding: 3.5rem 2rem 5rem;
+  }
+
+  .card {
+    grid-template-columns: minmax(260px, 320px) minmax(0, 1fr);
+  }
+
+  .image {
+    aspect-ratio: auto;
+    height: 100%;
+    min-height: 100%;
+  }
+
+  .body {
+    padding: 1.2rem;
+  }
+}

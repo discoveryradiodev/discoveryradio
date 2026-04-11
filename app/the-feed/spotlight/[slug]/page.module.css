@@ -1,0 +1,146 @@
+.page {
+  width: 100%;
+  padding: 2.5rem 1.25rem 4rem;
+  box-sizing: border-box;
+}
+
+.inner {
+  max-width: 780px;
+  margin: 0 auto;
+}
+
+.header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  margin-bottom: 1.5rem;
+}
+
+.eyebrow {
+  margin: 0;
+  color: rgba(242, 201, 76, 0.88);
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.title {
+  margin: 0;
+  font-size: clamp(1.8rem, 5vw, 2.75rem);
+  line-height: 1.1;
+  color: #f8fafc;
+}
+
+.artistName {
+  margin: 0;
+  color: #f8fafc;
+  font-size: 1.05rem;
+  font-weight: 600;
+}
+
+.artistMeta {
+  margin: 0;
+  color: rgba(226, 232, 240, 0.72);
+  font-size: 0.9rem;
+}
+
+.dateMeta {
+  margin: 0;
+  color: rgba(148, 163, 184, 0.88);
+  font-size: 0.875rem;
+}
+
+.excerpt {
+  margin: 0.2rem 0 0;
+  color: rgba(226, 232, 240, 0.84);
+  font-size: 1rem;
+  line-height: 1.6;
+  font-style: italic;
+  padding: 0.75rem 0;
+  border-top: 1px solid rgba(148, 163, 184, 0.12);
+  border-bottom: 1px solid rgba(148, 163, 184, 0.12);
+}
+
+.imageWrapper {
+  margin-bottom: 1.75rem;
+}
+
+.image {
+  display: block;
+  width: 100%;
+  max-width: 420px;
+  border-radius: 0.75rem;
+  background: rgba(15, 23, 42, 0.8);
+  border: 1px solid rgba(148, 163, 184, 0.1);
+}
+
+.body {
+  line-height: 1.75;
+  color: rgba(226, 232, 240, 0.9);
+}
+
+.body :global(p) {
+  margin: 0 0 1rem;
+}
+
+.body :global(h2),
+.body :global(h3) {
+  margin: 2rem 0 0.75rem;
+  color: #f8fafc;
+}
+
+.body :global(blockquote) {
+  margin: 1.5rem 0;
+  padding: 0.75rem 1.25rem;
+  border-left: 3px solid rgba(242, 201, 76, 0.55);
+  background: rgba(15, 23, 42, 0.44);
+  border-radius: 0 0.5rem 0.5rem 0;
+}
+
+.body :global(blockquote p) {
+  margin: 0;
+  font-style: italic;
+}
+
+.body :global(blockquote cite) {
+  display: block;
+  margin-top: 0.5rem;
+  font-size: 0.875rem;
+  opacity: 0.65;
+}
+
+.body :global(ul),
+.body :global(ol) {
+  padding-left: 1.5rem;
+  margin: 0 0 1rem;
+}
+
+.body :global(li) {
+  margin-bottom: 0.4rem;
+}
+
+.backNav {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-top: 2.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid rgba(148, 163, 184, 0.12);
+}
+
+.backLink {
+  color: rgba(226, 232, 240, 0.78);
+  text-decoration: none;
+  font-size: 0.88rem;
+}
+
+.backLink:hover {
+  color: #f2c94c;
+}
+
+@media (min-width: 760px) {
+  .page {
+    padding: 3.5rem 2rem 5rem;
+  }
+}

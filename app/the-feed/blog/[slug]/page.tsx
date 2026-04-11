@@ -1,6 +1,9 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { mockFeedData } from "@/lib/feed/mock-data";
+import { ArticleBlocks } from "@/components/feed/ArticleBlocks";
+import { getWeeklyBlogArticleBlocks } from "@/lib/feed/get-article-blocks";
+import { getArchivedWeeklyBlogBySlug, getWeeklyBlogBySlug } from "@/lib/feed/get-feed-data";
+import styles from "./page.module.css";
 
 type BlogPageProps = {
   params: {
@@ -8,49 +11,51 @@ type BlogPageProps = {
   };
 };
 
-export default function BlogPage({ params }: BlogPageProps) {
-  const blog = mockFeedData.weeklyBlog;
+export default async function BlogPage({ params }: BlogPageProps) {
+  const liveBlogPost = await getWeeklyBlogBySlug(params.slug);
+  const blogPost = liveBlogPost ?? (await getArchivedWeeklyBlogBySlug(params.slug));
+  const blocks = await getWeeklyBlogArticleBlocks(params.slug);
 
-  if (params.slug !== blog.slug) {
+  if (blogPost === null || blocks === null) {
     notFound();
   }
 
-  const publishedDate = new Date(blog.publishedAt).toLocaleDateString("en-US", {
+  const publishedDate = new Date(blogPost.publishedAt).toLocaleDateString("en-US", {
     year: "numeric",
     month: "long",
     day: "numeric",
   });
 
   return (
-    <main style={{ maxWidth: 780, margin: "0 auto", padding: "2rem 1rem 3rem" }}>
-      <article>
-        <header style={{ marginBottom: "1.5rem" }}>
-          <h1 style={{ margin: 0, lineHeight: 1.2 }}>{blog.title}</h1>
-          <p style={{ margin: "0.5rem 0 0", opacity: 0.8 }}>Published: {publishedDate}</p>
-        </header>
+    <main className={styles.page}>
+      <div className={styles.inner}>
+        <article>
+          <header className={styles.header}>
+            <p className={styles.eyebrow}>Weekly Blog</p>
+            <h1 className={styles.title}>{blogPost.title}</h1>
+            <p className={styles.dateMeta}>Published {publishedDate}</p>
+            <p className={styles.excerpt}>{blogPost.excerpt}</p>
+          </header>
 
-        <div style={{ marginBottom: "1.5rem" }}>
-          <img
-            src={blog.coverImageUrl ?? "/placeholder-blog-cover.jpg"}
-            alt={blog.coverImageAlt ?? "Weekly blog cover placeholder"}
-            style={{
-              display: "block",
-              width: "100%",
-              maxWidth: 640,
-              borderRadius: 8,
-              border: "1px solid #ddd",
-            }}
-          />
-        </div>
+          <div className={styles.imageWrapper}>
+            <img
+              src={blogPost.coverImageUrl ?? "/placeholder-blog-cover.jpg"}
+              alt={blogPost.coverImageAlt ?? "Weekly blog cover placeholder"}
+              className={styles.image}
+            />
+          </div>
 
-        <section style={{ lineHeight: 1.7 }}>
-          <p>{blog.excerpt}</p>
-        </section>
+          <section className={styles.body}>
+            <ArticleBlocks blocks={blocks} />
+          </section>
 
-        <nav style={{ marginTop: "2rem" }}>
-          <Link href="/the-feed">Back to The Feed</Link>
-        </nav>
-      </article>
+          <nav className={styles.backNav}>
+            <Link href="/the-feed/archive" className={styles.backLink}>Back to Archive</Link>
+            <Link href="/the-feed" className={styles.backLink}>Back to The Feed</Link>
+          </nav>
+        </article>
+      </div>
     </main>
   );
 }
+         

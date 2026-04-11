@@ -62,15 +62,16 @@ export type MonthlyPlaylist = {
 export type ArchiveItem = {
   id: string;
   title: string;
-  slug: string;
-  type: "spotlight" | "blog";
+  type: "youtube" | "spotlight" | "blog";
   publishedAt: string;
+  href: string;
+  description?: string;
 };
 
 export type FeedPageData = {
-  artistSpotlight: ArtistSpotlight;
+  artistSpotlight?: ArtistSpotlight;
   artistProfile: ArtistProfile;
-  weeklyBlog: WeeklyBlogPost;
+  weeklyBlog?: WeeklyBlogPost;
   monthlyPlaylist: MonthlyPlaylist;
   archive: ArchiveItem[];
 

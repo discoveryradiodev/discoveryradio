@@ -1,0 +1,39 @@
+.centered {
+  text-align: center;
+}
+
+/* Artist Spotlight — mobile: stacked */
+.spotlightBody {
+  margin-top: 0.75rem;
+}
+
+.spotlightHeadshot {
+  display: block;
+  width: 100%;
+  max-width: 240px;
+  aspect-ratio: 3 / 4;
+  object-fit: cover;
+  margin: 0 0 1rem 0;
+}
+
+/* Artist Spotlight — desktop: float wrap */
+@media (min-width: 760px) {
+  .spotlightHeadshot {
+    float: left;
+    width: 180px;
+    margin: 0 1.5rem 0.5rem 0;
+  }
+
+  .spotlightBody::after {
+    content: "";
+    display: table;
+    clear: both;
+  }
+}
+
+/* Artist Profile — Spotify embed */
+.spotifyEmbedWrapper {
+  margin-top: 1rem;
+  overflow: hidden;
+  border-radius: 0.25rem;
+}

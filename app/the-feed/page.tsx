@@ -1,99 +1,64 @@
 import Link from "next/link";
 import styles from "./page.module.css";
-import { mockFeedData } from "@/lib/feed/mock-data";
+import ArtistSpotlightCard from "@/components/feed/ArtistSpotlightCard";
+import ArtistProfileCard from "@/components/feed/ArtistProfileCard";
+import WeeklyBlogCard from "@/components/feed/WeeklyBlogCard";
+import MonthlyPlaylistCard from "@/components/feed/MonthlyPlaylistCard";
+import ArchiveCard from "@/components/feed/ArchiveCard";
+import SocialLinksCard from "@/components/feed/SocialLinksCard";
+import DiscordCard from "@/components/feed/DiscordCard";
+import { getFeedPageData } from "@/lib/feed/get-feed-data";
 
-export default function FeedPage() {
-  const {
-    artistSpotlight,
-    artistProfile,
-    weeklyBlog,
-    monthlyPlaylist,
-    archive,
-    socialLinks,
-    discordUrl,
-  } = mockFeedData;
-
-  const artistMeta = [artistSpotlight.artistLocation, artistSpotlight.artistGenre]
-    .filter(Boolean)
-    .join(" | ");
+export default async function FeedPage() {
+  const feedData = await getFeedPageData();
 
   return (
     <main className={styles.page} data-feed-page="true">
       <div className={styles.inner}>
         <h1 className={styles.title}>The Feed</h1>
+        <div className={styles.pageActions}>
+          <Link href="/the-feed/archive" className={styles.archiveLink}>
+            Browse Archive
+          </Link>
+        </div>
 
         <section className={styles.composition}>
           <div className={styles.topPair}>
-            <article className={`${styles.block} ${styles.heroBlock}`}>
-              <h2 className={styles.blockTitle}>Artist Spotlight</h2>
-              <p className={styles.blockBody}>{artistSpotlight.title}</p>
-              <p className={styles.blockBody}>{artistSpotlight.artistName}</p>
-              {artistMeta ? <p className={styles.blockBody}>{artistMeta}</p> : null}
-              <p className={styles.blockBody}>{artistSpotlight.excerpt}</p>
-              <Link
-                className={styles.blockBody}
-                href={`/the-feed/spotlight/${mockFeedData.artistSpotlight.slug}`}
-              >
-                Read more →
-              </Link>
-            </article>
+            {feedData.artistSpotlight ? (
+              <div className={`${styles.block} ${styles.heroBlock}`}>
+                <ArtistSpotlightCard spotlight={feedData.artistSpotlight} />
+              </div>
+            ) : null}
 
-            <article className={`${styles.block} ${styles.heroBlock}`}>
-              <h2 className={styles.blockTitle}>Artist Profile</h2>
-              <p className={styles.blockBody}>{artistProfile.monthLabel}</p>
-              <p className={styles.blockBody}>Embed type: {artistProfile.embedType}</p>
-            </article>
+            <div className={`${styles.block} ${styles.heroBlock}`}>
+              <ArtistProfileCard profile={feedData.artistProfile} />
+            </div>
           </div>
 
-          <article className={`${styles.block} ${styles.blogFeature}`}>
-            <h2 className={styles.blockTitle}>Weekly Blog</h2>
-            <p className={styles.blockBody}>{weeklyBlog.title}</p>
-            <p className={styles.blockBody}>{weeklyBlog.excerpt}</p>
-            <Link className={styles.blockBody} href={`/the-feed/blog/${mockFeedData.weeklyBlog.slug}`}>
-              Read more →
-            </Link>
-          </article>
+          {feedData.weeklyBlog ? (
+            <div className={`${styles.block} ${styles.blogFeature}`}>
+              <WeeklyBlogCard post={feedData.weeklyBlog} />
+            </div>
+          ) : null}
 
-          <div className={styles.midPair}>
-            <article className={styles.block}>
-              <h2 className={styles.blockTitle}>Monthly Playlist</h2>
-              <p className={styles.blockBody}>{monthlyPlaylist.title}</p>
-              <p className={styles.blockBody}>{monthlyPlaylist.monthLabel}</p>
-              {monthlyPlaylist.description ? (
-                <p className={styles.blockBody}>{monthlyPlaylist.description}</p>
-              ) : null}
-            </article>
+          <div className={styles.playlistStack}>
+            <div className={styles.block}>
+              <MonthlyPlaylistCard playlist={feedData.monthlyPlaylist} />
+            </div>
 
-            <article className={styles.block}>
-              <h2 className={styles.blockTitle}>Archive</h2>
-              <ul className={styles.blockBody}>
-                {archive.map((item) => (
-                  <li key={item.id}>{item.title}</li>
-                ))}
-              </ul>
-            </article>
+            <div className={styles.block}>
+              <ArchiveCard items={feedData.archive} />
+            </div>
           </div>
 
           <div className={styles.bottomPair}>
-            <article className={styles.block}>
-              <h2 className={styles.blockTitle}>Social Handles</h2>
-              <ul className={styles.blockBody}>
-                {socialLinks.map((link) => (
-                  <li key={link.href}>
-                    <a href={link.href} target="_blank" rel="noreferrer">
-                      {link.label}
-                    </a>
-                  </li>
-                ))}
-              </ul>
-            </article>
+            <div className={styles.block}>
+              <SocialLinksCard links={feedData.socialLinks} />
+            </div>
 
-            <article className={styles.block}>
-              <h2 className={styles.blockTitle}>Join Discord</h2>
-              <a className={styles.blockBody} href={discordUrl} target="_blank" rel="noreferrer">
-                {discordUrl}
-              </a>
-            </article>
+            <div className={styles.block}>
+              <DiscordCard discordUrl={feedData.discordUrl} />
+            </div>
           </div>
         </section>
       </div>

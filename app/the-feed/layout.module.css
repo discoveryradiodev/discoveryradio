@@ -1,0 +1,37 @@
+.shell {
+  position: relative;
+  min-height: 100%;
+  background:
+    radial-gradient(circle at top, rgba(36, 52, 86, 0.28), transparent 42%),
+    linear-gradient(180deg, #0d1422 0%, #0a101a 58%, #05070d 100%);
+  color: #e2e8f0;
+  isolation: isolate;
+}
+
+.shell::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(135deg, rgba(148, 163, 184, 0.08), transparent 32%),
+    radial-gradient(circle at bottom right, rgba(15, 23, 42, 0.38), transparent 36%);
+  pointer-events: none;
+  z-index: -1;
+}
+
+.shell :global(*) {
+  text-shadow: none;
+}
+
+.shell :global(h1),
+.shell :global(h2),
+.shell :global(h3),
+.shell :global(h4),
+.shell :global(h5),
+.shell :global(h6) {
+  color: #f2c94c;
+}
+
+.shell :global(a) {
+  color: inherit;
+}
