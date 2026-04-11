@@ -143,9 +143,9 @@ export async function getFeedPageData(): Promise<FeedPageData> {
   ]);
 
   return {
-    artistSpotlight,
+    artistSpotlight: artistSpotlight ?? undefined,
     artistProfile: music.artistProfile,
-    weeklyBlog,
+    weeklyBlog: weeklyBlog ?? undefined,
     monthlyPlaylist: music.monthlyPlaylist,
     archive: mockFeedData.archive,
     socialLinks: mockFeedData.socialLinks,
