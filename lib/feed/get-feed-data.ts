@@ -1,6 +1,7 @@
 import { fetchSheetRows } from '@/lib/feed/google-sheets';
 import { mockFeedData } from '@/lib/feed/mock-data';
 import type {
+  ArchiveItem,
   ArtistProfile,
   ArtistSpotlight,
   FeedPageData,
@@ -15,6 +16,15 @@ const MUSIC_REQUIRED_FIELDS = ['artist_name', 'month_label'] as const;
 
 function clean(value: string | undefined): string {
   return (value ?? '').trim();
+}
+
+function normalizeImagePath(value: string): string {
+  const trimmed = value.trim();
+  if (!trimmed) return '';
+  if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) return trimmed;
+  if (trimmed.startsWith('/')) return trimmed;
+  if (trimmed.startsWith('public/')) return '/' + trimmed.slice(7);
+  return '/' + trimmed;
 }
 
 function isNonEmptyRow(row: SheetRow): boolean {
@@ -73,7 +83,7 @@ function rowToSpotlight(row: SheetRow): ArtistSpotlight {
     artistName: clean(row['artist_name']),
     artistLocation: clean(row['artist_location']) || undefined,
     artistGenre: clean(row['artist_genre']) || undefined,
-    headshotUrl: clean(row['headshot_url']),
+    headshotUrl: normalizeImagePath(clean(row['headshot_url'])),
     headshotAlt: clean(row['headshot_alt']),
     publishedAt: clean(row['published_at']) || new Date().toISOString(),
     updatedAt: clean(row['updated_at']) || undefined,
@@ -135,11 +145,85 @@ async function fetchLiveMusic(): Promise<{
   return { artistProfile, monthlyPlaylist };
 }
 
+function newestByPublishedAt<T>(
+  items: T[],
+  getPublishedAt: (item: T) => string | undefined
+): T | null {
+  let bestItem: T | null = null;
+  let bestTime = Number.NEGATIVE_INFINITY;
+  let foundValidDate = false;
+
+  for (const item of items) {
+    const value = clean(getPublishedAt(item));
+    const time = Date.parse(value);
+    if (!Number.isNaN(time) && time > bestTime) {
+      foundValidDate = true;
+      bestTime = time;
+      bestItem = item;
+    }
+  }
+
+  if (foundValidDate) return bestItem;
+  return items[0] ?? null;
+}
+
+async function fetchArchivePreviewItems(): Promise<ArchiveItem[]> {
+  const previewItems: ArchiveItem[] = [];
+
+  const newestArchivedYouTube = newestByPublishedAt(
+    mockFeedData.archive.filter((item) => item.type === 'youtube'),
+    (item) => item.publishedAt
+  );
+  if (newestArchivedYouTube) {
+    previewItems.push(newestArchivedYouTube);
+  }
+
+  try {
+    const archivedBlogs = await getArchivedWeeklyBlogs();
+    const newestArchivedBlog = newestByPublishedAt(archivedBlogs, (item) => item.publishedAt);
+    if (newestArchivedBlog) {
+      previewItems.push({
+        id: `archive-blog-${newestArchivedBlog.id}`,
+        title: newestArchivedBlog.title,
+        type: 'blog',
+        publishedAt: newestArchivedBlog.publishedAt,
+        href: `/the-feed/blog/${newestArchivedBlog.slug}`,
+        description: newestArchivedBlog.excerpt || undefined,
+      });
+    }
+  } catch {
+    // Missing archive blog data should not break feed rendering.
+  }
+
+  try {
+    const archivedSpotlights = await getArchivedArtistSpotlights();
+    const newestArchivedSpotlight = newestByPublishedAt(
+      archivedSpotlights,
+      (item) => item.publishedAt
+    );
+    if (newestArchivedSpotlight) {
+      previewItems.push({
+        id: `archive-spotlight-${newestArchivedSpotlight.id}`,
+        title: newestArchivedSpotlight.title,
+        type: 'spotlight',
+        publishedAt: newestArchivedSpotlight.publishedAt,
+        href: `/the-feed/spotlight/${newestArchivedSpotlight.slug}`,
+        description: newestArchivedSpotlight.excerpt || undefined,
+      });
+    }
+  } catch {
+    // Missing archive spotlight data should not break feed rendering.
+  }
+
+  return previewItems;
+}
+
 export async function getFeedPageData(): Promise<FeedPageData> {
-  const [artistSpotlight, weeklyBlog, music] = await Promise.all([
+  const [artistSpotlight, weeklyBlog, music, archivePreview] = await Promise.all([
     fetchLiveSpotlight(),
     fetchLiveBlog(),
     fetchLiveMusic(),
+    fetchArchivePreviewItems(),
   ]);
 
   return {
@@ -148,6 +232,7 @@ export async function getFeedPageData(): Promise<FeedPageData> {
     weeklyBlog: weeklyBlog ?? undefined,
     monthlyPlaylist: music.monthlyPlaylist,
     archive: mockFeedData.archive,
+    archivePreview,
     socialLinks: mockFeedData.socialLinks,
     discordUrl: mockFeedData.discordUrl,
   };

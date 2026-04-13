@@ -27,7 +27,7 @@
 
 .title {
   margin: 0;
-  font-size: clamp(1.8rem, 5vw, 2.75rem);
+  font-size: var(--article-title-size, clamp(1.8rem, 5vw, 2.75rem));
   line-height: 1.1;
   color: #f8fafc;
 }
@@ -41,43 +41,37 @@
 
 .artistMeta {
   margin: 0;
-  color: rgba(226, 232, 240, 0.72);
+  color: var(--article-meta-color, rgba(226, 232, 240, 0.72));
   font-size: 0.9rem;
 }
 
 .dateMeta {
   margin: 0;
-  color: rgba(148, 163, 184, 0.88);
+  color: var(--article-meta-color, rgba(148, 163, 184, 0.88));
   font-size: 0.875rem;
 }
 
-.excerpt {
-  margin: 0.2rem 0 0;
-  color: rgba(226, 232, 240, 0.84);
-  font-size: 1rem;
-  line-height: 1.6;
-  font-style: italic;
-  padding: 0.75rem 0;
-  border-top: 1px solid rgba(148, 163, 184, 0.12);
-  border-bottom: 1px solid rgba(148, 163, 184, 0.12);
-}
-
-.imageWrapper {
-  margin-bottom: 1.75rem;
+.imageWrap {
+  float: left;
 }
 
 .image {
   display: block;
-  width: 100%;
-  max-width: 420px;
-  border-radius: 0.75rem;
-  background: rgba(15, 23, 42, 0.8);
-  border: 1px solid rgba(148, 163, 184, 0.1);
+  width: var(--article-image-width, min(53%, 414px));
+  max-width: 100%;
+  height: auto;
+  margin: 0.3rem 1.25rem 0.9rem calc(-90px + var(--article-image-x, 0px));
+  shape-outside: var(--spotlight-article-shape-url);
+  -webkit-shape-outside: var(--spotlight-article-shape-url);
+  shape-image-threshold: 0.5;
+  shape-margin: 0.35rem;
 }
 
 .body {
-  line-height: 1.75;
-  color: rgba(226, 232, 240, 0.9);
+  display: flow-root;
+  font-size: var(--article-body-size, clamp(1.35rem, 3.75vw, 2.0625rem));
+  line-height: var(--article-line-height, 1.75);
+  color: var(--article-text-color, rgba(226, 232, 240, 0.9));
 }
 
 .body :global(p) {
@@ -137,6 +131,19 @@
 
 .backLink:hover {
   color: #f2c94c;
+}
+
+@media (max-width: 759px) {
+  .imageWrap {
+    float: none;
+  }
+
+  .image {
+    width: 100%;
+    margin: 0 0 1rem;
+    shape-outside: none;
+    -webkit-shape-outside: none;
+  }
 }
 
 @media (min-width: 760px) {

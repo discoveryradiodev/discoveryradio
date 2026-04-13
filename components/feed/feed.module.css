@@ -1,39 +1,359 @@
-.centered {
-  text-align: center;
+.card {
+  position: relative;
+  height: 100%;
+  color: #1b1614;
 }
 
-/* Artist Spotlight — mobile: stacked */
+.card h3 {
+  margin: 0;
+}
+
+.spotlightCard {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.95rem;
+  background: var(--spotlight-panel-bg, #f8efde);
+  border: 2px solid var(--spotlight-panel-border, #cbb5a4);
+  color: var(--spotlight-text-color, #1b1614);
+  padding: 1.25rem;
+  border-radius: 0.25rem;
+}
+
+.eyebrow {
+  align-self: flex-start;
+  padding: 0.2rem 0.45rem;
+  border: 1.5px solid #151110;
+  background: #f2e4c9;
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.spotlightHeader {
+  display: grid;
+  gap: 0.95rem;
+}
+
+.spotlightName {
+  font-size: var(--spotlight-title-size, clamp(2rem, 5.1vw, 3.15rem));
+  line-height: 0.95;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.spotlightMeta {
+  margin: 0;
+  font-size: var(--spotlight-meta-size, 0.85rem);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  opacity: 0.82;
+}
+
 .spotlightBody {
-  margin-top: 0.75rem;
+  display: flow-root;
 }
 
 .spotlightHeadshot {
+  float: left;
   display: block;
-  width: 100%;
-  max-width: 240px;
-  aspect-ratio: 3 / 4;
-  object-fit: cover;
-  margin: 0 0 1rem 0;
+  width: var(--spotlight-image-width, min(59%, 441px));
+  min-width: 273px;
+  max-width: 100%;
+  height: auto;
+  margin: 0 1rem 0.8rem calc(-90px + var(--spotlight-image-x, 0px));
+  shape-outside: var(--spotlight-shape-url);
+  -webkit-shape-outside: var(--spotlight-shape-url);
+  shape-image-threshold: 0.5;
+  shape-margin: var(--spotlight-shape-margin, 0.35rem);
 }
 
-/* Artist Spotlight — desktop: float wrap */
-@media (min-width: 760px) {
+.spotlightExcerpt {
+  margin: 0;
+  font-size: var(--spotlight-excerpt-size, 1rem);
+  line-height: 1.5;
+}
+
+.listenCta {
+  display: inline-flex;
+  clear: both;
+  margin-top: 0.75rem;
+  padding: 0.52rem 0.78rem;
+  border: 2px solid var(--spotlight-cta-bg, #0e0d0d);
+  background: var(--spotlight-cta-bg, #0e0d0d);
+  color: var(--spotlight-cta-color, #f8efde);
+  text-decoration: none;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+@media (max-width: 979px) {
   .spotlightHeadshot {
-    float: left;
-    width: 180px;
-    margin: 0 1.5rem 0.5rem 0;
-  }
-
-  .spotlightBody::after {
-    content: "";
-    display: table;
-    clear: both;
+    float: none;
+    width: 100%;
+    min-width: 0;
+    margin: 0 0 0.9rem;
+    shape-outside: none;
+    -webkit-shape-outside: none;
   }
 }
 
-/* Artist Profile — Spotify embed */
+.profileCard {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.supportTitle {
+  font-size: 1.2rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.profileName {
+  margin: 0.3rem 0 0;
+  font-size: 1.55rem;
+  line-height: 1.1;
+  text-transform: uppercase;
+}
+
+.supportMeta {
+  margin: 0.35rem 0 0;
+  font-size: 0.86rem;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+}
+
 .spotifyEmbedWrapper {
-  margin-top: 1rem;
+  margin-top: 0.9rem;
   overflow: hidden;
-  border-radius: 0.25rem;
+  border: 2px solid #1b1715;
+  box-shadow: 3px 3px 0 rgba(26, 22, 20, 0.65);
+}
+
+.blogStrip {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.85rem;
+  height: 100%;
+}
+
+.blogImageWrap {
+  position: relative;
+  border: 2px solid #14100f;
+  background: #dacdb2;
+  min-height: 150px;
+  max-height: 190px;
+  overflow: hidden;
+}
+
+.blogImage {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.blogContent {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.featureLabel {
+  align-self: flex-start;
+  margin: 0;
+  padding: 0.15rem 0.45rem;
+  border: 1.5px solid #171311;
+  background: #f5e8ce;
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.blogTitle {
+  font-size: clamp(1.35rem, 2.8vw, 2rem);
+  line-height: 1.1;
+}
+
+.published {
+  margin: 0;
+  font-size: 0.82rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  opacity: 0.85;
+}
+
+.blogExcerpt {
+  margin: 0;
+  line-height: 1.5;
+}
+
+.readCta {
+  align-self: flex-start;
+  margin-top: 0.2rem;
+  color: #171311;
+  font-weight: 700;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 0.14em;
+}
+
+.archiveCard {
+  height: 100%;
+}
+
+.archiveHeader {
+  margin: 0;
+  font-size: 1.45rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.archiveIntro {
+  margin: 0.42rem 0 0.8rem;
+  line-height: 1.45;
+}
+
+.archiveList {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 0.58rem;
+}
+
+.archiveItem {
+  display: grid;
+  gap: 0.2rem;
+  padding: 0.6rem 0.68rem;
+  border: 1.5px solid #211b17;
+  background: rgba(246, 236, 216, 0.66);
+}
+
+.archiveItem a {
+  color: #171311;
+  text-decoration: none;
+}
+
+.archiveItem a:hover {
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+}
+
+.archiveMeta {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  opacity: 0.86;
+}
+
+.playlistCard {
+  display: flex;
+  flex-direction: column;
+  gap: 0.62rem;
+  height: 100%;
+}
+
+.playlistTitle {
+  font-size: clamp(1.4rem, 3vw, 2rem);
+  line-height: 1.1;
+}
+
+.playlistDesc {
+  margin: 0;
+  line-height: 1.45;
+}
+
+.embedPlaceholder {
+  margin-top: auto;
+  border: 2px dashed #29221e;
+  padding: 0.8rem;
+  background: rgba(17, 17, 17, 0.06);
+}
+
+.embedPlaceholder p {
+  margin: 0;
+  font-size: 0.85rem;
+}
+
+.playlistLink {
+  display: inline-flex;
+  align-self: flex-start;
+  margin-top: 0.42rem;
+  color: #191412;
+  font-size: 0.86rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-weight: 700;
+}
+
+.socialCard h3,
+.discordCard h3 {
+  font-size: 1.14rem;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.socialList {
+  margin: 0.55rem 0 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+}
+
+.socialList a {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.32rem 0.58rem;
+  border: 1.5px solid #1f1a17;
+  background: rgba(246, 236, 216, 0.74);
+  color: #16110f;
+  text-decoration: none;
+  font-size: 0.86rem;
+  letter-spacing: 0.04em;
+}
+
+.discordCard {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+}
+
+.discordCard p {
+  margin: 0;
+}
+
+.discordCta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.3rem;
+  padding: 0.48rem 0.85rem;
+  border: 2px solid #111;
+  background: #111;
+  color: #faefdd;
+  text-decoration: none;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+@media (min-width: 980px) {
+  .blogStrip {
+    grid-template-columns: minmax(220px, 0.45fr) minmax(0, 1fr);
+    align-items: stretch;
+  }
+
+  .blogImageWrap {
+    max-height: none;
+    min-height: 100%;
+  }
 }

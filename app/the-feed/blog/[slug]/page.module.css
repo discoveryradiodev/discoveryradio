@@ -5,7 +5,7 @@
 }
 
 .inner {
-  max-width: 780px;
+  max-width: var(--blog-content-max-width, 780px);
   margin: 0 auto;
 }
 
@@ -27,20 +27,20 @@
 
 .title {
   margin: 0;
-  font-size: clamp(1.8rem, 5vw, 2.75rem);
+  font-size: var(--blog-title-size, clamp(1.8rem, 5vw, 2.75rem));
   line-height: 1.1;
   color: #f8fafc;
 }
 
 .dateMeta {
   margin: 0;
-  color: rgba(148, 163, 184, 0.88);
+  color: var(--blog-meta-color, rgba(148, 163, 184, 0.88));
   font-size: 0.875rem;
 }
 
 .excerpt {
   margin: 0.2rem 0 0;
-  color: rgba(226, 232, 240, 0.84);
+  color: var(--blog-text-color, rgba(226, 232, 240, 0.84));
   font-size: 1rem;
   line-height: 1.6;
   font-style: italic;
@@ -56,15 +56,16 @@
 .image {
   display: block;
   width: 100%;
-  max-width: 640px;
+  max-width: var(--blog-image-width, 640px);
   border-radius: 0.75rem;
   background: rgba(15, 23, 42, 0.8);
   border: 1px solid rgba(148, 163, 184, 0.1);
 }
 
 .body {
-  line-height: 1.75;
-  color: rgba(226, 232, 240, 0.9);
+  font-size: var(--blog-body-size, 1rem);
+  line-height: var(--blog-line-height, 1.75);
+  color: var(--blog-text-color, rgba(226, 232, 240, 0.9));
 }
 
 .body :global(p) {

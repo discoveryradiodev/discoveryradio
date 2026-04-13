@@ -1,22 +1,41 @@
 .shell {
+  --ink: #150f1a;
+  --memphis-blue: #2431ad;
+  --memphis-blue-deep: #13185e;
+  --memphis-violet: #5f48b9;
   position: relative;
-  min-height: 100%;
-  background:
-    radial-gradient(circle at top, rgba(36, 52, 86, 0.28), transparent 42%),
-    linear-gradient(180deg, #0d1422 0%, #0a101a 58%, #05070d 100%);
-  color: #e2e8f0;
+  min-height: 100vh;
+  overflow: hidden;
+  color: #f4eee2;
   isolation: isolate;
+  background:
+    linear-gradient(138deg, rgba(17, 22, 88, 0.95) 0%, rgba(42, 50, 159, 0.92) 38%, rgba(88, 64, 178, 0.9) 100%),
+    repeating-linear-gradient(125deg, rgba(248, 239, 224, 0.07) 0 2px, transparent 2px 24px);
 }
 
 .shell::before {
   content: "";
   position: absolute;
   inset: 0;
-  background:
-    linear-gradient(135deg, rgba(148, 163, 184, 0.08), transparent 32%),
-    radial-gradient(circle at bottom right, rgba(15, 23, 42, 0.38), transparent 36%);
-  pointer-events: none;
   z-index: -1;
+  background:
+    linear-gradient(146deg, transparent 0 34%, rgba(246, 236, 218, 0.14) 34% 39%, transparent 39% 100%),
+    radial-gradient(circle at 12% 14%, rgba(247, 228, 136, 0.28) 0 9%, transparent 9.2%),
+    radial-gradient(circle at 84% 26%, rgba(248, 239, 224, 0.26) 0 5.5%, transparent 5.8%),
+    radial-gradient(circle at 68% 74%, rgba(252, 241, 216, 0.2) 0 7%, transparent 7.3%),
+    linear-gradient(100deg, transparent 0 75%, rgba(18, 23, 80, 0.46) 75% 100%);
+}
+
+.shell::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background:
+    linear-gradient(18deg, transparent 0 88%, rgba(243, 228, 186, 0.16) 88% 100%),
+    repeating-linear-gradient(90deg, transparent 0 97px, rgba(17, 15, 26, 0.22) 97px 100px),
+    repeating-linear-gradient(0deg, transparent 0 96px, rgba(17, 15, 26, 0.16) 96px 99px);
+  mix-blend-mode: soft-light;
 }
 
 .shell :global(*) {
@@ -29,7 +48,7 @@
 .shell :global(h4),
 .shell :global(h5),
 .shell :global(h6) {
-  color: #f2c94c;
+  color: var(--ink);
 }
 
 .shell :global(a) {

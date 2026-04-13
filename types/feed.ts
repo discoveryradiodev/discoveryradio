@@ -74,6 +74,7 @@ export type FeedPageData = {
   weeklyBlog?: WeeklyBlogPost;
   monthlyPlaylist: MonthlyPlaylist;
   archive: ArchiveItem[];
+  archivePreview?: ArchiveItem[];
 
   socialLinks: SocialLink[];
   discordUrl: string;

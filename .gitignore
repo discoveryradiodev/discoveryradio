@@ -10,3 +10,7 @@ out/
 # Video files
 public/*.mov
 public/*.mp4
+.vercel
+billy_the_seventh.txt
+
+willard_style_lab_dump.txt

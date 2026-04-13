@@ -50,7 +50,7 @@
   border: 1px solid rgba(148, 163, 184, 0.14);
   border-radius: 1rem;
   overflow: hidden;
-  background: rgba(15, 23, 42, 0.58);
+  background: transparent;
 }
 
 .image {

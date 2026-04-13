@@ -28,25 +28,28 @@ export default async function BlogPage({ params }: BlogPageProps) {
 
   return (
     <main className={styles.page}>
-      <div className={styles.inner}>
+      <div className={styles.inner} data-style-target="blog-content-frame">
         <article>
           <header className={styles.header}>
             <p className={styles.eyebrow}>Weekly Blog</p>
-            <h1 className={styles.title}>{blogPost.title}</h1>
-            <p className={styles.dateMeta}>Published {publishedDate}</p>
+             <h1 className={styles.title} data-style-target="blog-title">{blogPost.title}</h1>
+             <p className={styles.dateMeta} data-style-target="blog-meta">Published {publishedDate}</p>
             <p className={styles.excerpt}>{blogPost.excerpt}</p>
           </header>
 
           <div className={styles.imageWrapper}>
-            <img
-              src={blogPost.coverImageUrl ?? "/placeholder-blog-cover.jpg"}
-              alt={blogPost.coverImageAlt ?? "Weekly blog cover placeholder"}
-              className={styles.image}
-            />
+             <img
+               src={blogPost.coverImageUrl ?? "/placeholder-blog-cover.jpg"}
+               alt={blogPost.coverImageAlt ?? "Weekly blog cover placeholder"}
+               className={styles.image}
+               data-style-target="blog-image"
+             />
           </div>
 
           <section className={styles.body}>
-            <ArticleBlocks blocks={blocks} />
+             <div data-style-target="blog-body">
+               <ArticleBlocks blocks={blocks} />
+             </div>
           </section>
 
           <nav className={styles.backNav}>

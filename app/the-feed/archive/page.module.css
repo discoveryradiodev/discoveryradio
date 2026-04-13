@@ -87,11 +87,8 @@
 
 .section {
   margin-top: 2rem;
-  padding: 1.2rem;
-  border: 1px solid rgba(148, 163, 184, 0.12);
-  border-radius: 1.25rem;
-  background: linear-gradient(180deg, rgba(15, 23, 42, 0.68), rgba(10, 16, 26, 0.92));
-  box-shadow: 0 20px 60px rgba(2, 6, 23, 0.28);
+  padding-top: 1.35rem;
+  border-top: 1px solid rgba(226, 232, 240, 0.2);
 }
 
 .sectionHeader {
@@ -132,7 +129,7 @@
 .featureCard {
   border: 1px solid rgba(148, 163, 184, 0.12);
   border-radius: 1rem;
-  background: rgba(15, 23, 42, 0.56);
+  background: transparent;
 }
 
 .videoCard {
@@ -219,7 +216,7 @@
   }
 
   .section {
-    padding: 1.5rem;
+    padding-top: 1.6rem;
   }
 
   .featureCard {

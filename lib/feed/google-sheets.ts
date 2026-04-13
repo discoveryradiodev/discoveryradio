@@ -41,7 +41,7 @@ export async function fetchSheetRows(sheetName: string): Promise<SheetRow[]> {
     throw new Error(`fetchSheetRows: missing table payload for sheet "${sheetName}"`);
   }
 
-  const cols: string[] = (table.cols ?? []).map((c) => (c.label ?? '').trim());
+  const cols: string[] = (table.cols ?? []).map((c) => (c.label ?? '').trim().toLowerCase());
   if (cols.length === 0) {
     throw new Error(`fetchSheetRows: no column labels found in sheet "${sheetName}"`);
   }
@@ -51,7 +51,7 @@ export async function fetchSheetRows(sheetName: string): Promise<SheetRow[]> {
     const row: SheetRow = {};
     cols.forEach((col, i) => {
       const cell = cells[i];
-      row[col] = cell?.v != null ? String(cell.v) : '';
+      row[col] = cell?.v != null ? String(cell.v).trim() : '';
     });
     return row;
   });

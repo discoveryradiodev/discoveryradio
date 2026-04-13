@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import type { CSSProperties } from "react";
 import { ArticleBlocks } from "@/components/feed/ArticleBlocks";
 import { getArtistSpotlightArticleBlocks } from "@/lib/feed/get-article-blocks";
 import { getArchivedArtistSpotlightBySlug, getArtistSpotlightBySlug } from "@/lib/feed/get-feed-data";
@@ -15,6 +16,9 @@ export default async function SpotlightPage({ params }: SpotlightPageProps) {
   const liveSpotlight = await getArtistSpotlightBySlug(params.slug);
   const spotlight = liveSpotlight ?? (await getArchivedArtistSpotlightBySlug(params.slug));
   const blocks = await getArtistSpotlightArticleBlocks(params.slug);
+  const spotlightImageStyle = {
+    "--spotlight-article-shape-url": `url("${spotlight?.headshotUrl ?? ""}")`,
+  } as CSSProperties;
 
   if (spotlight === null || blocks === null) {
     notFound();
@@ -29,27 +33,29 @@ export default async function SpotlightPage({ params }: SpotlightPageProps) {
 
   return (
     <main className={styles.page}>
-      <div className={styles.inner}>
+      <div className={styles.inner} data-style-target="article-content-frame">
         <article>
-          <header className={styles.header}>
+          <header className={styles.header} data-style-target="article-hero">
             <p className={styles.eyebrow}>Artist Spotlight</p>
-            <h1 className={styles.title}>{spotlight.title}</h1>
-            <p className={styles.artistName}>{spotlight.artistName}</p>
-            {artistMeta ? <p className={styles.artistMeta}>{artistMeta}</p> : null}
-            <p className={styles.dateMeta}>Published {publishedDate}</p>
-            <p className={styles.excerpt}>{spotlight.excerpt}</p>
+             <h1 className={styles.title} data-style-target="article-title">{spotlight.title}</h1>
+            <p className={styles.artistName} data-style-target="article-identity">{spotlight.artistName}</p>
+             {artistMeta ? <p className={styles.artistMeta} data-style-target="article-meta">{artistMeta}</p> : null}
+            <p className={styles.dateMeta} data-style-target="article-published">Published {publishedDate}</p>
           </header>
 
-          <div className={styles.imageWrapper}>
-            <img
-              src={spotlight.headshotUrl}
-              alt={spotlight.headshotAlt}
-              className={styles.image}
-            />
-          </div>
-
           <section className={styles.body}>
-            <ArticleBlocks blocks={blocks} />
+             <div className={styles.imageWrap} data-style-target="article-image-wrap">
+               <img
+                 src={spotlight.headshotUrl}
+                 alt={spotlight.headshotAlt}
+                 className={styles.image}
+                 data-style-target="article-image"
+                 style={spotlightImageStyle}
+               />
+             </div>
+             <div data-style-target="article-body">
+               <ArticleBlocks blocks={blocks} />
+             </div>
           </section>
 
           <nav className={styles.backNav}>

@@ -1,0 +1,88 @@
+.gatePage {
+  min-height: calc(100vh - 120px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1rem;
+}
+
+.gateCard {
+  width: min(100%, 420px);
+  background: rgba(11, 16, 26, 0.88);
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  border-radius: 0.75rem;
+  padding: 1.25rem;
+  box-shadow: 0 12px 32px rgba(2, 6, 23, 0.45);
+}
+
+.gateTitle {
+  margin: 0;
+  font-size: 1.3rem;
+  color: #f8fafc;
+}
+
+.gateCopy {
+  margin: 0.65rem 0 1rem;
+  color: rgba(226, 232, 240, 0.85);
+  font-size: 0.92rem;
+}
+
+.gateForm {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.gateLabel {
+  color: #e2e8f0;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.gateInput {
+  width: 100%;
+  padding: 0.56rem 0.65rem;
+  border-radius: 0.45rem;
+  border: 1px solid rgba(148, 163, 184, 0.45);
+  background: rgba(15, 23, 42, 0.86);
+  color: #f8fafc;
+  font-size: 0.95rem;
+}
+
+.gateError {
+  margin: 0;
+  color: #fca5a5;
+  font-size: 0.84rem;
+}
+
+.gateButton {
+  margin-top: 0.2rem;
+  padding: 0.62rem 0.72rem;
+  border: 1px solid rgba(242, 201, 76, 0.75);
+  border-radius: 0.45rem;
+  background: rgba(242, 201, 76, 0.2);
+  color: #f8efde;
+  font-size: 0.88rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.logoutForm {
+  position: fixed;
+  top: 0.75rem;
+  right: 0.75rem;
+  z-index: 1200;
+}
+
+.logoutButton {
+  padding: 0.45rem 0.64rem;
+  border: 1px solid rgba(148, 163, 184, 0.55);
+  border-radius: 0.4rem;
+  background: rgba(2, 6, 23, 0.85);
+  color: #e2e8f0;
+  font-size: 0.74rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+}
