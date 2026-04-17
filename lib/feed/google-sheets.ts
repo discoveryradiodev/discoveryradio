@@ -6,7 +6,7 @@ export async function fetchSheetRows(sheetName: string): Promise<SheetRow[]> {
   const url =
     `https://docs.google.com/spreadsheets/d/${feedConfig.sheetId}/gviz/tq?sheet=${encodeURIComponent(sheetName)}&headers=1&tqx=out:json`;
 
-  const res = await fetch(url, { next: { revalidate: 300 } });
+  const res = await fetch(url, { next: { revalidate: 50 } });
   if (!res.ok) {
     throw new Error(
       `fetchSheetRows: request failed for sheet "${sheetName}" \u2014 ${res.status} ${res.statusText}`

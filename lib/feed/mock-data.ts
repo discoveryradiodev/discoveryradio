@@ -19,10 +19,10 @@ export const mockFeedData: FeedPageData = {
   },
 
   artistProfile: {
-    artistName: "Placeholder Artist",
+    artistName: "Kanye West",
     embedType: "artist",
-    spotifyUrl: "https://open.spotify.com/artist/placeholder",
-    spotifyEmbedUrl: "https://open.spotify.com/embed/artist/placeholder",
+    spotifyUrl: "https://open.spotify.com/artist/5K4W6rqBFWDnAN6FQUkS6x",
+    spotifyEmbedUrl: "https://open.spotify.com/embed/artist/5K4W6rqBFWDnAN6FQUkS6x",
     monthLabel: "April 2026",
   },
 
@@ -75,6 +75,14 @@ export const mockFeedData: FeedPageData = {
     {
       label: "TikTok",
       href: "https://www.tiktok.com/@discoveryradioinc",
+    },
+    {
+      label: "YouTube",
+      href: "https://www.youtube.com/@DiscoveryRadioInc",
+    },
+    {
+      label: "Gmail",
+      href: "mailto:xaynehackley@gmail.com",
     },
   ],
 

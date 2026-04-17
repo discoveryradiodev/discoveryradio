@@ -50,19 +50,22 @@
 }
 
 .imageWrapper {
-  margin-bottom: 1.75rem;
+  float: left;
+  margin: 0.2rem 1.25rem 0.9rem 0;
 }
 
 .image {
   display: block;
-  width: 100%;
-  max-width: var(--blog-image-width, 640px);
+  width: var(--blog-image-width, min(48%, 340px));
+  max-width: 100%;
+  height: auto;
   border-radius: 0.75rem;
   background: rgba(15, 23, 42, 0.8);
   border: 1px solid rgba(148, 163, 184, 0.1);
 }
 
 .body {
+  display: flow-root;
   font-size: var(--blog-body-size, 1rem);
   line-height: var(--blog-line-height, 1.75);
   color: var(--blog-text-color, rgba(226, 232, 240, 0.9));
@@ -130,5 +133,16 @@
 @media (min-width: 760px) {
   .page {
     padding: 3.5rem 2rem 5rem;
+  }
+}
+
+@media (max-width: 759px) {
+  .imageWrapper {
+    float: none;
+    margin: 0 0 1rem;
+  }
+
+  .image {
+    width: 100%;
   }
 }

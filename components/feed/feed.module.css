@@ -74,17 +74,39 @@
   line-height: 1.5;
 }
 
-.listenCta {
+.listenCta,
+.readCta,
+.playlistLink,
+.discordCta {
   display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.5rem;
+  padding: 0.6rem 1rem;
+  border: 2px solid #111;
+  background: #101010;
+  box-shadow: 4px 4px 0 rgba(17, 17, 17, 0.25);
+  color: #f8efe1;
+  text-decoration: none;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+
+.listenCta:hover,
+.readCta:hover,
+.playlistLink:hover,
+.discordCta:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 6px 6px 0 rgba(17, 17, 17, 0.35);
+  background: #131a5d;
+  color: #f8efe1;
+}
+
+.listenCta {
   clear: both;
   margin-top: 0.75rem;
-  padding: 0.52rem 0.78rem;
-  border: 2px solid var(--spotlight-cta-bg, #0e0d0d);
-  background: var(--spotlight-cta-bg, #0e0d0d);
-  color: var(--spotlight-cta-color, #f8efde);
-  text-decoration: none;
   font-size: 0.78rem;
-  font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
@@ -128,9 +150,18 @@
 
 .spotifyEmbedWrapper {
   margin-top: 0.9rem;
+  display: block;
   overflow: hidden;
-  border: 2px solid #1b1715;
-  box-shadow: 3px 3px 0 rgba(26, 22, 20, 0.65);
+  line-height: 0;
+  border-radius: 0.9rem;
+  border: 0;
+  box-shadow: 4px 4px 0 rgba(17, 17, 17, 0.25);
+}
+
+.spotifyEmbedWrapper iframe {
+  display: block;
+  width: 100%;
+  border: 0;
 }
 
 .blogStrip {
@@ -195,10 +226,8 @@
 .readCta {
   align-self: flex-start;
   margin-top: 0.2rem;
-  color: #171311;
-  font-weight: 700;
-  text-decoration-thickness: 2px;
-  text-underline-offset: 0.14em;
+  font-size: 0.86rem;
+  text-transform: uppercase;
 }
 
 .archiveCard {
@@ -234,11 +263,14 @@
 }
 
 .archiveItem a {
+  align-self: flex-start;
   color: #171311;
   text-decoration: none;
+  font-size: 0.82rem;
 }
 
 .archiveItem a:hover {
+  color: #131a5d;
   text-decoration: underline;
   text-decoration-thickness: 2px;
 }
@@ -280,17 +312,20 @@
 }
 
 .playlistLink {
-  display: inline-flex;
   align-self: flex-start;
   margin-top: 0.42rem;
-  color: #191412;
   font-size: 0.86rem;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
-  font-weight: 700;
 }
 
-.socialCard h3,
+.socialCard h3 {
+  width: 100%;
+  text-align: center;
+  font-size: 1.14rem;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
 .discordCard h3 {
   font-size: 1.14rem;
   letter-spacing: 0.07em;
@@ -298,24 +333,52 @@
 }
 
 .socialList {
-  margin: 0.55rem 0 0;
+  margin: 0.75rem 0 0;
   padding: 0;
   list-style: none;
   display: flex;
-  flex-wrap: wrap;
-  gap: 0.55rem;
+  flex-wrap: nowrap;
+  align-items: stretch;
+  width: 100%;
+  gap: 0;
 }
 
-.socialList a {
-  display: inline-flex;
+.socialList li {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+}
+
+.socialItem {
+  display: flex;
+  flex-direction: row;
   align-items: center;
-  padding: 0.32rem 0.58rem;
-  border: 1.5px solid #1f1a17;
-  background: rgba(246, 236, 216, 0.74);
+  gap: 0.65rem;
+  padding: 0.55rem 0.25rem;
+  width: 100%;
   color: #16110f;
   text-decoration: none;
-  font-size: 0.86rem;
-  letter-spacing: 0.04em;
+  transition: color 0.18s ease;
+}
+
+.socialItem:hover {
+  color: #131a5d;
+}
+
+.socialIcon {
+  width: 2rem;
+  height: 2rem;
+  flex-shrink: 0;
+}
+
+.socialLabel {
+  font-size: 0.88rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  text-align: left;
+  line-height: 1.35;
+  max-width: 7.5rem;
 }
 
 .discordCard {
@@ -331,19 +394,8 @@
 }
 
 .discordCta {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 2.3rem;
-  padding: 0.48rem 0.85rem;
-  border: 2px solid #111;
-  background: #111;
-  color: #faefdd;
-  text-decoration: none;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
   font-size: 0.78rem;
-  font-weight: 700;
+  text-transform: uppercase;
 }
 
 @media (min-width: 980px) {
@@ -355,5 +407,20 @@
   .blogImageWrap {
     max-height: none;
     min-height: 100%;
+  }
+}
+
+@media (max-width: 759px) {
+  .socialList {
+    flex-wrap: wrap;
+    gap: 0.25rem 0;
+  }
+
+  .socialList li {
+    flex: 1 1 50%;
+  }
+
+  .socialLabel {
+    font-size: 0.76rem;
   }
 }

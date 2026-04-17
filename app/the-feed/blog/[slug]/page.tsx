@@ -36,17 +36,15 @@ export default async function BlogPage({ params }: BlogPageProps) {
              <p className={styles.dateMeta} data-style-target="blog-meta">Published {publishedDate}</p>
             <p className={styles.excerpt}>{blogPost.excerpt}</p>
           </header>
-
-          <div className={styles.imageWrapper}>
-             <img
-               src={blogPost.coverImageUrl ?? "/placeholder-blog-cover.jpg"}
-               alt={blogPost.coverImageAlt ?? "Weekly blog cover placeholder"}
-               className={styles.image}
-               data-style-target="blog-image"
-             />
-          </div>
-
           <section className={styles.body}>
+             <div className={styles.imageWrapper}>
+               <img
+                 src={blogPost.coverImageUrl ?? "/placeholder-blog-cover.jpg"}
+                 alt={blogPost.coverImageAlt ?? "Weekly blog cover placeholder"}
+                 className={styles.image}
+                 data-style-target="blog-image"
+               />
+             </div>
              <div data-style-target="blog-body">
                <ArticleBlocks blocks={blocks} />
              </div>

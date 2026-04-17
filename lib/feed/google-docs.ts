@@ -3,7 +3,7 @@ import type { ArticleBlock } from '@/types/article';
 export async function fetchGoogleDocText(docId: string): Promise<string> {
   const url = `https://docs.google.com/document/d/${docId}/export?format=txt`;
 
-  const res = await fetch(url, { next: { revalidate: 300 } });
+  const res = await fetch(url, { next: { revalidate: 50 } });
   if (!res.ok) {
     throw new Error(
       `fetchGoogleDocText: request failed for doc "${docId}" \u2014 ${res.status} ${res.statusText}`

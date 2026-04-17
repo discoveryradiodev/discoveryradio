@@ -96,7 +96,7 @@ function rowToBlog(row: SheetRow): WeeklyBlogPost {
     status: (row['status'] as WeeklyBlogPost['status']) ?? 'published',
     slug: clean(row['slug']),
     title: clean(row['title']),
-    excerpt: clean(row['excerpt']),
+    excerpt: clean(row['excerpt']) || clean(row['exerpt']),
     docId: clean(row['doc_id']),
     coverImageUrl: clean(row['cover_image_url']) || undefined,
     coverImageAlt: clean(row['cover_image_alt']) || undefined,
@@ -127,11 +127,11 @@ async function fetchLiveMusic(): Promise<{
   const row = firstValidRow(rows, isRenderableMusicRow);
 
   const artistProfile: ArtistProfile = {
-    artistName: clean(row?.['artist_name']) || 'Discovery Radio',
+    artistName: 'Kanye West',
     embedType: 'artist',
-    spotifyUrl: clean(row?.['spotify_artist_url']),
-    spotifyEmbedUrl: clean(row?.['spotify_artist_embed_url']),
-    monthLabel: clean(row?.['month_label']),
+    spotifyUrl: 'https://open.spotify.com/artist/5K4W6rqBFWDnAN6FQUkS6x',
+    spotifyEmbedUrl: 'https://open.spotify.com/embed/artist/5K4W6rqBFWDnAN6FQUkS6x',
+    monthLabel: 'April 2026',
   };
 
   const monthlyPlaylist: MonthlyPlaylist = {

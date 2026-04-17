@@ -50,7 +50,3 @@
 .shell :global(h6) {
   color: var(--ink);
 }
-
-.shell :global(a) {
-  color: inherit;
-}
