@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { StyleLabShell } from "@/components/styleLab/StyleLabShell";
+import { canApplyLocalSourceStyles } from "@/lib/dev/style-lab-apply";
 import { isStyleLabEnabled } from "@/lib/dev/is-style-lab-enabled";
 import { isWillardAuthenticated } from "@/lib/dev/style-lab-auth";
 import styles from "./page.module.css";
@@ -23,6 +24,11 @@ export default async function WillardPage({ searchParams }: WillardPageProps) {
   }
 
   const cookieStore = await cookies();
+  const headerStore = await headers();
+  const canApplyToSource = canApplyLocalSourceStyles(
+    headerStore.get("x-forwarded-host") ?? headerStore.get("host")
+  );
+
   if (!isWillardAuthenticated(cookieStore)) {
     const hasError = searchParams?.error === "invalid";
     return (
@@ -59,7 +65,7 @@ export default async function WillardPage({ searchParams }: WillardPageProps) {
         <input type="hidden" name="intent" value="logout" />
         <button type="submit" className={styles.logoutButton}>Logout</button>
       </form>
-      <StyleLabShell />
+      <StyleLabShell canApplyToSource={canApplyToSource} />
     </>
   );
 }

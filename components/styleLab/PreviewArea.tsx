@@ -4,13 +4,12 @@ import { forwardRef, useEffect, useImperativeHandle, useRef } from "react";
 import { useStyleLab } from "@/lib/dev/style-lab-context";
 import { STYLE_LAB_DEFAULTS } from "@/lib/dev/style-lab-defaults";
 import { injectStyleLabVariables, removeStyleLabVariables } from "@/lib/dev/style-lab-inject";
+import { buildTargetStylesheet } from "@/lib/dev/style-lab-css";
 import {
   attachInspectListeners,
   clearSelection,
-  TARGET_TO_KIND,
   type StyleTargetId,
 } from "@/lib/dev/style-lab-inspect";
-import { isStyleTargetId, type StyleTargetKind } from "@/lib/dev/style-lab-inspect";
 import styles from "./styleLab.module.css";
 
 const RUNTIME_STYLE_ID = "style-lab-target-runtime-style";
@@ -267,105 +266,4 @@ function injectComprehensiveStylesheet(
     doc.head.appendChild(styleEl);
   }
   styleEl.textContent = css;
-}
-
-/**
- * Builds a CSS stylesheet string that applies inline overrides for every target
- * that has at least one user-edited field. Only emits rules for known targets.
- */
-function buildTargetStylesheet(variables: Record<string, string>): string {
-  // Group target-scoped vars (keys with "__" separator) by targetId
-  const targetFields = new Map<string, Record<string, string>>();
-  for (const [key, value] of Object.entries(variables)) {
-    const sepIdx = key.indexOf("__");
-    if (sepIdx === -1) continue; // legacy/non-target var
-    const targetId = key.slice(0, sepIdx);
-    const field = key.slice(sepIdx + 2);
-    if (!isStyleTargetId(targetId)) continue; // unknown target, skip
-    if (!targetFields.has(targetId)) targetFields.set(targetId, {});
-    targetFields.get(targetId)![field] = value;
-  }
-
-  let css = "";
-  for (const [targetId, fields] of targetFields.entries()) {
-    const decls = buildDeclarations(TARGET_TO_KIND[targetId as StyleTargetId], fields);
-    if (decls.length === 0) continue;
-    css += `[data-style-target="${targetId}"] {\n${decls.join("\n")}\n}\n\n`;
-  }
-  return css;
-}
-
-function buildDeclarations(kind: StyleTargetKind, fields: Record<string, string>): string[] {
-  const d: string[] = [];
-  const v = (k: string) => fields[k];
-
-  if (kind === "text") {
-    if (v("font-family"))    d.push(`  font-family: ${v("font-family")} !important;`);
-    if (v("font-size"))      d.push(`  font-size: ${v("font-size")} !important;`);
-    if (v("font-weight"))    d.push(`  font-weight: ${v("font-weight")} !important;`);
-    if (v("line-height"))    d.push(`  line-height: ${v("line-height")} !important;`);
-    if (v("letter-spacing")) d.push(`  letter-spacing: ${v("letter-spacing")} !important;`);
-    if (v("text-transform")) d.push(`  text-transform: ${v("text-transform")} !important;`);
-    if (v("color"))          d.push(`  color: ${v("color")} !important;`);
-    if (v("text-align"))     d.push(`  text-align: ${v("text-align")} !important;`);
-  } else if (kind === "image") {
-    if (v("width"))          d.push(`  width: ${v("width")} !important;`);
-    if (v("max-width"))      d.push(`  max-width: ${v("max-width")} !important;`);
-    if (v("opacity"))        d.push(`  opacity: ${v("opacity")} !important;`);
-    if (v("border-radius"))  d.push(`  border-radius: ${v("border-radius")} !important;`);
-    if (v("border-width") || v("border-color")) {
-      d.push(`  border-style: solid !important;`);
-      if (v("border-width")) d.push(`  border-width: ${v("border-width")} !important;`);
-      if (v("border-color")) d.push(`  border-color: ${v("border-color")} !important;`);
-    }
-    if (v("box-shadow"))     d.push(`  box-shadow: ${v("box-shadow")} !important;`);
-    if (v("x-offset") || v("y-offset") || v("rotation")) {
-      const x = v("x-offset") ?? "0px";
-      const y = v("y-offset") ?? "0px";
-      const r = v("rotation") ?? "0deg";
-      d.push(`  transform: translate(${x}, ${y}) rotate(${r}) !important;`);
-    }
-  } else if (kind === "button") {
-    if (v("font-family"))      d.push(`  font-family: ${v("font-family")} !important;`);
-    if (v("font-size"))        d.push(`  font-size: ${v("font-size")} !important;`);
-    if (v("font-weight"))      d.push(`  font-weight: ${v("font-weight")} !important;`);
-    if (v("text-color"))       d.push(`  color: ${v("text-color")} !important;`);
-    if (v("background-color")) d.push(`  background: ${v("background-color")} !important;`);
-    if (v("border-width") || v("border-color")) {
-      d.push(`  border-style: solid !important;`);
-      if (v("border-width")) d.push(`  border-width: ${v("border-width")} !important;`);
-      if (v("border-color")) d.push(`  border-color: ${v("border-color")} !important;`);
-    }
-    if (v("border-radius"))    d.push(`  border-radius: ${v("border-radius")} !important;`);
-    if (v("padding-x") || v("padding-y")) {
-      const py = v("padding-y") ?? "0px";
-      const px = v("padding-x") ?? "0px";
-      d.push(`  padding: ${py} ${px} !important;`);
-    }
-    if (v("box-shadow"))       d.push(`  box-shadow: ${v("box-shadow")} !important;`);
-  } else { // container
-    if (v("background-color")) d.push(`  background: ${v("background-color")} !important;`);
-    if (v("border-width") || v("border-color")) {
-      d.push(`  border-style: solid !important;`);
-      if (v("border-width")) d.push(`  border-width: ${v("border-width")} !important;`);
-      if (v("border-color")) d.push(`  border-color: ${v("border-color")} !important;`);
-    }
-    if (v("border-radius"))    d.push(`  border-radius: ${v("border-radius")} !important;`);
-    if (v("max-width"))        d.push(`  max-width: ${v("max-width")} !important;`);
-    if (v("margin-x-mode") === "auto") {
-      d.push("  margin-left: auto !important;");
-      d.push("  margin-right: auto !important;");
-    } else if (v("margin-x")) {
-      d.push(`  margin-left: ${v("margin-x")} !important;`);
-      d.push(`  margin-right: ${v("margin-x")} !important;`);
-    }
-    if (v("padding-x"))        d.push(`  padding-left: ${v("padding-x")} !important;`);
-    if (v("padding-x"))        d.push(`  padding-right: ${v("padding-x")} !important;`);
-    if (v("padding-y"))        d.push(`  padding-top: ${v("padding-y")} !important;`);
-    if (v("padding-y"))        d.push(`  padding-bottom: ${v("padding-y")} !important;`);
-    if (v("padding"))          d.push(`  padding: ${v("padding")} !important;`);
-    if (v("shadow"))           d.push(`  box-shadow: ${v("shadow")} !important;`);
-    if (v("opacity"))          d.push(`  opacity: ${v("opacity")} !important;`);
-  }
-  return d;
 }
