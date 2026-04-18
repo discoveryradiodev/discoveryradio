@@ -7,15 +7,16 @@ import { getArchivedArtistSpotlightBySlug, getArtistSpotlightBySlug } from "@/li
 import styles from "./page.module.css";
 
 type SpotlightPageProps = {
-  params: {
+  params: Promise<{
     slug: string;
-  };
+  }>;
 };
 
 export default async function SpotlightPage({ params }: SpotlightPageProps) {
-  const liveSpotlight = await getArtistSpotlightBySlug(params.slug);
-  const spotlight = liveSpotlight ?? (await getArchivedArtistSpotlightBySlug(params.slug));
-  const blocks = await getArtistSpotlightArticleBlocks(params.slug);
+  const { slug } = await params;
+  const liveSpotlight = await getArtistSpotlightBySlug(slug);
+  const spotlight = liveSpotlight ?? (await getArchivedArtistSpotlightBySlug(slug));
+  const blocks = await getArtistSpotlightArticleBlocks(slug);
   const spotlightImageStyle = {
     "--spotlight-article-shape-url": `url("${spotlight?.headshotUrl ?? ""}")`,
   } as CSSProperties;

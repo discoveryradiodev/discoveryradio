@@ -48,7 +48,7 @@ export async function POST(request: Request) {
   );
 
   const nextCss = buildGeneratedWillardCss(variables);
-  const absolutePath = path.join(process.cwd(), WILLARD_GENERATED_FILE_RELATIVE_PATH);
+  const absolutePath = path.join(/*turbopackIgnore: true*/ process.cwd(), WILLARD_GENERATED_FILE_RELATIVE_PATH);
   const previousCss = await readFile(absolutePath, "utf8").catch(() => "");
 
   await writeFile(absolutePath, nextCss, "utf8");

@@ -12,9 +12,9 @@ export const metadata = {
 };
 
 type WillardPageProps = {
-  searchParams?: {
+  searchParams?: Promise<{
     error?: string;
-  };
+  }>;
 };
 
 export default async function WillardPage({ searchParams }: WillardPageProps) {
@@ -30,7 +30,8 @@ export default async function WillardPage({ searchParams }: WillardPageProps) {
   );
 
   if (!isWillardAuthenticated(cookieStore)) {
-    const hasError = searchParams?.error === "invalid";
+    const resolvedSearchParams = searchParams ? await searchParams : undefined;
+    const hasError = resolvedSearchParams?.error === "invalid";
     return (
       <main className={styles.gatePage}>
         <section className={styles.gateCard}>

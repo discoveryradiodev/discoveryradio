@@ -6,15 +6,16 @@ import { getArchivedWeeklyBlogBySlug, getWeeklyBlogBySlug } from "@/lib/feed/get
 import styles from "./page.module.css";
 
 type BlogPageProps = {
-  params: {
+  params: Promise<{
     slug: string;
-  };
+  }>;
 };
 
 export default async function BlogPage({ params }: BlogPageProps) {
-  const liveBlogPost = await getWeeklyBlogBySlug(params.slug);
-  const blogPost = liveBlogPost ?? (await getArchivedWeeklyBlogBySlug(params.slug));
-  const blocks = await getWeeklyBlogArticleBlocks(params.slug);
+  const { slug } = await params;
+  const liveBlogPost = await getWeeklyBlogBySlug(slug);
+  const blogPost = liveBlogPost ?? (await getArchivedWeeklyBlogBySlug(slug));
+  const blocks = await getWeeklyBlogArticleBlocks(slug);
 
   if (blogPost === null || blocks === null) {
     notFound();
