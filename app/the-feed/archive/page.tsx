@@ -39,20 +39,21 @@ export default async function FeedArchivePage() {
   return (
     <main className={styles.page}>
       <div className={styles.inner}>
-        <header className={styles.header}>
+        <header className={styles.masthead}>
+          <div className={styles.mastheadPrimary}>
+            <h1 className={styles.mastheadTitle}>THE FEED ARCHIVE</h1>
+            <p className={styles.mastheadSubTitle}>DISCOVERY RADIO</p>
+          </div>
+          <Link href="/the-feed" className={styles.backLink}>Back to The Feed</Link>
+        </header>
+
+        <section className={`${styles.module} ${styles.leadModule}`}>
           <div className={styles.headerContent}>
-            <p className={styles.eyebrow}>The Feed Archive</p>
-            <h1 className={styles.title}>Recent highlights from interviews, blogs, and spotlights.</h1>
+            <h2 className={styles.title}>Recent highlights from interviews, blogs, and spotlights.</h2>
             <p className={styles.intro}>
               Each section shows the latest highlight and links to its full category archive.
             </p>
-            <nav className={styles.actions}>
-              <Link href="/the-feed" className={styles.backLink}>
-                Back to The Feed
-              </Link>
-            </nav>
           </div>
-
           <div className={styles.logoBlock} aria-hidden="true">
             <Image
               src="/discoveryradio_logo_transparent.png"
@@ -63,9 +64,9 @@ export default async function FeedArchivePage() {
               priority={false}
             />
           </div>
-        </header>
+        </section>
 
-        <section className={styles.section}>
+        <section className={`${styles.module} ${styles.section}`}>
           <div className={styles.sectionHeader}>
             <h2 className={styles.sectionTitle}>
               <Link href="/the-feed/archive/youtube" className={styles.sectionTitleLink}>
@@ -97,7 +98,7 @@ export default async function FeedArchivePage() {
           </div>
         </section>
 
-        <section className={styles.section}>
+        <section className={`${styles.module} ${styles.section}`}>
           <div className={styles.sectionHeader}>
             <h2 className={styles.sectionTitle}>
               <Link href="/the-feed/archive/blog" className={styles.sectionTitleLink}>
@@ -131,7 +132,7 @@ export default async function FeedArchivePage() {
           ))}
         </section>
 
-        <section className={styles.section}>
+        <section className={`${styles.module} ${styles.section}`}>
           <div className={styles.sectionHeader}>
             <h2 className={styles.sectionTitle}>
               <Link href="/the-feed/archive/spotlights" className={styles.sectionTitleLink}>

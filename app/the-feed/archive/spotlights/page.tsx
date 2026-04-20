@@ -18,13 +18,20 @@ export default async function SpotlightsArchivePage() {
   return (
     <main className={styles.page}>
       <div className={styles.inner}>
-        <header className={styles.header}>
-          <p className={styles.eyebrow}>Archive Category</p>
-          <h1 className={styles.title}>Artist Spotlights</h1>
-          <p className={styles.intro}>Full spotlight list in newest-first order.</p>
+        <header className={styles.masthead}>
+          <div className={styles.mastheadPrimary}>
+            <h1 className={styles.mastheadTitle}>THE FEED</h1>
+            <p className={styles.mastheadSubTitle}>SPOTLIGHT ARCHIVE</p>
+          </div>
+          <Link href="/the-feed/archive" className={styles.backLink}>Back to Archive</Link>
         </header>
 
-        <section className={styles.list}>
+        <section className={`${styles.module} ${styles.leadModule}`}>
+          <p className={styles.intro}>Full spotlight list in newest-first order.</p>
+        </section>
+
+        <section className={`${styles.module} ${styles.listModule}`}>
+          <div className={styles.list}>
           {spotlightItems.length === 0 ? (
             <p className={styles.intro}>No archived spotlight entries are available right now.</p>
           ) : (
@@ -49,6 +56,7 @@ export default async function SpotlightsArchivePage() {
               </article>
             ))
           )}
+          </div>
         </section>
 
         <nav className={styles.backNav}>

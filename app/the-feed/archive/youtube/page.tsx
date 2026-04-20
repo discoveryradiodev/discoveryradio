@@ -20,15 +20,20 @@ export default async function YouTubeArchivePage() {
   return (
     <main className={styles.page}>
       <div className={styles.inner}>
-        <header className={styles.header}>
-          <p className={styles.eyebrow}>Archive Category</p>
-          <h1 className={styles.title}>YouTube Interviews</h1>
-          <p className={styles.intro}>
-            Full interview archive in newest-first order. The older entries stay lower in the stack.
-          </p>
+          <header className={styles.masthead}>
+            <div className={styles.mastheadPrimary}>
+              <h1 className={styles.mastheadTitle}>THE FEED</h1>
+              <p className={styles.mastheadSubTitle}>YOUTUBE ARCHIVE</p>
+            </div>
+            <Link href="/the-feed/archive" className={styles.backLink}>Back to Archive</Link>
         </header>
 
-        <section className={styles.list}>
+          <section className={`${styles.module} ${styles.leadModule}`}>
+            <p className={styles.intro}>Embedded episodes from newest to oldest.</p>
+          </section>
+
+          <section className={`${styles.module} ${styles.listModule}`}>
+            <div className={styles.list}>
           {youtubeItems.map((item) => (
             <article key={item.id} className={styles.card}>
               <p className={styles.metaLabel}>YouTube Interview</p>
@@ -41,6 +46,7 @@ export default async function YouTubeArchivePage() {
               {item.description ? <p className={styles.description}>{item.description}</p> : null}
             </article>
           ))}
+          </div>
         </section>
 
         <nav className={styles.backNav}>

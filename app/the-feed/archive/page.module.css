@@ -1,13 +1,13 @@
 .page {
   position: relative;
   width: 100%;
-  padding: 2.75rem 1.25rem 3rem;
+  padding: 2.2rem 1.1rem 4rem;
   box-sizing: border-box;
-  overflow: hidden;
+  overflow-x: hidden;
 }
 
 .inner {
-  max-width: 1120px;
+  max-width: 1240px;
   margin: 0 auto;
   position: relative;
   z-index: 1;
@@ -19,12 +19,48 @@
   object-fit: contain;
 }
 
-.header {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) clamp(180px, 28vw, 310px);
-  align-items: start;
-  gap: clamp(1rem, 2vw, 2rem);
-  margin-bottom: 2.25rem;
+.masthead {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.mastheadPrimary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.45rem 0.7rem;
+}
+
+.mastheadTitle {
+  margin: 0;
+  padding: 0.1rem 0.55rem 0.2rem;
+  border: 2px solid #15110f;
+  background: #f3e6cb;
+  box-shadow: 5px 5px 0 #15110f;
+  color: #171210;
+  font-size: clamp(2rem, 6.2vw, 3.8rem);
+  line-height: 0.94;
+  letter-spacing: 0.07em;
+  font-weight: 900;
+  transform: rotate(-1.1deg);
+}
+
+.mastheadSubTitle {
+  margin: 0;
+  padding: 0.3rem 0.65rem;
+  border: 2px solid #171311;
+  background: #131a5d;
+  box-shadow: 4px 4px 0 #171311;
+  color: #f7ebd1;
+  font-size: clamp(0.92rem, 2vw, 1.25rem);
+  line-height: 1;
+  letter-spacing: 0.13em;
+  font-weight: 800;
+  transform: translateY(-0.3rem) rotate(1.5deg);
 }
 
 .headerContent {
@@ -35,60 +71,86 @@
 
 .logoBlock {
   width: 100%;
-  max-width: 310px;
-  justify-self: end;
+  max-width: 260px;
+  justify-self: center;
   align-self: center;
   aspect-ratio: 1 / 1;
-  opacity: 0.62;
+  opacity: 0.42;
   pointer-events: none;
   user-select: none;
-  filter: drop-shadow(0 16px 36px rgba(2, 6, 23, 0.44));
-}
-
-.eyebrow {
-  margin: 0;
-  color: rgba(242, 201, 76, 0.88);
-  font-size: 0.85rem;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
+  filter: drop-shadow(0 12px 20px rgba(2, 6, 23, 0.3));
 }
 
 .title {
   margin: 0;
   max-width: 700px;
-  font-size: clamp(2.5rem, 5vw, 4rem);
+  font-size: clamp(1.65rem, 3.6vw, 2.5rem);
   line-height: 1.05;
-  color: #f8fafc;
+  color: #171210;
 }
 
 .intro {
   margin: 0;
   max-width: 720px;
-  color: rgba(226, 232, 240, 0.8);
+  color: rgba(23, 19, 17, 0.82);
   line-height: 1.6;
-}
-
-.actions {
-  margin-top: 0.25rem;
 }
 
 .backLink {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-height: 2.75rem;
-  padding: 0.75rem 1rem;
-  border: 1px solid rgba(148, 163, 184, 0.28);
-  border-radius: 999px;
-  background: rgba(15, 23, 42, 0.46);
-  color: #f8fafc;
+  min-height: 2.5rem;
+  padding: 0.6rem 1rem;
+  border: 2px solid #111;
+  background: #101010;
+  box-shadow: 4px 4px 0 rgba(17, 17, 17, 0.25);
+  color: #f8efe1;
   text-decoration: none;
+  font-size: 0.9rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+
+.backLink:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 6px 6px 0 rgba(17, 17, 17, 0.35);
+  background: #131a5d;
+  color: #f8efe1;
+}
+
+.module {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  padding: 1rem;
+  border: 2px solid #1d1714;
+  background: linear-gradient(173deg, #f4e7ce 0%, #ebddc4 100%);
+  box-shadow: 0 10px 24px rgba(16, 10, 26, 0.34), 4px 4px 0 rgba(23, 19, 17, 0.55);
+}
+
+.module::before {
+  content: "";
+  position: absolute;
+  top: 0.55rem;
+  right: 0.65rem;
+  width: 2.4rem;
+  height: 0.46rem;
+  background: rgba(66, 74, 161, 0.22);
+  transform: rotate(-8deg);
+}
+
+.leadModule {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(160px, 260px);
+  align-items: center;
+  gap: 1rem;
 }
 
 .section {
-  margin-top: 2rem;
-  padding-top: 1.35rem;
-  border-top: 1px solid rgba(226, 232, 240, 0.2);
+  margin-top: 1rem;
 }
 
 .sectionHeader {
@@ -100,7 +162,7 @@
 
 .sectionTitle {
   margin: 0;
-  color: #f8fafc;
+  color: #171210;
   font-size: clamp(1.35rem, 2vw, 1.9rem);
 }
 
@@ -110,12 +172,12 @@
 }
 
 .sectionTitleLink:hover {
-  color: #f2c94c;
+  color: #2431ad;
 }
 
 .sectionCopy {
   margin: 0;
-  color: rgba(226, 232, 240, 0.74);
+  color: rgba(23, 19, 17, 0.78);
   line-height: 1.55;
 }
 
@@ -127,9 +189,9 @@
 
 .videoCard,
 .featureCard {
-  border: 1px solid rgba(148, 163, 184, 0.12);
-  border-radius: 1rem;
-  background: transparent;
+  border: 2px solid #1d1714;
+  background: linear-gradient(180deg, rgba(255, 252, 244, 0.94) 0%, rgba(247, 238, 219, 0.9) 100%);
+  box-shadow: 3px 3px 0 rgba(23, 19, 17, 0.34);
 }
 
 .videoCard {
@@ -159,9 +221,9 @@
 
 .metaLabel {
   margin: 0;
-  color: rgba(242, 201, 76, 0.88);
+  color: #2431ad;
   font-size: 0.78rem;
-  font-weight: 700;
+  font-weight: 800;
   letter-spacing: 0.12em;
   text-transform: uppercase;
 }
@@ -173,23 +235,24 @@
 }
 
 .cardLink {
-  color: #f8fafc;
+  color: #171210;
   text-decoration: none;
 }
 
 .cardLink:hover {
-  color: #f2c94c;
+  color: #2431ad;
 }
 
 .cardMeta {
   margin: 0;
-  color: rgba(148, 163, 184, 0.95);
+  color: rgba(36, 49, 173, 0.9);
   font-size: 0.92rem;
+  font-weight: 700;
 }
 
 .cardDescription {
   margin: 0.5rem 0 0;
-  color: rgba(226, 232, 240, 0.7);
+  color: rgba(23, 19, 17, 0.8);
   font-size: 0.9rem;
   line-height: 1.55;
   font-style: italic;
@@ -200,23 +263,23 @@
   flex-wrap: wrap;
   gap: 0.5rem 0.85rem;
   margin: 0;
-  color: rgba(226, 232, 240, 0.8);
+  color: rgba(23, 19, 17, 0.8);
   font-size: 0.95rem;
 }
 
 .excerpt {
   margin: 0;
-  color: rgba(226, 232, 240, 0.88);
+  color: rgba(23, 19, 17, 0.86);
   line-height: 1.6;
 }
 
 @media (min-width: 760px) {
   .page {
-    padding: 3.5rem 2rem 4rem;
+    padding: 2.8rem 1.8rem 5rem;
   }
 
-  .section {
-    padding-top: 1.6rem;
+  .module {
+    padding: 1.15rem;
   }
 
   .featureCard {
@@ -239,14 +302,7 @@
 }
 
 @media (max-width: 759px) {
-  .header {
+  .leadModule {
     grid-template-columns: 1fr;
-    gap: 1rem;
-  }
-
-  .logoBlock {
-    width: clamp(145px, 45vw, 225px);
-    justify-self: start;
-    opacity: 0.54;
   }
 }

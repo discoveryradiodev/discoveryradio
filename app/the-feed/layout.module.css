@@ -50,3 +50,21 @@
 .shell :global(h6) {
   color: var(--ink);
 }
+
+.floatLogo {
+  position: fixed;
+  bottom: clamp(1.5rem, 4vh, 3rem);
+  right: clamp(1rem, 3vw, 2.5rem);
+  width: clamp(140px, 16vw, 240px);
+  height: auto;
+  display: block;
+  object-fit: contain;
+  pointer-events: none;
+  z-index: 10;
+}
+
+@media (max-width: 759px) {
+  .floatLogo {
+    display: none;
+  }
+}

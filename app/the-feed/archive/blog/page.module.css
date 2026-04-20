@@ -1,40 +1,84 @@
 .page {
   width: 100%;
-  padding: 2.75rem 1.25rem 4.5rem;
+  padding: 2.2rem 1.1rem 4rem;
   box-sizing: border-box;
+  overflow-x: hidden;
 }
 
 .inner {
-  max-width: 1040px;
+  max-width: 1240px;
   margin: 0 auto;
 }
 
-.header {
+.masthead {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.mastheadPrimary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.45rem 0.7rem;
+}
+
+.mastheadTitle {
+  margin: 0;
+  padding: 0.1rem 0.55rem 0.2rem;
+  border: 2px solid #15110f;
+  background: #f3e6cb;
+  box-shadow: 5px 5px 0 #15110f;
+  color: #171210;
+  font-size: clamp(2rem, 6vw, 3.4rem);
+  line-height: 0.94;
+  letter-spacing: 0.07em;
+  font-weight: 900;
+  transform: rotate(-1.1deg);
+}
+
+.mastheadSubTitle {
+  margin: 0;
+  padding: 0.3rem 0.65rem;
+  border: 2px solid #171311;
+  background: #131a5d;
+  box-shadow: 4px 4px 0 #171311;
+  color: #f7ebd1;
+  font-size: clamp(0.92rem, 2vw, 1.2rem);
+  line-height: 1;
+  letter-spacing: 0.13em;
+  font-weight: 800;
+  transform: translateY(-0.3rem) rotate(1.5deg);
+}
+
+.module {
+  position: relative;
   display: flex;
   flex-direction: column;
-  gap: 0.8rem;
-  margin-bottom: 1.6rem;
+  gap: 0.7rem;
+  padding: 1rem;
+  border: 2px solid #1d1714;
+  background: linear-gradient(173deg, #f4e7ce 0%, #ebddc4 100%);
+  box-shadow: 0 10px 24px rgba(16, 10, 26, 0.34), 4px 4px 0 rgba(23, 19, 17, 0.55);
 }
 
-.eyebrow {
-  margin: 0;
-  color: rgba(242, 201, 76, 0.88);
-  font-size: 0.82rem;
-  font-weight: 700;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-}
-
-.title {
-  margin: 0;
-  color: #f8fafc;
-  font-size: clamp(2rem, 4.5vw, 3rem);
-  line-height: 1.1;
+.module::before {
+  content: "";
+  position: absolute;
+  top: 0.55rem;
+  right: 0.65rem;
+  width: 2.4rem;
+  height: 0.46rem;
+  background: rgba(66, 74, 161, 0.22);
+  transform: rotate(-8deg);
 }
 
 .intro {
   margin: 0;
-  color: rgba(226, 232, 240, 0.8);
+  color: rgba(23, 19, 17, 0.82);
   line-height: 1.6;
 }
 
@@ -47,10 +91,10 @@
 .card {
   display: grid;
   grid-template-columns: 1fr;
-  border: 1px solid rgba(148, 163, 184, 0.14);
-  border-radius: 1rem;
+  border: 2px solid #1d1714;
   overflow: hidden;
-  background: transparent;
+  background: linear-gradient(180deg, rgba(255, 252, 244, 0.94) 0%, rgba(247, 238, 219, 0.9) 100%);
+  box-shadow: 3px 3px 0 rgba(23, 19, 17, 0.34);
 }
 
 .image {
@@ -58,7 +102,7 @@
   width: 100%;
   aspect-ratio: 16 / 10;
   object-fit: cover;
-  background: rgba(15, 23, 42, 0.8);
+  background: #f4e7ce;
 }
 
 .body {
@@ -70,38 +114,39 @@
 
 .metaLabel {
   margin: 0;
-  color: rgba(242, 201, 76, 0.88);
+  color: #2431ad;
   font-size: 0.76rem;
-  font-weight: 700;
+  font-weight: 800;
   letter-spacing: 0.12em;
   text-transform: uppercase;
 }
 
 .cardTitle {
   margin: 0;
-  color: #f8fafc;
+  color: #171210;
   font-size: 1.2rem;
   line-height: 1.28;
 }
 
 .cardLink {
-  color: #f8fafc;
+  color: #171210;
   text-decoration: none;
 }
 
 .cardLink:hover {
-  color: #f2c94c;
+  color: #2431ad;
 }
 
 .dateMeta {
   margin: 0;
-  color: rgba(148, 163, 184, 0.95);
+  color: rgba(36, 49, 173, 0.9);
   font-size: 0.9rem;
+  font-weight: 700;
 }
 
 .excerpt {
   margin: 0;
-  color: rgba(226, 232, 240, 0.82);
+  color: rgba(23, 19, 17, 0.86);
   line-height: 1.58;
 }
 
@@ -109,22 +154,40 @@
   display: flex;
   gap: 1rem;
   flex-wrap: wrap;
-  margin-top: 2rem;
+  margin-top: 1rem;
 }
 
 .backLink {
-  color: rgba(226, 232, 240, 0.82);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.5rem;
+  padding: 0.6rem 1rem;
+  border: 2px solid #111;
+  background: #101010;
+  box-shadow: 4px 4px 0 rgba(17, 17, 17, 0.25);
+  color: #f8efe1;
   text-decoration: none;
   font-size: 0.9rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
 }
 
 .backLink:hover {
-  color: #f2c94c;
+  transform: translate(-2px, -2px);
+  box-shadow: 6px 6px 0 rgba(17, 17, 17, 0.35);
+  background: #131a5d;
+  color: #f8efe1;
 }
 
 @media (min-width: 760px) {
   .page {
-    padding: 3.5rem 2rem 5rem;
+    padding: 2.8rem 1.8rem 5rem;
+  }
+
+  .module {
+    padding: 1.15rem;
   }
 
   .card {

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import type { CSSProperties } from "react";
 import { ArticleBlocks } from "@/components/feed/ArticleBlocks";
 import { getWeeklyBlogArticleBlocks } from "@/lib/feed/get-article-blocks";
 import { getArchivedWeeklyBlogBySlug, getWeeklyBlogBySlug } from "@/lib/feed/get-feed-data";
@@ -26,29 +27,44 @@ export default async function BlogPage({ params }: BlogPageProps) {
     month: "long",
     day: "numeric",
   });
+  const blogImageStyle = {
+    "--blog-article-shape-url": `url("${blogPost.coverImageUrl ?? ""}")`,
+  } as CSSProperties;
 
   return (
     <main className={styles.page}>
       <div className={styles.inner} data-style-target="blog-content-frame">
-        <article>
-          <header className={styles.header}>
-            <p className={styles.eyebrow}>Weekly Blog</p>
-             <h1 className={styles.title} data-style-target="blog-title">{blogPost.title}</h1>
-             <p className={styles.dateMeta} data-style-target="blog-meta">Published {publishedDate}</p>
-            <p className={styles.excerpt}>{blogPost.excerpt}</p>
+        <article className={styles.articleStack}>
+          <header className={styles.masthead}>
+            <div className={styles.mastheadPrimary}>
+              <h1 className={styles.mastheadTitle}>THE FEED</h1>
+              <p className={styles.mastheadSubTitle}>WEEKLY BLOG</p>
+            </div>
           </header>
-          <section className={styles.body}>
-             <div className={styles.imageWrapper}>
-               <img
-                 src={blogPost.coverImageUrl ?? "/placeholder-blog-cover.jpg"}
-                 alt={blogPost.coverImageAlt ?? "Weekly blog cover placeholder"}
-                 className={styles.image}
-                 data-style-target="blog-image"
-               />
-             </div>
-             <div data-style-target="blog-body">
-               <ArticleBlocks blocks={blocks} />
-             </div>
+
+          <section className={`${styles.module} ${styles.contentModule}`}>
+            <div className={styles.titleMetaGroup}>
+              <h1 className={styles.title} data-style-target="blog-title">{blogPost.title}</h1>
+              <p className={styles.excerpt}>{blogPost.excerpt}</p>
+              <div className={styles.metaRowGroup}>
+                <p className={styles.metaItem} data-style-target="blog-meta">Published {publishedDate}</p>
+              </div>
+            </div>
+          </section>
+
+          <section className={`${styles.module} ${styles.bodyModule}`} data-style-target="blog-body">
+            <div className={styles.bodyGroup}>
+              <img
+                src={blogPost.coverImageUrl ?? "/placeholder-blog-cover.jpg"}
+                alt={blogPost.coverImageAlt ?? "Weekly blog cover placeholder"}
+                className={styles.image}
+                data-style-target="blog-image"
+                style={blogImageStyle}
+              />
+              <div className={styles.bodyContent}>
+                <ArticleBlocks blocks={blocks} />
+              </div>
+            </div>
           </section>
 
           <nav className={styles.backNav}>

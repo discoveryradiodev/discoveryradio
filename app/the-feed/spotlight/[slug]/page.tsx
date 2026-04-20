@@ -35,28 +35,39 @@ export default async function SpotlightPage({ params }: SpotlightPageProps) {
   return (
     <main className={styles.page}>
       <div className={styles.inner} data-style-target="article-content-frame">
-        <article>
-          <header className={styles.header} data-style-target="article-hero">
-            <p className={styles.eyebrow}>Artist Spotlight</p>
-             <h1 className={styles.title} data-style-target="article-title">{spotlight.title}</h1>
-            <p className={styles.artistName} data-style-target="article-identity">{spotlight.artistName}</p>
-             {artistMeta ? <p className={styles.artistMeta} data-style-target="article-meta">{artistMeta}</p> : null}
-            <p className={styles.dateMeta} data-style-target="article-published">Published {publishedDate}</p>
+        <article className={styles.articleStack}>
+          <header className={styles.masthead}>
+            <div className={styles.mastheadPrimary}>
+              <h1 className={styles.mastheadTitle}>THE FEED</h1>
+              <p className={styles.mastheadSubTitle}>ARTIST SPOTLIGHT</p>
+            </div>
           </header>
 
-          <section className={styles.body}>
-             <div className={styles.imageWrap} data-style-target="article-image-wrap">
-               <img
-                 src={spotlight.headshotUrl}
-                 alt={spotlight.headshotAlt}
-                 className={styles.image}
-                 data-style-target="article-image"
-                 style={spotlightImageStyle}
-               />
-             </div>
-             <div data-style-target="article-body">
-               <ArticleBlocks blocks={blocks} />
-             </div>
+          <section className={`${styles.module} ${styles.contentModule}`} data-style-target="article-hero">
+            <div className={styles.titleMetaGroup}>
+              <h1 className={styles.title} data-style-target="article-title">{spotlight.title}</h1>
+              <div className={styles.metaRowGroup} data-style-target="article-meta">
+                <p className={styles.metaItem} data-style-target="article-identity">{spotlight.artistName}</p>
+                {spotlight.artistLocation ? <p className={styles.metaItem}>{spotlight.artistLocation}</p> : null}
+                {spotlight.artistGenre ? <p className={styles.metaItem}>{spotlight.artistGenre}</p> : null}
+                <p className={styles.metaItem} data-style-target="article-published">Published {publishedDate}</p>
+              </div>
+            </div>
+          </section>
+
+          <section className={`${styles.module} ${styles.bodyModule}`} data-style-target="article-body">
+            <div className={styles.bodyGroup}>
+              <img
+                src={spotlight.headshotUrl}
+                alt={spotlight.headshotAlt}
+                className={styles.image}
+                data-style-target="article-image"
+                style={spotlightImageStyle}
+              />
+              <div className={styles.bodyContent}>
+                <ArticleBlocks blocks={blocks} />
+              </div>
+            </div>
           </section>
 
           <nav className={styles.backNav}>
