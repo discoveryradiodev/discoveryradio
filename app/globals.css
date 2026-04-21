@@ -90,13 +90,8 @@ html:has([data-feed-shell="true"])::before {
     left: 0;
     right: 0;
     width: 100%;
-    transform: translateY(calc(-100% + 12px));
-    transition: transform 0.28s ease;
-  }
-
-  .nav-wrap:hover,
-  .nav-wrap:has(:focus-visible) {
-    transform: translateY(0);
+    transform: none;
+    transition: none;
   }
 }
 

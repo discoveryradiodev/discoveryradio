@@ -23,9 +23,11 @@ export default async function FeedArchivePage() {
   ]);
   const recentLimit = 1;
 
-  const youtubeItems = [...feedData.archive].sort(
+  const youtubeItems = feedData.archive
+    .filter((item) => item.type === 'youtube')
+    .sort(
     (a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime(),
-  );
+    );
   const recentYouTubeItems = youtubeItems.slice(0, recentLimit);
   const blogItems = archivedBlogs.sort(
     (a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime(),

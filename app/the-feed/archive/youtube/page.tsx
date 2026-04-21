@@ -13,9 +13,11 @@ function formatDate(dateString: string): string {
 export default async function YouTubeArchivePage() {
   const feedData = await getFeedPageData();
 
-  const youtubeItems = [...feedData.archive].sort(
+  const youtubeItems = feedData.archive
+    .filter((item) => item.type === 'youtube')
+    .sort(
     (a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime(),
-  );
+    );
 
   return (
     <main className={styles.page}>

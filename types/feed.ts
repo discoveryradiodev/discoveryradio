@@ -59,6 +59,19 @@ export type MonthlyPlaylist = {
   description?: string;
 };
 
+export type FeaturedYouTube = {
+  id: string;
+  status: FeedStatus;
+  title: string;
+  artistName: string;
+  youtubeUrl: string;
+  youtubeEmbedUrl: string;
+  thumbnailUrl?: string;
+  description?: string;
+  publishedAt: string;
+  updatedAt?: string;
+};
+
 export type ArchiveItem = {
   id: string;
   title: string;
@@ -73,6 +86,7 @@ export type FeedPageData = {
   artistProfile: ArtistProfile;
   weeklyBlog?: WeeklyBlogPost;
   monthlyPlaylist: MonthlyPlaylist;
+  featuredYouTube?: FeaturedYouTube;
   archive: ArchiveItem[];
   archivePreview?: ArchiveItem[];
 

@@ -4,6 +4,7 @@ import type {
   ArchiveItem,
   ArtistProfile,
   ArtistSpotlight,
+  FeaturedYouTube,
   FeedPageData,
   MonthlyPlaylist,
   WeeklyBlogPost,
@@ -145,6 +146,40 @@ async function fetchLiveMusic(): Promise<{
   return { artistProfile, monthlyPlaylist };
 }
 
+async function fetchLiveYouTube(): Promise<FeaturedYouTube | undefined> {
+  const rows = await fetchSheetRows('editor_youtube');
+  const row = rows.find((r) => isNonEmptyRow(r) && clean(r['status']) === 'published');
+  if (!row) return undefined;
+  return {
+    id: clean(row['id']),
+    status: 'published',
+    title: clean(row['title']),
+    artistName: clean(row['artist_name']),
+    youtubeUrl: clean(row['youtube_url']),
+    youtubeEmbedUrl: clean(row['youtube_embed_url']),
+    thumbnailUrl: clean(row['thumbnail_url']) || undefined,
+    description: clean(row['description']) || undefined,
+    publishedAt: clean(row['published_at']) || new Date().toISOString(),
+    updatedAt: clean(row['updated_at']) || undefined,
+  };
+}
+
+export async function getArchivedYouTubeItems(): Promise<ArchiveItem[]> {
+  const rows = await fetchSheetRows('archive_youtube');
+
+  return rows
+    .filter((row) => isNonEmptyRow(row) && clean(row['status']) === 'published')
+    .map((row) => ({
+      id: clean(row['id']),
+      title: clean(row['title']),
+      type: 'youtube' as const,
+      publishedAt: clean(row['published_at']) || new Date().toISOString(),
+      href: clean(row['youtube_url']),
+      description: clean(row['description']) || undefined,
+    }))
+    .sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
+}
+
 function newestByPublishedAt<T>(
   items: T[],
   getPublishedAt: (item: T) => string | undefined
@@ -170,10 +205,8 @@ function newestByPublishedAt<T>(
 async function fetchArchivePreviewItems(): Promise<ArchiveItem[]> {
   const previewItems: ArchiveItem[] = [];
 
-  const newestArchivedYouTube = newestByPublishedAt(
-    mockFeedData.archive.filter((item) => item.type === 'youtube'),
-    (item) => item.publishedAt
-  );
+  const archivedYouTubeItems = await getArchivedYouTubeItems();
+  const newestArchivedYouTube = newestByPublishedAt(archivedYouTubeItems, (item) => item.publishedAt);
   if (newestArchivedYouTube) {
     previewItems.push(newestArchivedYouTube);
   }
@@ -219,11 +252,13 @@ async function fetchArchivePreviewItems(): Promise<ArchiveItem[]> {
 }
 
 export async function getFeedPageData(): Promise<FeedPageData> {
-  const [artistSpotlight, weeklyBlog, music, archivePreview] = await Promise.all([
+  const [artistSpotlight, weeklyBlog, music, archivePreview, featuredYouTube, archivedYouTubeItems] = await Promise.all([
     fetchLiveSpotlight(),
     fetchLiveBlog(),
     fetchLiveMusic(),
     fetchArchivePreviewItems(),
+    fetchLiveYouTube(),
+    getArchivedYouTubeItems(),
   ]);
 
   return {
@@ -231,7 +266,8 @@ export async function getFeedPageData(): Promise<FeedPageData> {
     artistProfile: music.artistProfile,
     weeklyBlog: weeklyBlog ?? undefined,
     monthlyPlaylist: music.monthlyPlaylist,
-    archive: mockFeedData.archive,
+    featuredYouTube,
+    archive: archivedYouTubeItems,
     archivePreview,
     socialLinks: mockFeedData.socialLinks,
     discordUrl: mockFeedData.discordUrl,

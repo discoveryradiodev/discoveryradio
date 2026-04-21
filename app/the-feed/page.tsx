@@ -20,10 +20,29 @@ export default async function FeedPage() {
             <h1 className={styles.title} data-style-target="feed-masthead-title">THE FEED</h1>
             <p className={styles.subTitle} data-style-target="feed-masthead-subtitle">DISCOVERY RADIO</p>
           </div>
-          <Link href="/the-feed/archive" className={styles.archiveLink} data-style-target="feed-archive-link">
-            Browse Archive
-          </Link>
+          <div className={styles.mastheadActions}>
+            <Link href="/the-feed/archive" className={styles.archiveLink} data-style-target="feed-archive-link">
+              Browse Archive
+            </Link>
+            <Link href="/submit" className={styles.submitLink}>
+              Submit your work
+            </Link>
+          </div>
         </header>
+
+        <section className={styles.youtubeHero}>
+          <p className={styles.youtubeHeroLabel}>{feedData.featuredYouTube?.title ?? "Latest Interview"}</p>
+          <div className={styles.youtubeHeroMediaShell}>
+            <div className={styles.youtubeHeroFrame}>
+              <iframe
+                src={feedData.featuredYouTube?.youtubeEmbedUrl ?? "https://www.youtube.com/embed/FQFGy_KpvaY?autoplay=1&mute=1&controls=1&loop=1&playlist=FQFGy_KpvaY&playsinline=1&rel=0&modestbranding=1"}
+                title="Latest Interview"
+                allow="autoplay; encrypted-media; picture-in-picture"
+                allowFullScreen
+              />
+            </div>
+          </div>
+        </section>
 
         <section className={styles.composition}>
           <div className={styles.rowOne}>
