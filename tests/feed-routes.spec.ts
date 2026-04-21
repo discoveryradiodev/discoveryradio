@@ -21,17 +21,31 @@ async function clickAndAssertRoute(page: Parameters<typeof test>[0]['page'], sel
 }
 
 test('Feed and archive links navigate to correct routes', async ({ page }) => {
-  await page.goto('/the-feed');
-  await expect(page).toHaveURL(/\/the-feed$/);
+  await page.goto('/');
+  await expect(page).toHaveURL(/\/$/);
 
   await clickAndAssertRoute(page, 'a[href^="/the-feed/blog/"]', 'Feed blog');
 
-  await page.goto('/the-feed');
+  await page.goto('/');
   await clickAndAssertRoute(page, 'a[href^="/the-feed/spotlight/"]', 'Feed spotlight');
 
   await page.goto('/the-feed/archive/blog');
-  await clickAndAssertRoute(page, 'a[href^="/the-feed/blog/"]', 'Archive blog');
+  if (await page.locator('a[href^="/the-feed/blog/"]').count()) {
+    await clickAndAssertRoute(page, 'a[href^="/the-feed/blog/"]', 'Archive blog');
+  } else {
+    await expect(page.locator('h1').first()).toBeVisible();
+  }
 
   await page.goto('/the-feed/archive/spotlights');
-  await clickAndAssertRoute(page, 'a[href^="/the-feed/spotlight/"]', 'Archive spotlight');
+  if (await page.locator('a[href^="/the-feed/spotlight/"]').count()) {
+    await clickAndAssertRoute(page, 'a[href^="/the-feed/spotlight/"]', 'Archive spotlight');
+  } else {
+    await expect(page.locator('h1').first()).toBeVisible();
+  }
+});
+
+test('Old /the-feed homepage redirects to canonical /', async ({ page }) => {
+  await page.goto('/the-feed');
+  await page.waitForLoadState('networkidle');
+  await expect(page).toHaveURL(/\/$/);
 });

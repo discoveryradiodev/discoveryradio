@@ -46,7 +46,7 @@ export default async function FeedArchivePage() {
             <h1 className={styles.mastheadTitle}>THE FEED ARCHIVE</h1>
             <p className={styles.mastheadSubTitle}>DISCOVERY RADIO</p>
           </div>
-          <Link href="/the-feed" className={styles.backLink}>Back to The Feed</Link>
+          <Link href="/" className={styles.backLink}>Back to The Feed</Link>
         </header>
 
         <section className={`${styles.module} ${styles.leadModule}`}>

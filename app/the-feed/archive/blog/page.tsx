@@ -56,7 +56,7 @@ export default async function BlogArchivePage() {
 
         <nav className={styles.backNav}>
           <Link href="/the-feed/archive" className={styles.backLink}>Back to Archive</Link>
-          <Link href="/the-feed" className={styles.backLink}>Back to The Feed</Link>
+          <Link href="/" className={styles.backLink}>Back to The Feed</Link>
         </nav>
       </div>
     </main>

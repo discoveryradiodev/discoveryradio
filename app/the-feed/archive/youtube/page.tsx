@@ -55,7 +55,7 @@ export default async function YouTubeArchivePage() {
           <Link href="/the-feed/archive" className={styles.backLink}>
             Back to Archive
           </Link>
-          <Link href="/the-feed" className={styles.backLink}>
+          <Link href="/" className={styles.backLink}>
             Back to The Feed
           </Link>
         </nav>
