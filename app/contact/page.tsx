@@ -1,22 +1,26 @@
+import styles from "./page.module.css";
+
 export default function ContactPage() {
   return (
-    <div className="container">
-      <div className="contact-overlay-container">
-        <div className="artists-section">
-          <h2 className="artists-heading">Enter for a chance to be interviewed!</h2>
-          <p className="artists-intro">
+    <div className={styles.page}>
+      <div className={styles.inner}>
+        <div className={styles.moduleCard}>
+          <h2 className={styles.heading}>Enter for a chance to be interviewed!</h2>
+          <p className={styles.intro}>
             Want to be interviewed? Featured on "The Feed"? Fill out the form and we'll be in touch! 
           </p>
-          <p className="artists-intro artists-intro-punchy">
+          <p className={`${styles.intro} ${styles.punchy}`}>
             Every Artist goes through the same process, no matter how big or small.
           </p>
-          <p className="artists-intro">
+          <p className={styles.intro}>
             This form helps us understand your music and how we can best support you. We look forward to hearing from you!
           </p>
-          <p className="artists-values">Submitting does not guarantee placement.</p>
-          <a href="/submit" className="artists-cta">
-            Submit your work
-          </a>
+          <p className={styles.values}>Submitting does not guarantee placement.</p>
+          <div className={styles.ctaRow}>
+            <a href="/submit" className={styles.cta}>
+              Submit your work
+            </a>
+          </div>
         </div>
       </div>
     </div>

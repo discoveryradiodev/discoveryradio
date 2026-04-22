@@ -1,0 +1,142 @@
+.page {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 4.9rem 1rem 3rem;
+}
+
+.page,
+.page * {
+  text-shadow: none;
+}
+
+.page h1,
+.page h2,
+.page h3,
+.page h4,
+.page h5,
+.page h6,
+.page p,
+.page a {
+  text-shadow: none;
+}
+
+.inner {
+  width: min(100%, 860px);
+  margin: 0 auto;
+}
+
+.moduleCard {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 0.78rem;
+  padding: 1.1rem;
+  border: 2px solid #1d1714;
+  background: linear-gradient(173deg, #f4e7ce 0%, #ebddc4 100%);
+  box-shadow: 0 7px 16px rgba(16, 10, 26, 0.18), 3px 3px 0 rgba(23, 19, 17, 0.38);
+  color: #171210;
+}
+
+.moduleCard::before {
+  content: "";
+  position: absolute;
+  top: 0.52rem;
+  right: 0.64rem;
+  width: 2rem;
+  height: 0.32rem;
+  background: rgba(66, 74, 161, 0.2);
+  transform: rotate(-7deg);
+}
+
+.heading {
+  margin: 0;
+  color: #171210;
+  font-size: clamp(1.55rem, 4.2vw, 2.35rem);
+  line-height: 1.06;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.intro {
+  margin: 0;
+  color: rgba(23, 19, 17, 0.9);
+  font-size: 1rem;
+  line-height: 1.6;
+}
+
+.punchy {
+  font-weight: 700;
+}
+
+.values {
+  margin: 0.25rem 0 0;
+  color: rgba(23, 19, 17, 0.8);
+  font-size: 0.9rem;
+  line-height: 1.45;
+  font-style: italic;
+}
+
+.ctaRow {
+  margin-top: 0.15rem;
+  display: flex;
+  align-items: center;
+}
+
+.cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.5rem;
+  padding: 0.6rem 1rem;
+  border: 2px solid #111;
+  background: #101010;
+  box-shadow: 4px 4px 0 rgba(17, 17, 17, 0.25);
+  color: #f8efe1;
+  text-decoration: none;
+  font-size: 0.86rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+
+.cta:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 6px 6px 0 rgba(17, 17, 17, 0.35);
+  background: #131a5d;
+  color: #f8efe1;
+}
+
+@media (min-width: 768px) {
+  .page {
+    padding-top: 6.1rem;
+    padding-bottom: 3.6rem;
+  }
+
+  .moduleCard {
+    gap: 0.84rem;
+    padding: 1.35rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .page {
+    padding: 4rem 0.85rem 2.4rem;
+  }
+
+  .moduleCard {
+    padding: 0.95rem;
+  }
+
+  .intro {
+    font-size: 0.96rem;
+  }
+
+  .values {
+    font-size: 0.86rem;
+  }
+
+  .cta {
+    width: 100%;
+  }
+}

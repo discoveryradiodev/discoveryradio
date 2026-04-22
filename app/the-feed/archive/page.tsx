@@ -1,5 +1,4 @@
 import Link from "next/link";
-import Image from "next/image";
 import {
   getArchivedArtistSpotlights,
   getArchivedWeeklyBlogs,
@@ -55,16 +54,6 @@ export default async function FeedArchivePage() {
             <p className={styles.intro}>
               Each section shows the latest highlight and links to its full category archive.
             </p>
-          </div>
-          <div className={styles.logoBlock} aria-hidden="true">
-            <Image
-              src="/discoveryradio_logo_transparent.png"
-              alt=""
-              width={320}
-              height={320}
-              className={styles.logoImage}
-              priority={false}
-            />
           </div>
         </section>
 

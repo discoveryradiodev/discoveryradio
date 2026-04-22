@@ -10,6 +10,20 @@ type FormState =
 
 export default function SubmitPage() {
   const [formState, setFormState] = useState<FormState>({ status: "idle" });
+  const [submitAttempted, setSubmitAttempted] = useState(false);
+  const [touched, setTouched] = useState({
+    artistName: false,
+    email: false,
+    primaryLink: false,
+    location: false,
+    numberOfYears: false,
+    spotifyLink: false,
+    soundcloudLink: false,
+    instagram: false,
+    tiktok: false,
+    bio: false,
+    whyDiscoveryRadio: false,
+  });
 
   // Required fields
   const [artistName, setArtistName] = useState("");
@@ -54,8 +68,35 @@ export default function SubmitPage() {
     (bio.trim().length > 0 || whyDiscoveryRadio.trim().length > 0) &&
     !isSubmitting;
 
+  const isArtistNameMissing = !artistName.trim();
+  const isEmailMissing = !email.trim();
+  const isPrimaryLinkMissing = !primaryLink.trim();
+  const isLocationMissing = !location.trim();
+  const isNumberOfYearsMissing = !numberOfYears.trim();
+  const isSpotifyOrSoundCloudMissing = !spotifyLink.trim() && !soundcloudLink.trim();
+  const isInstagramOrTikTokMissing = !instagram.trim() && !tiktok.trim();
+  const isBioOrWhyMissing = !bio.trim() && !whyDiscoveryRadio.trim();
+
+  const showArtistNameError = (submitAttempted || touched.artistName) && isArtistNameMissing;
+  const showEmailError = (submitAttempted || touched.email) && isEmailMissing;
+  const showPrimaryLinkError = (submitAttempted || touched.primaryLink) && isPrimaryLinkMissing;
+  const showLocationError = (submitAttempted || touched.location) && isLocationMissing;
+  const showNumberOfYearsError =
+    (submitAttempted || touched.numberOfYears) && isNumberOfYearsMissing;
+  const showSpotifyOrSoundCloudError =
+    (submitAttempted || touched.spotifyLink || touched.soundcloudLink) && isSpotifyOrSoundCloudMissing;
+  const showInstagramOrTikTokError =
+    (submitAttempted || touched.instagram || touched.tiktok) && isInstagramOrTikTokMissing;
+  const showBioOrWhyError =
+    (submitAttempted || touched.bio || touched.whyDiscoveryRadio) && isBioOrWhyMissing;
+
+  const markTouched = (field: keyof typeof touched) => {
+    setTouched((prev) => (prev[field] ? prev : { ...prev, [field]: true }));
+  };
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    setSubmitAttempted(true);
 
     setFormState({ status: "submitting" });
 
@@ -110,6 +151,20 @@ export default function SubmitPage() {
       setTiktok("");
       setWhyDiscoveryRadio("");
       setNotes("");
+      setSubmitAttempted(false);
+      setTouched({
+        artistName: false,
+        email: false,
+        primaryLink: false,
+        location: false,
+        numberOfYears: false,
+        spotifyLink: false,
+        soundcloudLink: false,
+        instagram: false,
+        tiktok: false,
+        bio: false,
+        whyDiscoveryRadio: false,
+      });
     } catch (err: any) {
       setFormState({
         status: "error",
@@ -206,6 +261,14 @@ export default function SubmitPage() {
     marginTop: "4px",
   };
 
+  const fieldErrorTextStyle: React.CSSProperties = {
+    marginTop: "6px",
+    fontSize: "0.82rem",
+    lineHeight: "1.45",
+    color: "#F4A5A5",
+    whiteSpace: "pre-line",
+  };
+
   return (
     <>
       {/* Fixed full-page overlay with backdrop filter blur + dark scrim */}
@@ -241,7 +304,23 @@ export default function SubmitPage() {
             </h2>
             <p style={{ margin: 0 }}>If it resonates, we'll reach out.</p>
             <button
-              onClick={() => setFormState({ status: "idle" })}
+              onClick={() => {
+                setFormState({ status: "idle" });
+                setSubmitAttempted(false);
+                setTouched({
+                  artistName: false,
+                  email: false,
+                  primaryLink: false,
+                  location: false,
+                  numberOfYears: false,
+                  spotifyLink: false,
+                  soundcloudLink: false,
+                  instagram: false,
+                  tiktok: false,
+                  bio: false,
+                  whyDiscoveryRadio: false,
+                });
+              }}
               style={{
                 marginTop: "12px",
                 padding: "8px 16px",
@@ -276,10 +355,14 @@ export default function SubmitPage() {
                   type="text"
                   value={artistName}
                   onChange={(e) => setArtistName(e.target.value)}
+                  onBlur={() => markTouched("artistName")}
                   placeholder="Your artist name"
                   style={fieldStyle}
                   required
                 />
+                {showArtistNameError ? (
+                  <div style={fieldErrorTextStyle}>Tell me what name you go by as an artist.</div>
+                ) : null}
               </label>
 
               <label style={labelStyle}>
@@ -290,10 +373,14 @@ export default function SubmitPage() {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
+                  onBlur={() => markTouched("email")}
                   placeholder="your@email.com"
                   style={fieldStyle}
                   required
                 />
+                {showEmailError ? (
+                  <div style={fieldErrorTextStyle}>Drop your email so I can reach you if I need anything else.</div>
+                ) : null}
               </label>
 
               <label style={labelStyle}>
@@ -304,11 +391,15 @@ export default function SubmitPage() {
                   type="url"
                   value={primaryLink}
                   onChange={(e) => setPrimaryLink(e.target.value)}
+                  onBlur={() => markTouched("primaryLink")}
                   placeholder="Spotify / SoundCloud / YouTube link"
                   style={fieldStyle}
                   required
                 />
                 <div style={helperTextStyle}>One link that represents you best.</div>
+                {showPrimaryLinkError ? (
+                  <div style={fieldErrorTextStyle}>Link your best song — the one you’d bet on.</div>
+                ) : null}
               </label>
 
               {/* BIO */}
@@ -344,10 +435,16 @@ export default function SubmitPage() {
                   type="text"
                   value={location}
                   onChange={(e) => setLocation(e.target.value)}
+                  onBlur={() => markTouched("location")}
                   placeholder="City / Region"
                   style={fieldStyle}
                   required
                 />
+                {showLocationError ? (
+                  <div style={fieldErrorTextStyle}>
+                    {"Please include your location.\nContext and scene help me understand where your work is coming from."}
+                  </div>
+                ) : null}
               </label>
 
               <label style={labelStyle}>
@@ -366,12 +463,18 @@ export default function SubmitPage() {
                 <textarea
                   value={bio}
                   onChange={(e) => setBio(e.target.value)}
+                  onBlur={() => markTouched("bio")}
                   placeholder="Who are you? What are you making?"
                   style={textareaStyle}
                 />
                 <div style={helperTextStyle}>
                   Please enter a bio or explain why you chose Discovery Radio (at least one required)
                 </div>
+                {showBioOrWhyError ? (
+                  <div style={fieldErrorTextStyle}>
+                    {"Tell me who you are or why Discovery Radio matters to you.\nOne of these helps me understand the intent behind the submission."}
+                  </div>
+                ) : null}
               </label>
 
               {/* HOW MANY YEARS */}
@@ -385,10 +488,16 @@ export default function SubmitPage() {
                   type="text"
                   value={numberOfYears}
                   onChange={(e) => setNumberOfYears(e.target.value)}
+                  onBlur={() => markTouched("numberOfYears")}
                   placeholder="e.g. 3"
                   style={fieldStyle}
                   required
                 />
+                {showNumberOfYearsError ? (
+                  <div style={fieldErrorTextStyle}>
+                    {"Let me know how long you’ve been at this.\nExperience gives important context to your work."}
+                  </div>
+                ) : null}
               </label>
 
               {/* MUSIC & LINKS */}
@@ -400,12 +509,18 @@ export default function SubmitPage() {
                   type="url"
                   value={spotifyLink}
                   onChange={(e) => setSpotifyLink(e.target.value)}
+                  onBlur={() => markTouched("spotifyLink")}
                   placeholder="https://open.spotify.com/..."
                   style={fieldStyle}
                 />
                 <div style={helperTextStyle}>
                   Spotify or SoundCloud (at least one required)
                 </div>
+                {showSpotifyOrSoundCloudError ? (
+                  <div style={fieldErrorTextStyle}>
+                    {"Please include a Spotify or SoundCloud link.\nThis helps me understand your commitment to putting music out into the world."}
+                  </div>
+                ) : null}
               </label>
 
               <label style={labelStyle}>
@@ -414,12 +529,18 @@ export default function SubmitPage() {
                   type="url"
                   value={soundcloudLink}
                   onChange={(e) => setSoundcloudLink(e.target.value)}
+                  onBlur={() => markTouched("soundcloudLink")}
                   placeholder="https://soundcloud.com/..."
                   style={fieldStyle}
                 />
                 <div style={helperTextStyle}>
                   Spotify or SoundCloud (at least one required)
                 </div>
+                {showSpotifyOrSoundCloudError ? (
+                  <div style={fieldErrorTextStyle}>
+                    {"Please include a Spotify or SoundCloud link.\nThis helps me understand your commitment to putting music out into the world."}
+                  </div>
+                ) : null}
               </label>
 
               <label style={labelStyle}>
@@ -442,12 +563,18 @@ export default function SubmitPage() {
                   type="text"
                   value={instagram}
                   onChange={(e) => setInstagram(e.target.value)}
+                  onBlur={() => markTouched("instagram")}
                   placeholder="@yourhandle"
                   style={fieldStyle}
                 />
                 <div style={helperTextStyle}>
                   Instagram or TikTok (at least one required)
                 </div>
+                {showInstagramOrTikTokError ? (
+                  <div style={fieldErrorTextStyle}>
+                    {"I need at least one social handle (Instagram or TikTok).\nThis helps me understand how you present yourself as an artist."}
+                  </div>
+                ) : null}
               </label>
 
               <label style={labelStyle}>
@@ -456,12 +583,18 @@ export default function SubmitPage() {
                   type="text"
                   value={tiktok}
                   onChange={(e) => setTiktok(e.target.value)}
+                  onBlur={() => markTouched("tiktok")}
                   placeholder="@yourhandle"
                   style={fieldStyle}
                 />
                 <div style={helperTextStyle}>
                   Instagram or TikTok (at least one required)
                 </div>
+                {showInstagramOrTikTokError ? (
+                  <div style={fieldErrorTextStyle}>
+                    {"I need at least one social handle (Instagram or TikTok).\nThis helps me understand how you present yourself as an artist."}
+                  </div>
+                ) : null}
               </label>
 
               {/* WHY DISCOVERY RADIO */}
@@ -472,12 +605,18 @@ export default function SubmitPage() {
                 <textarea
                   value={whyDiscoveryRadio}
                   onChange={(e) => setWhyDiscoveryRadio(e.target.value)}
+                  onBlur={() => markTouched("whyDiscoveryRadio")}
                   placeholder="What resonates with you about Discovery Radio?"
                   style={textareaStyle}
                 />
                 <div style={helperTextStyle}>
                   Bio or Why Discovery Radio (at least one required)
                 </div>
+                {showBioOrWhyError ? (
+                  <div style={fieldErrorTextStyle}>
+                    {"Tell me who you are or why Discovery Radio matters to you.\nOne of these helps me understand the intent behind the submission."}
+                  </div>
+                ) : null}
               </label>
 
               {/* NOTES (INTERNAL) */}
@@ -495,51 +634,6 @@ export default function SubmitPage() {
                   Most artists will leave this empty. That's fine.
                 </div>
               </label>
-
-              <div style={{ marginTop: "16px", marginBottom: "8px", fontSize: "0.85rem", opacity: 0.85 }}>
-                <ul style={{ margin: "8px 0 0 16px", padding: 0 }}>
-                  {!artistName.trim() && (
-                    <li>
-                      ❌ <span style={{ whiteSpace: "pre-line" }}>Tell me what name you go by as an artist.</span>
-                    </li>
-                  )}
-                  {!email.trim() && (
-                    <li>
-                      ❌ <span style={{ whiteSpace: "pre-line" }}>Drop your email so I can reach you if I need anything else.</span>
-                    </li>
-                  )}
-                  {!primaryLink.trim() && (
-                    <li>
-                      ❌ <span style={{ whiteSpace: "pre-line" }}>Link your best song — the one you’d bet on.</span>
-                    </li>
-                  )}
-                  {!location.trim() && (
-                    <li>
-                      ❌ <span style={{ whiteSpace: "pre-line" }}>{"Please include your location.\nContext and scene help me understand where your work is coming from."}</span>
-                    </li>
-                  )}
-                  {!numberOfYears.trim() && (
-                    <li>
-                      ❌ <span style={{ whiteSpace: "pre-line" }}>{"Let me know how long you’ve been at this.\nExperience gives important context to your work."}</span>
-                    </li>
-                  )}
-                  {!spotifyLink.trim() && !soundcloudLink.trim() && (
-                    <li>
-                      ❌ <span style={{ whiteSpace: "pre-line" }}>{"Please include a Spotify or SoundCloud link.\nThis helps me understand your commitment to putting music out into the world."}</span>
-                    </li>
-                  )}
-                  {!instagram.trim() && !tiktok.trim() && (
-                    <li>
-                      ❌ <span style={{ whiteSpace: "pre-line" }}>{"I need at least one social handle (Instagram or TikTok).\nThis helps me understand how you present yourself as an artist."}</span>
-                    </li>
-                  )}
-                  {!bio.trim() && !whyDiscoveryRadio.trim() && (
-                    <li>
-                      ❌ <span style={{ whiteSpace: "pre-line" }}>{"Tell me who you are or why Discovery Radio matters to you.\nOne of these helps me understand the intent behind the submission."}</span>
-                    </li>
-                  )}
-                </ul>
-              </div>
 
               <button
                 type="submit"
