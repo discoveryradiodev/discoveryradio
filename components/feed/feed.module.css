@@ -57,11 +57,11 @@
 .spotlightHeadshot {
   float: left;
   display: block;
-  width: var(--spotlight-image-width, min(59%, 441px));
-  min-width: 273px;
+  width: var(--spotlight-image-width, min(34.2%, 254px));
+  min-width: 162px;
   max-width: 100%;
   height: auto;
-  margin: 0 1rem 0.8rem calc(-90px + var(--spotlight-image-x, 0px));
+  margin: 0 1rem 0.8rem calc(-18px + var(--spotlight-image-x, 0px));
   shape-outside: var(--spotlight-shape-url);
   -webkit-shape-outside: var(--spotlight-shape-url);
   shape-image-threshold: 0.5;

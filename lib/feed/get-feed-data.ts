@@ -128,11 +128,11 @@ async function fetchLiveMusic(): Promise<{
   const row = firstValidRow(rows, isRenderableMusicRow);
 
   const artistProfile: ArtistProfile = {
-    artistName: 'Kanye West',
+    artistName: clean(row?.['artist_profile_name']) || 'Featured Artist',
     embedType: 'artist',
-    spotifyUrl: 'https://open.spotify.com/artist/5K4W6rqBFWDnAN6FQUkS6x',
-    spotifyEmbedUrl: 'https://open.spotify.com/embed/artist/5K4W6rqBFWDnAN6FQUkS6x',
-    monthLabel: 'April 2026',
+    spotifyUrl: clean(row?.['artist_profile_url']) || '',
+    spotifyEmbedUrl: clean(row?.['artist_profile_embed_url']) || '',
+    monthLabel: clean(row?.['month_label']) || '',
   };
 
   const monthlyPlaylist: MonthlyPlaylist = {
