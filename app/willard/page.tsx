@@ -4,6 +4,7 @@ import { StyleLabShell } from "@/components/styleLab/StyleLabShell";
 import { canApplyLocalSourceStyles } from "@/lib/dev/style-lab-apply";
 import { isStyleLabEnabled } from "@/lib/dev/is-style-lab-enabled";
 import { isWillardAuthenticated } from "@/lib/dev/style-lab-auth";
+import { WillardPasswordInput } from "./WillardPasswordInput";
 import styles from "./page.module.css";
 
 export const metadata = {
@@ -42,13 +43,11 @@ export default async function WillardPage({ searchParams }: WillardPageProps) {
             <label htmlFor="willard-password" className={styles.gateLabel}>
               Password
             </label>
-            <input
+            <WillardPasswordInput
               id="willard-password"
               name="password"
-              type="password"
-              className={styles.gateInput}
-              autoComplete="current-password"
-              required
+              inputClassName={styles.gateInput}
+              toggleClassName={styles.gateToggle}
             />
             {hasError ? (
               <p className={styles.gateError}>Invalid password. Try again.</p>

@@ -24,6 +24,7 @@ export type StyleTargetDefinition = {
 };
 
 export const STYLE_TARGET_REGISTRY = {
+  "feed-shell": { label: "Feed Shell Background", group: "feedShell", kind: "container" },
   "feed-masthead-title": { label: "Feed Masthead Title", group: "feedShell", kind: "text" },
   "feed-masthead-subtitle": { label: "Feed Masthead Subtitle", group: "feedShell", kind: "text" },
   "feed-archive-link": { label: "Feed Archive Link", group: "feedShell", kind: "button" },

@@ -4,12 +4,18 @@ import { forwardRef, useEffect, useImperativeHandle, useRef } from "react";
 import { useStyleLab } from "@/lib/dev/style-lab-context";
 import { STYLE_LAB_DEFAULTS } from "@/lib/dev/style-lab-defaults";
 import { injectStyleLabVariables, removeStyleLabVariables } from "@/lib/dev/style-lab-inject";
+import { applyImageOverridesToDocument } from "@/lib/dev/style-lab-image-runtime";
 import { buildTargetStylesheet } from "@/lib/dev/style-lab-css";
 import {
   attachInspectListeners,
   clearSelection,
   type StyleTargetId,
 } from "@/lib/dev/style-lab-inspect";
+import {
+  getPreviewLabelForTarget,
+  getPreviewPathForTarget,
+  normalizeWillardPreviewTarget,
+} from "@/lib/dev/willard-preview-sync";
 import styles from "./styleLab.module.css";
 
 const RUNTIME_STYLE_ID = "style-lab-target-runtime-style";
@@ -41,7 +47,7 @@ export const PreviewArea = forwardRef<PreviewAreaHandle, PreviewAreaProps>(
   ) {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const cleanupRef = useRef<(() => void) | null>(null);
-  const { variables } = useStyleLab();
+  const { variables, imageOverrides, backgroundOverrides } = useStyleLab();
 
   /** Removes all style-lab custom properties and the runtime stylesheet from the iframe. */
   const clearAllStyles = () => {
@@ -96,7 +102,10 @@ export const PreviewArea = forwardRef<PreviewAreaHandle, PreviewAreaProps>(
           injectStyleLabVariables(doc.documentElement, legacyVars);
         }
         if (doc?.head) {
-          injectComprehensiveStylesheet(doc, RUNTIME_STYLE_ID, variables);
+          injectComprehensiveStylesheet(doc, RUNTIME_STYLE_ID, variables, backgroundOverrides);
+        }
+        if (doc) {
+          applyImageOverridesToDocument(doc, imageOverrides);
         }
         attachInspectIfNeeded(doc);
       } catch (error) {
@@ -117,7 +126,7 @@ export const PreviewArea = forwardRef<PreviewAreaHandle, PreviewAreaProps>(
         clearSelection(doc);
       }
     };
-  }, [activeTarget, inspectMode, onStyleTargetSelect]);
+  }, [activeTarget, inspectMode, onStyleTargetSelect, variables, imageOverrides, backgroundOverrides]);
 
   // Inject variables whenever they change
   useEffect(() => {
@@ -141,8 +150,9 @@ export const PreviewArea = forwardRef<PreviewAreaHandle, PreviewAreaProps>(
     const iframe = iframeRef.current;
     const doc = iframe?.contentDocument;
     if (!doc?.head) return;
-    injectComprehensiveStylesheet(doc, RUNTIME_STYLE_ID, variables);
-  }, [variables]);
+    injectComprehensiveStylesheet(doc, RUNTIME_STYLE_ID, variables, backgroundOverrides);
+    applyImageOverridesToDocument(doc, imageOverrides);
+  }, [variables, imageOverrides, backgroundOverrides]);
 
   // Immediate inspect-mode toggle handling without waiting for iframe load.
   useEffect(() => {
@@ -180,62 +190,33 @@ export const PreviewArea = forwardRef<PreviewAreaHandle, PreviewAreaProps>(
     onClearSelection?.();
   }, [activeTarget]);
 
-  const getIframeSrc = () => {
-    switch (activeTarget) {
-      case "feed-homepage":
-        return "/the-feed";
-      case "live-spotlight":
-        return "/the-feed/spotlight/ye";
-      case "live-blog":
-        return "/the-feed/blog/weekly-blog-placeholder-entry";
-      default:
-        return "/the-feed";
-    }
-  };
+  const safePreviewTarget = normalizeWillardPreviewTarget(activeTarget);
 
   return (
     <div className={styles.previewArea}>
-      <div className={styles.previewHeader}>
-        <h3 className={styles.previewTitle}>
-          Preview: {getTargetLabel(activeTarget)}
-        </h3>
-        <p className={styles.previewSubtitle}>
-          Live CSS variables — Changes update in real time
-        </p>
-      </div>
-
       <div className={styles.previewFrame}>
         <iframe
           ref={iframeRef}
-          src={getIframeSrc()}
+          src={getPreviewPathForTarget(safePreviewTarget)}
           style={{
             width: "100%",
             height: "100%",
             border: "none",
             borderRadius: "0.375rem",
           }}
-          title={`Preview: ${getTargetLabel(activeTarget)}`}
+          title={`Preview: ${getPreviewLabelForTarget(safePreviewTarget)}`}
           sandbox="allow-same-origin allow-scripts allow-popups"
         />
       </div>
 
       <div className={styles.previewFooter}>
         <p className={styles.previewFooterText}>
-          Target: <code>{activeTarget}</code>
+          Target: <code>{safePreviewTarget}</code>
         </p>
       </div>
     </div>
   );
 });
-
-function getTargetLabel(targetId: string): string {
-  const labels: Record<string, string> = {
-    "feed-homepage": "Feed Homepage",
-    "live-spotlight": "Live Spotlight Page",
-    "live-blog": "Live Blog Page",
-  };
-  return labels[targetId] || "Unknown";
-}
 
 /** Returns only the non-target-scoped entries (no "__") for legacy CSS var injection. */
 function getLegacyVars(variables: Record<string, string>): Record<string, string> {
@@ -250,10 +231,11 @@ function getLegacyVars(variables: Record<string, string>): Record<string, string
 function injectComprehensiveStylesheet(
   doc: Document,
   styleId: string,
-  variables: Record<string, string>
+  variables: Record<string, string>,
+  backgroundOverrides: ReturnType<typeof useStyleLab>["backgroundOverrides"]
 ): void {
   let styleEl = doc.getElementById(styleId) as HTMLStyleElement | null;
-  const css = buildTargetStylesheet(variables);
+  const css = buildTargetStylesheet(variables, backgroundOverrides);
 
   if (!css) {
     if (styleEl) styleEl.remove();

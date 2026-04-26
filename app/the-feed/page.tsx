@@ -13,7 +13,7 @@ export default async function FeedPage() {
   const feedData = await getFeedPageData();
 
   return (
-    <main className={styles.page} data-feed-page="true">
+    <main className={styles.page} data-feed-page="true" data-style-target="feed-shell">
       <div className={styles.inner}>
         <header className={styles.masthead}>
           <div className={styles.mastheadPrimary}>

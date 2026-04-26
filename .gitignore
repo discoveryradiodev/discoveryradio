@@ -21,3 +21,9 @@ Willard 1.txt
 billy_the_eleventh.txt
 source-dump.txt
 feed-home-migration-dump-with-lines.txt
+
+test-results/
+tsconfig.tsbuildinfo
+Billy 2.0.txt
+billy_2.1.txt
+source-dump.txt

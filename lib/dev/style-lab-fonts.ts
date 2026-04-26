@@ -152,7 +152,24 @@ export const STYLE_LAB_FONT_FAMILIES = STYLE_LAB_FONT_REGISTRY.map((font) => fon
 export const STYLE_LAB_WEB_FONTS = STYLE_LAB_FONT_REGISTRY.filter((font) => font.source === "loaded");
 export const STYLE_LAB_SYSTEM_FONTS = STYLE_LAB_FONT_REGISTRY.filter((font) => font.source === "system");
 
-export const STYLE_LAB_FONT_OPTIONS = STYLE_LAB_FONT_REGISTRY.map((font) => ({
-  label: `${CATEGORY_LABELS[font.category]} | ${font.label}${font.source === "system" ? " (System)" : ""}`,
-  value: font.family,
-}));
+function dedupeByValue<T extends { value: string }>(items: readonly T[]): T[] {
+  const seen = new Set<string>();
+  const deduped: T[] = [];
+
+  for (const item of items) {
+    if (seen.has(item.value)) {
+      continue;
+    }
+    seen.add(item.value);
+    deduped.push(item);
+  }
+
+  return deduped;
+}
+
+export const STYLE_LAB_FONT_OPTIONS = dedupeByValue(
+  STYLE_LAB_FONT_REGISTRY.map((font) => ({
+    label: `${CATEGORY_LABELS[font.category]} | ${font.label}${font.source === "system" ? " (System)" : ""}`,
+    value: font.family,
+  }))
+);

@@ -1,71 +1,165 @@
 .gatePage {
-  min-height: calc(100vh - 120px);
+  min-height: calc(100vh - 110px);
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 2rem 1rem;
+  padding: 5.1rem 1rem 2.2rem;
+}
+
+.gatePage,
+.gatePage * {
+  text-shadow: none;
 }
 
 .gateCard {
-  width: min(100%, 420px);
-  background: rgba(11, 16, 26, 0.88);
-  border: 1px solid rgba(148, 163, 184, 0.25);
-  border-radius: 0.75rem;
-  padding: 1.25rem;
-  box-shadow: 0 12px 32px rgba(2, 6, 23, 0.45);
+  position: relative;
+  width: min(100%, 560px);
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  border: 2px solid #1d1714;
+  background: linear-gradient(173deg, #f4e7ce 0%, #ebddc4 100%);
+  box-shadow: 0 10px 20px rgba(16, 10, 26, 0.24), 4px 4px 0 rgba(23, 19, 17, 0.48);
+  padding: 1.2rem;
+  color: #171210;
+}
+
+.gateCard::before {
+  content: "";
+  position: absolute;
+  top: 0.54rem;
+  right: 0.66rem;
+  width: 2rem;
+  height: 0.34rem;
+  background: rgba(66, 74, 161, 0.2);
+  transform: rotate(-7deg);
 }
 
 .gateTitle {
   margin: 0;
-  font-size: 1.3rem;
-  color: #f8fafc;
+  color: #171210;
+  font-size: clamp(1.65rem, 4.4vw, 2.5rem);
+  line-height: 1.02;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  text-shadow: none;
 }
 
 .gateCopy {
-  margin: 0.65rem 0 1rem;
-  color: rgba(226, 232, 240, 0.85);
-  font-size: 0.92rem;
+  margin: 0;
+  color: rgba(23, 19, 17, 0.9);
+  font-size: 1rem;
+  line-height: 1.55;
+  text-shadow: none;
 }
 
 .gateForm {
   display: grid;
-  gap: 0.65rem;
+  gap: 0.62rem;
+  margin-top: 0.2rem;
 }
 
 .gateLabel {
-  color: #e2e8f0;
-  font-size: 0.85rem;
-  font-weight: 600;
+  color: #1f1917;
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  text-shadow: none;
 }
 
 .gateInput {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.5rem;
   width: 100%;
-  padding: 0.56rem 0.65rem;
-  border-radius: 0.45rem;
-  border: 1px solid rgba(148, 163, 184, 0.45);
-  background: rgba(15, 23, 42, 0.86);
-  color: #f8fafc;
-  font-size: 0.95rem;
+  text-shadow: none;
+}
+
+.gateInput input {
+  width: 100%;
+  min-width: 0;
+  min-height: 2.7rem;
+  padding: 0.6rem 0.74rem;
+  border: 2px solid #8b7d73;
+  background: rgba(247, 239, 226, 0.96);
+  color: #1b1614;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  font-family: inherit;
+  font-size: 1rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  box-sizing: border-box;
+  transition: border-color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
+}
+
+.gateInput input:focus {
+  outline: none;
+  border-color: #131a5d;
+  background: #fffaf2;
+  box-shadow: 0 0 0 3px rgba(19, 26, 93, 0.14);
+}
+
+.gateInput input::placeholder {
+  color: #90867f;
+  opacity: 0.9;
+}
+
+.gateToggle {
+  min-width: 5.5rem;
+  min-height: 2.7rem;
+  padding: 0.56rem 0.8rem;
+  border: 2px solid #111;
+  background: #101010;
+  color: #f8efe1;
+  box-shadow: 3px 3px 0 rgba(17, 17, 17, 0.25);
+  font-family: inherit;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+
+.gateToggle:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 5px 5px 0 rgba(17, 17, 17, 0.35);
+  background: #131a5d;
 }
 
 .gateError {
   margin: 0;
-  color: #fca5a5;
+  padding: 0.44rem 0.56rem;
+  border-left: 2px solid #8d2424;
+  background: rgba(197, 48, 48, 0.08);
+  color: #8d2424;
   font-size: 0.84rem;
+  line-height: 1.4;
+  text-shadow: none;
 }
 
 .gateButton {
-  margin-top: 0.2rem;
-  padding: 0.62rem 0.72rem;
-  border: 1px solid rgba(242, 201, 76, 0.75);
-  border-radius: 0.45rem;
-  background: rgba(242, 201, 76, 0.2);
+  margin-top: 0.16rem;
+  min-height: 2.7rem;
+  padding: 0.62rem 1rem;
+  border: 2px solid #111;
+  background: #101010;
+  box-shadow: 4px 4px 0 rgba(17, 17, 17, 0.25);
   color: #f8efde;
-  font-size: 0.88rem;
+  font-size: 0.85rem;
   font-weight: 700;
-  letter-spacing: 0.03em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+  text-shadow: none;
+}
+
+.gateButton:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 6px 6px 0 rgba(17, 17, 17, 0.35);
+  background: #131a5d;
 }
 
 .logoutForm {
@@ -85,4 +179,35 @@
   text-transform: uppercase;
   letter-spacing: 0.04em;
   cursor: pointer;
+}
+
+@media (min-width: 768px) {
+  .gatePage {
+    padding-top: 6.2rem;
+    padding-bottom: 3rem;
+  }
+
+  .gateCard {
+    padding: 1.36rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .gatePage {
+    padding: 4rem 0.85rem 2.2rem;
+  }
+
+  .gateCard {
+    padding: 0.96rem;
+  }
+
+  .gateInput {
+    grid-template-columns: 1fr;
+  }
+
+  .gateToggle,
+  .gateButton {
+    width: 100%;
+    justify-self: stretch;
+  }
 }

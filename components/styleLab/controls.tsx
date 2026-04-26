@@ -95,8 +95,8 @@ export function SelectControl({
         onChange={(e) => onChange(e.target.value)}
         className={styles.select}
       >
-        {options.map((opt) => (
-          <option key={opt.value} value={opt.value}>
+        {options.map((opt, index) => (
+          <option key={`${opt.value}-${index}`} value={opt.value}>
             {opt.label}
           </option>
         ))}

@@ -5,6 +5,7 @@ import {
   type StyleTargetId,
   type StyleTargetKind,
 } from "@/lib/dev/style-lab-inspect";
+import type { WillardBackgroundOverride } from "@/lib/dev/willard-assets";
 
 export const WILLARD_GENERATED_FILE_RELATIVE_PATH = "app/the-feed/willard.generated.css";
 
@@ -24,14 +25,29 @@ export function buildGeneratedWillardCss(variables: Record<string, string>): str
   return `${GENERATED_HEADER}\n\n${css}`;
 }
 
-export function buildTargetStylesheet(variables: Record<string, string>): string {
+export function buildTargetStylesheet(
+  variables: Record<string, string>,
+  backgroundOverrides: WillardBackgroundOverride[] = []
+): string {
   const targetFields = collectMeaningfulTargetFields(variables);
+  const backgroundOverrideMap = collectBackgroundOverrides(backgroundOverrides);
+  const targetIds = new Set<StyleTargetId>([
+    ...targetFields.keys(),
+    ...backgroundOverrideMap.keys(),
+  ]);
 
-  return Array.from(targetFields.entries())
-    .sort(([left], [right]) => left.localeCompare(right))
-    .map(([targetId, fields]) => {
-      const kind = TARGET_TO_KIND[targetId as StyleTargetId];
+  return Array.from(targetIds.values())
+    .sort((left, right) => left.localeCompare(right))
+    .map((targetId) => {
+      const kind = TARGET_TO_KIND[targetId];
+      const fields = targetFields.get(targetId) ?? {};
       const declarations = buildDeclarations(kind, fields);
+      const backgroundOverride = backgroundOverrideMap.get(targetId);
+      if (backgroundOverride) {
+        declarations.push(
+          ...buildBackgroundOverrideDeclarations(backgroundOverride)
+        );
+      }
 
       if (declarations.length === 0) {
         return "";
@@ -41,7 +57,51 @@ export function buildTargetStylesheet(variables: Record<string, string>): string
     })
     .filter(Boolean)
     .join("\n\n")
-    .trimEnd() + (targetFields.size > 0 ? "\n" : "");
+    .trimEnd() + (targetIds.size > 0 ? "\n" : "");
+}
+
+function collectBackgroundOverrides(
+  backgroundOverrides: WillardBackgroundOverride[]
+): Map<StyleTargetId, WillardBackgroundOverride> {
+  const grouped = new Map<StyleTargetId, WillardBackgroundOverride>();
+
+  for (const item of backgroundOverrides) {
+    if (!item || !isStyleTargetId(item.targetId)) {
+      continue;
+    }
+
+    const url = normalizeCssValue(item.url ?? "");
+    if (!url) {
+      continue;
+    }
+
+    grouped.set(item.targetId, {
+      ...item,
+      url,
+    });
+  }
+
+  return grouped;
+}
+
+function buildBackgroundOverrideDeclarations(
+  override: WillardBackgroundOverride
+): string[] {
+  const declarations: string[] = [];
+
+  declarations.push(`  background-image: url("${escapeCssUrl(override.url)}") !important;`);
+  declarations.push(`  background-size: ${override.size} !important;`);
+  declarations.push(`  background-position: ${override.position} !important;`);
+  declarations.push(`  background-repeat: ${override.repeat} !important;`);
+  if (override.blendMode) {
+    declarations.push(`  background-blend-mode: ${override.blendMode} !important;`);
+  }
+
+  return declarations;
+}
+
+function escapeCssUrl(value: string): string {
+  return value.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
 }
 
 function collectMeaningfulTargetFields(
