@@ -5,6 +5,10 @@ import { useStyleLab } from "@/lib/dev/style-lab-context";
 import { STYLE_LAB_DEFAULTS } from "@/lib/dev/style-lab-defaults";
 import { injectStyleLabVariables, removeStyleLabVariables } from "@/lib/dev/style-lab-inject";
 import { applyImageOverridesToDocument } from "@/lib/dev/style-lab-image-runtime";
+import {
+  applyOverlayDraftsToDocument,
+  removeOverlayDraftsFromDocument,
+} from "@/lib/dev/style-lab-overlay-runtime";
 import { buildTargetStylesheet } from "@/lib/dev/style-lab-css";
 import {
   attachInspectListeners,
@@ -47,7 +51,7 @@ export const PreviewArea = forwardRef<PreviewAreaHandle, PreviewAreaProps>(
   ) {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const cleanupRef = useRef<(() => void) | null>(null);
-  const { variables, imageOverrides, backgroundOverrides } = useStyleLab();
+  const { variables, imageOverrides, backgroundOverrides, overlayDrafts } = useStyleLab();
 
   /** Removes all style-lab custom properties and the runtime stylesheet from the iframe. */
   const clearAllStyles = () => {
@@ -106,6 +110,7 @@ export const PreviewArea = forwardRef<PreviewAreaHandle, PreviewAreaProps>(
         }
         if (doc) {
           applyImageOverridesToDocument(doc, imageOverrides);
+          applyOverlayDraftsToDocument(doc, getSurfaceOverlayDrafts(overlayDrafts, activeTarget));
         }
         attachInspectIfNeeded(doc);
       } catch (error) {
@@ -126,7 +131,7 @@ export const PreviewArea = forwardRef<PreviewAreaHandle, PreviewAreaProps>(
         clearSelection(doc);
       }
     };
-  }, [activeTarget, inspectMode, onStyleTargetSelect, variables, imageOverrides, backgroundOverrides]);
+  }, [activeTarget, inspectMode, onStyleTargetSelect, variables, imageOverrides, backgroundOverrides, overlayDrafts]);
 
   // Inject variables whenever they change
   useEffect(() => {
@@ -152,7 +157,8 @@ export const PreviewArea = forwardRef<PreviewAreaHandle, PreviewAreaProps>(
     if (!doc?.head) return;
     injectComprehensiveStylesheet(doc, RUNTIME_STYLE_ID, variables, backgroundOverrides);
     applyImageOverridesToDocument(doc, imageOverrides);
-  }, [variables, imageOverrides, backgroundOverrides]);
+    applyOverlayDraftsToDocument(doc, getSurfaceOverlayDrafts(overlayDrafts, activeTarget));
+  }, [variables, imageOverrides, backgroundOverrides, overlayDrafts, activeTarget]);
 
   // Immediate inspect-mode toggle handling without waiting for iframe load.
   useEffect(() => {
@@ -182,6 +188,7 @@ export const PreviewArea = forwardRef<PreviewAreaHandle, PreviewAreaProps>(
       clearSelection(doc);
       const styleEl = doc.getElementById(RUNTIME_STYLE_ID);
       if (styleEl) styleEl.remove();
+      removeOverlayDraftsFromDocument(doc);
     } catch (e) {
       console.error("Failed to clear selection on target switch:", e);
     }
@@ -225,6 +232,14 @@ function getLegacyVars(variables: Record<string, string>): Record<string, string
     if (!k.includes("__")) legacy[k] = v;
   }
   return legacy;
+}
+
+function getSurfaceOverlayDrafts(
+  drafts: ReturnType<typeof useStyleLab>["overlayDrafts"],
+  surface: string
+) {
+  const safeSurface = normalizeWillardPreviewTarget(surface);
+  return drafts.filter((draft) => draft.surface === safeSurface);
 }
 
 /** Upserts a <style> element in the iframe <head> with rules for every edited target. */

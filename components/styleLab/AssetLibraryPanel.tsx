@@ -5,6 +5,7 @@ import { useStyleLab } from "@/lib/dev/style-lab-context";
 import {
   createUsageId,
   type WillardAsset,
+  type WillardAssetStatus,
   type WillardBackgroundBlendMode,
   type WillardBackgroundPosition,
   type WillardBackgroundRepeat,
@@ -26,6 +27,11 @@ type AssetLibraryPanelProps = {
 };
 
 type AssetFilterId =
+  | "approved"
+  | "needs-review"
+  | "denied"
+  | "demo-hidden"
+  | "rejected"
   | "all"
   | "images"
   | "article-covers"
@@ -50,6 +56,10 @@ type StorageCapabilities = {
 };
 
 const FILTER_OPTIONS: Array<{ id: AssetFilterId; label: string }> = [
+  { id: "approved", label: "Approved (Default)" },
+  { id: "needs-review", label: "Review Queue" },
+  { id: "denied", label: "Denied / Rejected" },
+  { id: "demo-hidden", label: "Demo / Hidden" },
   { id: "all", label: "All" },
   { id: "images", label: "Images" },
   { id: "article-covers", label: "Article Covers" },
@@ -75,10 +85,16 @@ const CATEGORY_OPTIONS = [
   { value: "homepage-image", label: "Homepage Images" },
   { value: "background", label: "Backgrounds" },
   { value: "texture", label: "Textures" },
+  { value: "paper", label: "Paper" },
   { value: "sticker", label: "Stickers" },
   { value: "tape", label: "Tape" },
   { value: "frame", label: "Frames" },
   { value: "overlay", label: "Overlays" },
+  { value: "shape", label: "Shapes" },
+  { value: "mask", label: "Masks" },
+  { value: "edge", label: "Edges" },
+  { value: "callout", label: "Callouts" },
+  { value: "module-frame", label: "Module Frames" },
 ] as const;
 
 const IMAGE_OBJECT_FIT_OPTIONS: WillardImageObjectFit[] = [
@@ -129,7 +145,7 @@ export function AssetLibraryPanel({
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [capabilities, setCapabilities] = useState<StorageCapabilities | null>(null);
 
-  const [selectedFilter, setSelectedFilter] = useState<AssetFilterId>("all");
+  const [selectedFilter, setSelectedFilter] = useState<AssetFilterId>("approved");
   const [backgroundSize, setBackgroundSize] = useState<WillardBackgroundSize>("cover");
   const [backgroundPosition, setBackgroundPosition] = useState<WillardBackgroundPosition>("center");
   const [backgroundRepeat, setBackgroundRepeat] = useState<WillardBackgroundRepeat>("no-repeat");
@@ -144,6 +160,7 @@ export function AssetLibraryPanel({
   const [publicCategory, setPublicCategory] = useState("image");
   const [isRegisteringPublic, setIsRegisteringPublic] = useState(false);
   const [registerError, setRegisterError] = useState<string | null>(null);
+  const [actionAssetId, setActionAssetId] = useState<string | null>(null);
 
   const selectedAsset = useMemo(() => {
     if (!selectedAssetId) {
@@ -172,7 +189,9 @@ export function AssetLibraryPanel({
   }, [activeStyleTarget, backgroundOverrides]);
 
   const filteredAssets = useMemo(() => {
-    return assets.filter((asset) => matchesFilter(asset, selectedFilter, usedAssetIds));
+    return assets
+      .filter((asset) => matchesFilter(asset, selectedFilter, usedAssetIds))
+      .sort((a, b) => assetTimestamp(b) - assetTimestamp(a));
   }, [assets, selectedFilter, usedAssetIds]);
 
   const canUpload = capabilities?.canUploadToBlob ?? false;
@@ -479,6 +498,89 @@ export function AssetLibraryPanel({
     }
   };
 
+  const canCurateLocally = process.env.NODE_ENV === "development";
+
+  const handleApproveAsset = async (asset: WillardAsset) => {
+    if (!canCurateLocally) {
+      window.alert("Approve is only available in local/dev mode.");
+      return;
+    }
+
+    const suggested = asset.suggestedCategory || asset.category || "image";
+    const input = window.prompt(
+      "Approve asset category (image, background, texture, paper, overlay, tape, sticker, frame, shape, mask, edge, callout, module-frame)",
+      suggested
+    );
+    if (!input) {
+      return;
+    }
+
+    const category = normalizeReviewCategory(input);
+    if (!category) {
+      window.alert("Invalid category.");
+      return;
+    }
+
+    setActionAssetId(asset.id);
+    try {
+      const response = await fetch("/api/willard/assets/approve", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          localPath: asset.pathname ?? asset.url,
+          sourceKind: asset.sourceKind,
+          category,
+        }),
+      });
+
+      const payload = await response.json().catch(() => null);
+      if (!response.ok) {
+        throw new Error(payload?.error ?? "Approve failed.");
+      }
+
+      await loadAssets();
+    } catch (error) {
+      window.alert(error instanceof Error ? error.message : "Approve failed.");
+    } finally {
+      setActionAssetId(null);
+    }
+  };
+
+  const handleDenyAsset = async (asset: WillardAsset) => {
+    if (!canCurateLocally) {
+      window.alert("Deny is only available in local/dev mode.");
+      return;
+    }
+
+    if (!window.confirm(`Deny and remove ${asset.filename}?`)) {
+      return;
+    }
+
+    setActionAssetId(asset.id);
+    try {
+      const response = await fetch("/api/willard/assets/deny", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          localPath: asset.pathname ?? asset.url,
+          sourceKind: asset.sourceKind,
+          reason: "Denied in local review queue",
+        }),
+      });
+
+      const payload = await response.json().catch(() => null);
+      if (!response.ok) {
+        throw new Error(payload?.error ?? "Deny failed.");
+      }
+
+      await loadAssets();
+    } catch (error) {
+      window.alert(error instanceof Error ? error.message : "Deny failed.");
+    } finally {
+      setActionAssetId(null);
+    }
+  };
+
   if (!isOpen) {
     return null;
   }
@@ -618,7 +720,58 @@ export function AssetLibraryPanel({
               </p>
             ) : null}
 
-            {!isLoading && filteredAssets.length > 0 ? (
+            {!isLoading && filteredAssets.length > 0 && selectedFilter === "needs-review" ? (
+              <div className={styles.assetActionStack}>
+                {filteredAssets.map((asset) => {
+                  const disabled = actionAssetId === asset.id;
+                  return (
+                    <div key={asset.id} className={styles.assetDetails}>
+                      <img src={asset.url} alt={asset.altText ?? asset.filename} className={styles.assetDetailsThumb} />
+                      <dl className={styles.assetDetailsList}>
+                        <div>
+                          <dt>Filename</dt>
+                          <dd>{asset.filename}</dd>
+                        </div>
+                        <div>
+                          <dt>Suggested category</dt>
+                          <dd>{asset.suggestedCategory ?? asset.category ?? "image"}</dd>
+                        </div>
+                        <div>
+                          <dt>Provider / license</dt>
+                          <dd>{asset.sourceNotes ?? "Unknown source"}</dd>
+                        </div>
+                        <div>
+                          <dt>Status</dt>
+                          <dd>{resolveAssetStatus(asset)}</dd>
+                        </div>
+                      </dl>
+                      <div className={styles.assetActionStack}>
+                        <button
+                          type="button"
+                          className={styles.assetPrimaryButton}
+                          disabled={disabled || !canCurateLocally}
+                          onClick={() => handleApproveAsset(asset)}
+                          title={!canCurateLocally ? "Local/dev only" : "Approve asset"}
+                        >
+                          {disabled ? "Working..." : "Approve"}
+                        </button>
+                        <button
+                          type="button"
+                          className={styles.assetDangerButton}
+                          disabled={disabled || !canCurateLocally}
+                          onClick={() => handleDenyAsset(asset)}
+                          title={!canCurateLocally ? "Local/dev only" : "Deny asset"}
+                        >
+                          {disabled ? "Working..." : "Deny"}
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : null}
+
+            {!isLoading && filteredAssets.length > 0 && selectedFilter !== "needs-review" ? (
               <div className={styles.assetGrid}>
                 {filteredAssets.map((asset) => {
                   const isSelected = asset.id === selectedAssetId;
@@ -632,7 +785,7 @@ export function AssetLibraryPanel({
                     >
                       <img src={asset.url} alt={asset.altText ?? asset.filename} className={styles.assetThumb} />
                       <span className={styles.assetCardName}>{asset.filename}</span>
-                      <span className={styles.assetCardMeta}>{asset.category}</span>
+                      <span className={styles.assetCardMeta}>{asset.category} · {resolveAssetStatus(asset)}</span>
                     </button>
                   );
                 })}
@@ -1138,7 +1291,17 @@ export function AssetLibraryPanel({
                   </div>
                   <div>
                     <dt>Status</dt>
-                    <dd>{selectedAsset.readonly ? "Read-only" : "Editable"}</dd>
+                    <dd>
+                      {resolveAssetStatus(selectedAsset)} · {selectedAsset.readonly ? "Read-only" : "Editable"}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt>Quality score</dt>
+                    <dd>{typeof selectedAsset.qualityScore === "number" ? selectedAsset.qualityScore : "Not scored"}</dd>
+                  </div>
+                  <div>
+                    <dt>Needs review</dt>
+                    <dd>{selectedAsset.reviewRequired ? "Yes" : "No"}</dd>
                   </div>
                 </dl>
               </div>
@@ -1151,6 +1314,28 @@ export function AssetLibraryPanel({
 }
 
 function matchesFilter(asset: WillardAsset, filterId: AssetFilterId, usedAssetIds: Set<string>): boolean {
+  const status = resolveAssetStatus(asset);
+
+  if (filterId === "approved") {
+    return status === "approved";
+  }
+
+  if (filterId === "needs-review") {
+    return asset.reviewRequired === true || status === "staging";
+  }
+
+  if (filterId === "demo-hidden") {
+    return status === "demo";
+  }
+
+  if (filterId === "denied") {
+    return status === "denied" || status === "rejected";
+  }
+
+  if (filterId === "rejected") {
+    return status === "rejected" || status === "denied";
+  }
+
   if (filterId === "all") {
     return true;
   }
@@ -1192,7 +1377,7 @@ function matchesFilter(asset: WillardAsset, filterId: AssetFilterId, usedAssetId
   }
 
   if (filterId === "textures") {
-    return asset.category === "texture";
+    return asset.category === "texture" || asset.category === "paper";
   }
 
   if (filterId === "stickers") {
@@ -1212,6 +1397,58 @@ function matchesFilter(asset: WillardAsset, filterId: AssetFilterId, usedAssetId
   }
 
   return true;
+}
+
+function resolveAssetStatus(asset: WillardAsset): WillardAssetStatus {
+  const normalized = (asset.status ?? "").trim().toLowerCase();
+  if (
+    normalized === "approved" ||
+    normalized === "staging" ||
+    normalized === "denied" ||
+    normalized === "rejected" ||
+    normalized === "demo"
+  ) {
+    return normalized;
+  }
+
+  if (asset.reviewRequired) {
+    return "staging";
+  }
+
+  if (asset.sourceKind === "uploaded") {
+    return "approved";
+  }
+
+  return "staging";
+}
+
+function normalizeReviewCategory(value: string): string {
+  const normalized = value.trim().toLowerCase();
+  const allowed = new Set([
+    "image",
+    "background",
+    "texture",
+    "paper",
+    "overlay",
+    "tape",
+    "sticker",
+    "frame",
+    "shape",
+    "mask",
+    "edge",
+    "callout",
+    "module-frame",
+  ]);
+  return allowed.has(normalized) ? normalized : "";
+}
+
+function assetTimestamp(asset: WillardAsset): number {
+  const primary = new Date(asset.createdAt).getTime();
+  if (Number.isFinite(primary)) {
+    return primary;
+  }
+  const fallback = new Date(asset.updatedAt).getTime();
+  return Number.isFinite(fallback) ? fallback : 0;
 }
 
 function formatBytes(bytes: number): string {

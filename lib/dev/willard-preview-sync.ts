@@ -2,6 +2,7 @@ import type { StyleTargetId } from "@/lib/dev/style-lab-inspect";
 import type {
   WillardBackgroundOverride,
   WillardImageOverride,
+  WillardOverlayDraft,
 } from "@/lib/dev/willard-assets";
 
 export const WILLARD_PREVIEW_CHANNEL_NAME = "willard-preview-channel";
@@ -14,6 +15,7 @@ export type WillardPreviewSnapshot = {
   variables: Record<string, string>;
   imageOverrides: WillardImageOverride[];
   backgroundOverrides: WillardBackgroundOverride[];
+  overlayDrafts: WillardOverlayDraft[];
   target: WillardPreviewTarget;
   inspectMode: boolean;
   updatedAt: number;
@@ -25,6 +27,7 @@ export type WillardPreviewMessage =
       variables: Record<string, string>;
       imageOverrides: WillardImageOverride[];
       backgroundOverrides: WillardBackgroundOverride[];
+      overlayDrafts: WillardOverlayDraft[];
     }
   | {
       type: "preview-target";
@@ -142,11 +145,15 @@ export function readWillardPreviewSnapshot(): WillardPreviewSnapshot | null {
     const backgroundOverrides = Array.isArray(parsed.backgroundOverrides)
       ? (parsed.backgroundOverrides as WillardBackgroundOverride[])
       : [];
+    const overlayDrafts = Array.isArray(parsed.overlayDrafts)
+      ? (parsed.overlayDrafts as WillardOverlayDraft[])
+      : [];
 
     return {
       variables,
       imageOverrides,
       backgroundOverrides,
+      overlayDrafts,
       target: normalizeWillardPreviewTarget(parsed.target),
       inspectMode: Boolean(parsed.inspectMode),
       updatedAt: typeof parsed.updatedAt === "number" ? parsed.updatedAt : Date.now(),

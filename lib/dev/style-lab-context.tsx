@@ -9,6 +9,7 @@ import {
 } from "react";
 import type {
   WillardAsset,
+  WillardAssetUsageSurface,
   WillardAssetUsage,
   WillardBackgroundOverride,
   WillardImageOverride,
@@ -17,6 +18,24 @@ import type {
 
 const STORAGE_KEY = "discovery-radio-style-lab";
 const ASSET_STORAGE_KEY = "discovery-radio-style-lab-assets";
+
+const LEGACY_DEMO_STARTER_ASSET_IDS = new Set([
+  "starter-overlay-tape-strip",
+  "starter-overlay-sticker-star-dot",
+  "starter-overlay-torn-paper",
+  "starter-overlay-frame-line",
+  "starter-overlay-scribble",
+  "starter-overlay-halftone-texture",
+]);
+
+const LEGACY_DEMO_STARTER_PATHS = new Set([
+  "/willard-overlays/tape-strip.svg",
+  "/willard-overlays/sticker-star-dot.svg",
+  "/willard-overlays/torn-paper.svg",
+  "/willard-overlays/frame-line.svg",
+  "/willard-overlays/scribble.svg",
+  "/willard-overlays/halftone-texture.svg",
+]);
 
 // Old kind-scoped prefixes from before the element isolation pass.
 // These are discarded on load as they are no longer meaningful.
@@ -48,6 +67,7 @@ interface StyleLabContextType {
   addOverlayDraft: (draft: WillardOverlayDraft) => void;
   updateOverlayDraft: (draftId: string, updates: Partial<WillardOverlayDraft>) => void;
   removeOverlayDraft: (draftId: string) => void;
+  clearOverlayDraftsForSurface: (surface: WillardAssetUsageSurface) => void;
   /** Remove only the style variables belonging to one inspect target (keys matching `targetId__*`). */
   resetTargetVariables: (targetId: string) => void;
   /** Clear all image overrides and their usage records. Does not delete assets. */
@@ -95,6 +115,8 @@ export function StyleLabProvider({ children }: { children: ReactNode }) {
       }
     }
 
+    let loadedAssets: WillardAsset[] = [];
+
     const assetStored = localStorage.getItem(ASSET_STORAGE_KEY);
     if (assetStored) {
       try {
@@ -108,7 +130,18 @@ export function StyleLabProvider({ children }: { children: ReactNode }) {
         };
 
         if (Array.isArray(parsed.assets)) {
-          setAssetsState(parsed.assets as WillardAsset[]);
+          loadedAssets = (parsed.assets as WillardAsset[]).filter((asset) => {
+            if (LEGACY_DEMO_STARTER_ASSET_IDS.has(asset.id)) {
+              return false;
+            }
+
+            const normalizedPath = String(asset.pathname ?? asset.url ?? "")
+              .trim()
+              .split(/[?#]/)[0]
+              .toLowerCase();
+
+            return !LEGACY_DEMO_STARTER_PATHS.has(normalizedPath);
+          });
         }
         if (typeof parsed.selectedAssetId === "string" || parsed.selectedAssetId === null) {
           setSelectedAssetId(parsed.selectedAssetId as string | null);
@@ -129,6 +162,8 @@ export function StyleLabProvider({ children }: { children: ReactNode }) {
         console.error("Failed to parse style lab asset settings:", e);
       }
     }
+
+    setAssetsState(loadedAssets);
 
     setIsLoaded(true);
   }, []);
@@ -232,6 +267,10 @@ export function StyleLabProvider({ children }: { children: ReactNode }) {
     setOverlayDrafts((prev) => prev.filter((item) => item.id !== draftId));
   };
 
+  const clearOverlayDraftsForSurface = (surface: WillardAssetUsageSurface) => {
+    setOverlayDrafts((prev) => prev.filter((item) => item.surface !== surface));
+  };
+
   const resetTargetVariables = (targetId: string) => {
     const prefix = `${targetId}__`;
     setVariables((prev) => {
@@ -290,6 +329,7 @@ export function StyleLabProvider({ children }: { children: ReactNode }) {
         addOverlayDraft,
         updateOverlayDraft,
         removeOverlayDraft,
+        clearOverlayDraftsForSurface,
         resetTargetVariables,
         clearAllImageOverrides,
         clearAllBackgroundOverrides,

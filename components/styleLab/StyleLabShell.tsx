@@ -15,6 +15,7 @@ import {
 } from "@/lib/dev/willard-preview-sync";
 import { AssetLibraryPanel } from "./AssetLibraryPanel";
 import { ControlPanel } from "./ControlPanel";
+import { LayersPanel } from "./LayersPanel";
 import { PreviewArea, type PreviewAreaHandle } from "./PreviewArea";
 import styles from "./styleLab.module.css";
 
@@ -58,6 +59,7 @@ function StyleLabShellInner({ canApplyToSource = false }: StyleLabShellProps) {
   const [previewNotice, setPreviewNotice] = useState<string | null>(null);
   const [isApplying, setIsApplying] = useState(false);
   const [isAssetLibraryOpen, setIsAssetLibraryOpen] = useState(false);
+  const [isLayersOpen, setIsLayersOpen] = useState(false);
   const [applyStatus, setApplyStatus] = useState<ApplyStatus>(null);
   const previewRef = useRef<PreviewAreaHandle>(null);
   const popoutWindowRef = useRef<Window | null>(null);
@@ -67,6 +69,7 @@ function StyleLabShellInner({ canApplyToSource = false }: StyleLabShellProps) {
     variables,
     imageOverrides,
     backgroundOverrides,
+    overlayDrafts,
     isLoaded,
   } = useStyleLab();
 
@@ -138,6 +141,7 @@ function StyleLabShellInner({ canApplyToSource = false }: StyleLabShellProps) {
         variables,
         imageOverrides,
         backgroundOverrides,
+        overlayDrafts,
         target: safeTarget,
         inspectMode,
         updatedAt: Date.now(),
@@ -149,6 +153,7 @@ function StyleLabShellInner({ canApplyToSource = false }: StyleLabShellProps) {
       variables,
       imageOverrides,
       backgroundOverrides,
+      overlayDrafts,
     });
     postWillardPreviewMessage(previewChannelRef.current, {
       type: "preview-target",
@@ -277,6 +282,7 @@ function StyleLabShellInner({ canApplyToSource = false }: StyleLabShellProps) {
       variables,
       imageOverrides,
       backgroundOverrides,
+      overlayDrafts,
       target: safeTarget,
       inspectMode,
       updatedAt: Date.now(),
@@ -287,6 +293,7 @@ function StyleLabShellInner({ canApplyToSource = false }: StyleLabShellProps) {
       variables,
       imageOverrides,
       backgroundOverrides,
+      overlayDrafts,
     });
     postWillardPreviewMessage(previewChannelRef.current, {
       type: "preview-target",
@@ -300,6 +307,7 @@ function StyleLabShellInner({ canApplyToSource = false }: StyleLabShellProps) {
     variables,
     imageOverrides,
     backgroundOverrides,
+    overlayDrafts,
     activeTarget,
     inspectMode,
     isLoaded,
@@ -418,18 +426,27 @@ function StyleLabShellInner({ canApplyToSource = false }: StyleLabShellProps) {
             >
               Asset Library
             </button>
+            <button
+              onClick={() => setIsLayersOpen(true)}
+              className={styles.toolbarButton}
+              title="Open overlay layers"
+            >
+              Layers
+            </button>
           </div>
         </div>
 
         <div className={styles.toolbarMeta}>
-          {changedTargetCount > 0 || imageOverrides.length > 0 || backgroundOverrides.length > 0 ? (
+          {changedTargetCount > 0 || imageOverrides.length > 0 || backgroundOverrides.length > 0 || overlayDrafts.length > 0 ? (
             <p className={styles.changesSummary}>
               Changed:{" "}
               {changedTargetCount > 0 ? `${changedTargetCount} style target${changedTargetCount !== 1 ? "s" : ""}` : null}
-              {changedTargetCount > 0 && (imageOverrides.length > 0 || backgroundOverrides.length > 0) ? " · " : null}
+              {changedTargetCount > 0 && (imageOverrides.length > 0 || backgroundOverrides.length > 0 || overlayDrafts.length > 0) ? " · " : null}
               {imageOverrides.length > 0 ? `${imageOverrides.length} image override${imageOverrides.length !== 1 ? "s" : ""}` : null}
-              {imageOverrides.length > 0 && backgroundOverrides.length > 0 ? " · " : null}
+              {imageOverrides.length > 0 && (backgroundOverrides.length > 0 || overlayDrafts.length > 0) ? " · " : null}
               {backgroundOverrides.length > 0 ? `${backgroundOverrides.length} background override${backgroundOverrides.length !== 1 ? "s" : ""}` : null}
+              {backgroundOverrides.length > 0 && overlayDrafts.length > 0 ? " · " : null}
+              {overlayDrafts.length > 0 ? `${overlayDrafts.length} overlay layer${overlayDrafts.length !== 1 ? "s" : ""}` : null}
             </p>
           ) : null}
           {canApplyToSource ? (
@@ -492,6 +509,12 @@ function StyleLabShellInner({ canApplyToSource = false }: StyleLabShellProps) {
         isOpen={isAssetLibraryOpen}
         onClose={() => setIsAssetLibraryOpen(false)}
         activeStyleTarget={activeStyleTarget}
+        activeSurface={normalizeWillardPreviewTarget(activeTarget)}
+      />
+
+      <LayersPanel
+        isOpen={isLayersOpen}
+        onClose={() => setIsLayersOpen(false)}
         activeSurface={normalizeWillardPreviewTarget(activeTarget)}
       />
     </div>

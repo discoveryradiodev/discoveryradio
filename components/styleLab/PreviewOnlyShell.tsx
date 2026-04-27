@@ -4,6 +4,10 @@ import { useEffect, useRef, useState } from "react";
 import { STYLE_LAB_DEFAULTS } from "@/lib/dev/style-lab-defaults";
 import { buildTargetStylesheet } from "@/lib/dev/style-lab-css";
 import { applyImageOverridesToDocument } from "@/lib/dev/style-lab-image-runtime";
+import {
+  applyOverlayDraftsToDocument,
+  removeOverlayDraftsFromDocument,
+} from "@/lib/dev/style-lab-overlay-runtime";
 import { injectStyleLabVariables, removeStyleLabVariables } from "@/lib/dev/style-lab-inject";
 import {
   attachInspectListeners,
@@ -27,6 +31,7 @@ import {
 import type {
   WillardBackgroundOverride,
   WillardImageOverride,
+  WillardOverlayDraft,
 } from "@/lib/dev/willard-assets";
 import styles from "./styleLab.module.css";
 
@@ -45,6 +50,9 @@ export function PreviewOnlyShell({ initialTarget }: PreviewOnlyShellProps) {
   );
   const [backgroundOverrides, setBackgroundOverrides] = useState<WillardBackgroundOverride[]>(
     snapshot?.backgroundOverrides ?? []
+  );
+  const [overlayDrafts, setOverlayDrafts] = useState<WillardOverlayDraft[]>(
+    snapshot?.overlayDrafts ?? []
   );
   const [activeTarget, setActiveTarget] = useState<WillardPreviewTarget>(
     snapshot?.target ?? initialTarget
@@ -108,6 +116,7 @@ export function PreviewOnlyShell({ initialTarget }: PreviewOnlyShellProps) {
         setVariables(message.variables ?? {});
         setImageOverrides(message.imageOverrides ?? []);
         setBackgroundOverrides(message.backgroundOverrides ?? []);
+        setOverlayDrafts(message.overlayDrafts ?? []);
         return;
       }
 
@@ -152,6 +161,7 @@ export function PreviewOnlyShell({ initialTarget }: PreviewOnlyShellProps) {
       setVariables(latest.variables);
       setImageOverrides(latest.imageOverrides ?? []);
       setBackgroundOverrides(latest.backgroundOverrides ?? []);
+      setOverlayDrafts(latest.overlayDrafts ?? []);
       setActiveTarget(latest.target);
       setInspectMode(latest.inspectMode);
     };
@@ -179,6 +189,7 @@ export function PreviewOnlyShell({ initialTarget }: PreviewOnlyShellProps) {
         }
         if (doc) {
           applyImageOverridesToDocument(doc, imageOverrides);
+          applyOverlayDraftsToDocument(doc, getSurfaceOverlayDrafts(overlayDrafts, activeTarget));
         }
         attachInspectIfNeeded(doc);
       } catch (error) {
@@ -197,7 +208,7 @@ export function PreviewOnlyShell({ initialTarget }: PreviewOnlyShellProps) {
         clearSelection(doc);
       }
     };
-  }, [activeTarget, inspectMode, variables, imageOverrides, backgroundOverrides]);
+  }, [activeTarget, inspectMode, variables, imageOverrides, backgroundOverrides, overlayDrafts]);
 
   useEffect(() => {
     const doc = iframeRef.current?.contentDocument;
@@ -208,7 +219,8 @@ export function PreviewOnlyShell({ initialTarget }: PreviewOnlyShellProps) {
     injectStyleLabVariables(doc.documentElement, getLegacyVars(variables));
     injectComprehensiveStylesheet(doc, RUNTIME_STYLE_ID, variables, backgroundOverrides);
     applyImageOverridesToDocument(doc, imageOverrides);
-  }, [variables, imageOverrides, backgroundOverrides]);
+    applyOverlayDraftsToDocument(doc, getSurfaceOverlayDrafts(overlayDrafts, activeTarget));
+  }, [variables, imageOverrides, backgroundOverrides, overlayDrafts, activeTarget]);
 
   useEffect(() => {
     const doc = iframeRef.current?.contentDocument;
@@ -251,6 +263,7 @@ export function PreviewOnlyShell({ initialTarget }: PreviewOnlyShellProps) {
         if (styleEl) {
           styleEl.remove();
         }
+        removeOverlayDraftsFromDocument(doc);
       } catch {
         // ignore cleanup failures on pop-out close
       }
@@ -289,6 +302,10 @@ export function PreviewOnlyShell({ initialTarget }: PreviewOnlyShellProps) {
       </footer>
     </div>
   );
+}
+
+function getSurfaceOverlayDrafts(drafts: WillardOverlayDraft[], surface: WillardPreviewTarget) {
+  return drafts.filter((draft) => draft.surface === surface);
 }
 
 function getLegacyVars(variables: Record<string, string>): Record<string, string> {

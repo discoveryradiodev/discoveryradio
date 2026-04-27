@@ -1,0 +1,26 @@
+{
+  "version": 2,
+  "assets": [
+    {
+      "sourceUrl": "https://ambientcg.com/view?id=Cardboard001",
+      "author": "ambientCG",
+      "license": "CC0",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "provider": "ambientcg",
+      "originalFilename": "Cardboard001.png",
+      "localPath": "/willard-assets/paper/cardboard001.png",
+      "importedAt": "2026-04-27T21:29:19.848Z",
+      "query": "torn paper",
+      "category": "texture",
+      "status": "staging",
+      "qualityScore": 22,
+      "reviewRequired": true,
+      "rejectionReason": "tiny dimensions for usable texture",
+      "width": 64,
+      "height": 64,
+      "hasAlpha": true,
+      "dominantKind": "texture",
+      "curatorNotes": "Needs larger source before approval."
+    }
+  ]
+}

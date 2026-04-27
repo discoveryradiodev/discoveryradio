@@ -14,10 +14,26 @@ export type WillardAssetCategory =
   | "homepage-image"
   | "background"
   | "texture"
+  | "paper"
   | "sticker"
   | "tape"
   | "frame"
-  | "overlay";
+  | "overlay"
+  | "shape"
+  | "mask"
+  | "edge"
+  | "callout"
+  | "module-frame";
+
+export type WillardAssetStatus = "approved" | "staging" | "denied" | "rejected" | "demo";
+
+export type WillardAssetDominantKind =
+  | "texture"
+  | "transparent-overlay"
+  | "photo"
+  | "illustration"
+  | "shape"
+  | "unknown";
 
 export type WillardAsset = {
   id: string;
@@ -31,7 +47,19 @@ export type WillardAsset = {
   size: number;
   width?: number;
   height?: number;
+  hasAlpha?: boolean;
   category: WillardAssetCategory;
+  suggestedCategory?: WillardAssetCategory;
+  status?: WillardAssetStatus;
+  qualityScore?: number;
+  reviewRequired?: boolean;
+  rejectionReason?: string;
+  dominantKind?: WillardAssetDominantKind;
+  curatorNotes?: string;
+  approvedAt?: string;
+  deniedAt?: string;
+  approvedBy?: string;
+  deniedBy?: string;
   altText?: string;
   caption?: string;
   credit?: string;
@@ -152,10 +180,16 @@ const CATEGORY_SET: ReadonlySet<WillardAssetCategory> = new Set([
   "homepage-image",
   "background",
   "texture",
+  "paper",
   "sticker",
   "tape",
   "frame",
   "overlay",
+  "shape",
+  "mask",
+  "edge",
+  "callout",
+  "module-frame",
 ]);
 
 function createId(prefix: string): string {
