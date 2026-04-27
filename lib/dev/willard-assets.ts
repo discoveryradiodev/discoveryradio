@@ -77,7 +77,7 @@ export type WillardImageOverride = {
   assetId: string;
   url: string;
   altText?: string;
-  objectFit: string;
+  objectFit: WillardImageObjectFit;
   objectPositionX: number;
   objectPositionY: number;
   width: number;
@@ -92,9 +92,25 @@ export type WillardImageOverride = {
   zIndex: number;
 };
 
+export type WillardImageObjectFit =
+  | "cover"
+  | "contain"
+  | "fill"
+  | "none"
+  | "scale-down";
+
 export type WillardBackgroundSize = "cover" | "contain" | "auto";
 export type WillardBackgroundPosition = "center" | "top" | "bottom" | "left" | "right";
 export type WillardBackgroundRepeat = "no-repeat" | "repeat";
+export type WillardBackgroundBlendMode =
+  | "normal"
+  | "multiply"
+  | "screen"
+  | "overlay"
+  | "darken"
+  | "lighten"
+  | "soft-light"
+  | "hard-light";
 
 export type WillardBackgroundOverride = {
   targetId: string;
@@ -103,7 +119,7 @@ export type WillardBackgroundOverride = {
   size: WillardBackgroundSize;
   position: WillardBackgroundPosition;
   repeat: WillardBackgroundRepeat;
-  blendMode?: string;
+  blendMode?: WillardBackgroundBlendMode;
 };
 
 export type WillardOverlayPlacementMode = "anchor" | "free";

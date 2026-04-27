@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { StyleLabProvider } from "@/lib/dev/style-lab-context";
 import { useStyleLab } from "@/lib/dev/style-lab-context";
 import { isStyleTargetId, type StyleTargetId } from "@/lib/dev/style-lab-inspect";
@@ -69,6 +69,17 @@ function StyleLabShellInner({ canApplyToSource = false }: StyleLabShellProps) {
     backgroundOverrides,
     isLoaded,
   } = useStyleLab();
+
+  const changedTargetCount = useMemo(() => {
+    const seen = new Set<string>();
+    for (const k of Object.keys(variables)) {
+      const sep = k.indexOf("__");
+      if (sep !== -1) {
+        seen.add(k.slice(0, sep));
+      }
+    }
+    return seen.size;
+  }, [variables]);
 
   const showDockedPreview =
     previewDisplayMode === "docked" ||
@@ -172,7 +183,11 @@ function StyleLabShellInner({ canApplyToSource = false }: StyleLabShellProps) {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ variables }),
+        body: JSON.stringify({
+          variables,
+          backgroundOverrides,
+          imageOverrides,
+        }),
       });
 
       const payload = (await response.json().catch(() => null)) as {
@@ -407,6 +422,16 @@ function StyleLabShellInner({ canApplyToSource = false }: StyleLabShellProps) {
         </div>
 
         <div className={styles.toolbarMeta}>
+          {changedTargetCount > 0 || imageOverrides.length > 0 || backgroundOverrides.length > 0 ? (
+            <p className={styles.changesSummary}>
+              Changed:{" "}
+              {changedTargetCount > 0 ? `${changedTargetCount} style target${changedTargetCount !== 1 ? "s" : ""}` : null}
+              {changedTargetCount > 0 && (imageOverrides.length > 0 || backgroundOverrides.length > 0) ? " · " : null}
+              {imageOverrides.length > 0 ? `${imageOverrides.length} image override${imageOverrides.length !== 1 ? "s" : ""}` : null}
+              {imageOverrides.length > 0 && backgroundOverrides.length > 0 ? " · " : null}
+              {backgroundOverrides.length > 0 ? `${backgroundOverrides.length} background override${backgroundOverrides.length !== 1 ? "s" : ""}` : null}
+            </p>
+          ) : null}
           {canApplyToSource ? (
             <p className={styles.applyHint}>
               Local apply writes the current Willard state into the feed source file.

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { WILLARD_IMAGE_OVERRIDES } from "@/app/the-feed/willard.generated.images";
 import type { WeeklyBlogPost } from "@/types/feed";
 import styles from "./feed.module.css";
 
@@ -7,6 +8,7 @@ type Props = {
 };
 
 export default function WeeklyBlogCard({ post }: Props) {
+  const imageOverride = WILLARD_IMAGE_OVERRIDES["homepage-blog-image"];
   const publishedDate = new Date(post.publishedAt).toLocaleDateString("en-US", {
     year: "numeric",
     month: "long",
@@ -18,8 +20,8 @@ export default function WeeklyBlogCard({ post }: Props) {
       {post.coverImageUrl ? (
         <div className={styles.blogImageWrap}>
           <img
-            src={post.coverImageUrl}
-            alt={post.coverImageAlt || post.title}
+            src={imageOverride?.url ?? post.coverImageUrl}
+            alt={(imageOverride?.altText ?? post.coverImageAlt) || post.title}
             className={styles.blogImage}
             data-style-target="homepage-blog-image"
           />

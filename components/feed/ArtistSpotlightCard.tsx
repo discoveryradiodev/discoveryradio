@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { CSSProperties } from "react";
+import { WILLARD_IMAGE_OVERRIDES } from "@/app/the-feed/willard.generated.images";
 import type { ArtistSpotlight } from "@/types/feed";
 import styles from "./feed.module.css";
 
@@ -8,12 +9,13 @@ type Props = {
 };
 
 export default function ArtistSpotlightCard({ spotlight }: Props) {
+  const imageOverride = WILLARD_IMAGE_OVERRIDES["spotlight-image"];
   const artistMeta = [spotlight.artistLocation, spotlight.artistGenre]
     .filter(Boolean)
     .join(" | ");
 
   const spotlightImageStyle = {
-    "--spotlight-shape-url": `url("${spotlight.headshotUrl}")`,
+    "--spotlight-shape-url": `url("${imageOverride?.url ?? spotlight.headshotUrl}")`,
   } as CSSProperties;
 
   return (
@@ -25,8 +27,8 @@ export default function ArtistSpotlightCard({ spotlight }: Props) {
       </div>
       <div className={styles.spotlightBody}>
          <img
-           src={spotlight.headshotUrl}
-           alt={spotlight.headshotAlt}
+           src={imageOverride?.url ?? spotlight.headshotUrl}
+           alt={imageOverride?.altText ?? spotlight.headshotAlt}
            className={styles.spotlightHeadshot}
            data-style-target="spotlight-image"
            style={spotlightImageStyle}

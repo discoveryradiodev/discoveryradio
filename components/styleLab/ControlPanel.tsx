@@ -30,7 +30,7 @@ export function ControlPanel({
   onClose,
   onReset,
 }: ControlPanelProps) {
-  const { updateTargetVariable, getTargetValue } = useStyleLab();
+  const { updateTargetVariable, getTargetValue, resetTargetVariables } = useStyleLab();
   const spotlightGroupRef = useRef<HTMLDivElement>(null);
   const articleGroupRef = useRef<HTMLDivElement>(null);
   const blogGroupRef = useRef<HTMLDivElement>(null);
@@ -508,12 +508,22 @@ export function ControlPanel({
       </div>
 
       <div className={styles.panelFooter}>
-        <button
-          onClick={onReset}
-          className={styles.resetButton}
-        >
-          Reset to Defaults
-        </button>
+        <div className={styles.safetyResetGroup}>
+          <button
+            onClick={() => resetTargetVariables(activeStyleTarget)}
+            className={styles.resetSelectedButton}
+            title={`Remove only style variables for ${STYLE_TARGET_REGISTRY[activeStyleTarget].label}. Does not remove asset overrides.`}
+          >
+            Reset selected styles
+          </button>
+          <button
+            onClick={onReset}
+            className={styles.resetButton}
+            title="Reset ALL Willard style variables back to defaults"
+          >
+            Reset all styles
+          </button>
+        </div>
         <p className={styles.footerNote}>
           Changes saved to localStorage automatically.
         </p>

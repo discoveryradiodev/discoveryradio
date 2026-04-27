@@ -48,6 +48,12 @@ interface StyleLabContextType {
   addOverlayDraft: (draft: WillardOverlayDraft) => void;
   updateOverlayDraft: (draftId: string, updates: Partial<WillardOverlayDraft>) => void;
   removeOverlayDraft: (draftId: string) => void;
+  /** Remove only the style variables belonging to one inspect target (keys matching `targetId__*`). */
+  resetTargetVariables: (targetId: string) => void;
+  /** Clear all image overrides and their usage records. Does not delete assets. */
+  clearAllImageOverrides: () => void;
+  /** Clear all background overrides and their usage records. Does not delete assets. */
+  clearAllBackgroundOverrides: () => void;
   resetToDefaults: () => void;
   clearSettings: () => void;
   isLoaded: boolean;
@@ -226,6 +232,29 @@ export function StyleLabProvider({ children }: { children: ReactNode }) {
     setOverlayDrafts((prev) => prev.filter((item) => item.id !== draftId));
   };
 
+  const resetTargetVariables = (targetId: string) => {
+    const prefix = `${targetId}__`;
+    setVariables((prev) => {
+      const next: Record<string, string> = {};
+      for (const [k, v] of Object.entries(prev)) {
+        if (!k.startsWith(prefix)) {
+          next[k] = v;
+        }
+      }
+      return next;
+    });
+  };
+
+  const clearAllImageOverrides = () => {
+    setImageOverrides([]);
+    setAssetUsages((prev) => prev.filter((u) => u.usageType !== "selected-target-override"));
+  };
+
+  const clearAllBackgroundOverrides = () => {
+    setBackgroundOverrides([]);
+    setAssetUsages((prev) => prev.filter((u) => u.usageType !== "background"));
+  };
+
   const resetToDefaults = () => {
     setVariables({});
     localStorage.removeItem(STORAGE_KEY);
@@ -261,6 +290,9 @@ export function StyleLabProvider({ children }: { children: ReactNode }) {
         addOverlayDraft,
         updateOverlayDraft,
         removeOverlayDraft,
+        resetTargetVariables,
+        clearAllImageOverrides,
+        clearAllBackgroundOverrides,
         resetToDefaults,
         clearSettings,
         isLoaded,

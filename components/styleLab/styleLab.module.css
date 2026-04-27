@@ -847,6 +847,69 @@
   gap: 0.45rem;
 }
 
+.assetOverrideControls {
+  margin-top: 0.2rem;
+  padding: 0.5rem;
+  border: 1px solid #334155;
+  border-radius: 0.36rem;
+  background: #0f1419;
+  display: flex;
+  flex-direction: column;
+  gap: 0.38rem;
+}
+
+.assetControlRow {
+  display: grid;
+  grid-template-columns: minmax(80px, 96px) minmax(0, 1fr) auto;
+  gap: 0.45rem;
+  align-items: center;
+}
+
+.assetControlLabel {
+  margin: 0;
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #94a3b8;
+}
+
+.assetCompactRange,
+.assetCompactSelect,
+.assetCompactNumber,
+.assetCompactColor {
+  width: 100%;
+  min-width: 0;
+}
+
+.assetCompactRange {
+  accent-color: #3b82f6;
+}
+
+.assetCompactSelect,
+.assetCompactNumber,
+.assetCompactColor {
+  padding: 0.3rem 0.45rem;
+  border: 1px solid #475569;
+  border-radius: 0.28rem;
+  background: #111827;
+  color: #e2e8f0;
+  font-size: 0.72rem;
+}
+
+.assetCompactColor {
+  height: 1.75rem;
+  padding: 0.1rem;
+}
+
+.assetValueLabel {
+  min-width: 3.7rem;
+  text-align: right;
+  font-size: 0.68rem;
+  color: #cbd5e1;
+  font-variant-numeric: tabular-nums;
+}
+
 .assetListHeader {
   display: flex;
   align-items: center;
@@ -892,6 +955,80 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+/* Safety / Reset controls */
+
+.safetyResetGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.resetSelectedButton {
+  padding: 0.5rem 1rem;
+  background: #92400e;
+  border: 1px solid #b45309;
+  color: #fef3c7;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.resetSelectedButton:hover {
+  background: #b45309;
+  border-color: #d97706;
+}
+
+.resetSelectedButton:active {
+  background: #d97706;
+  transform: scale(0.98);
+}
+
+/* Changes summary strip in toolbar */
+
+.changesSummary {
+  margin: 0;
+  font-size: 0.75rem;
+  color: #a3e635;
+  font-weight: 500;
+}
+
+/* Override note beneath remove buttons */
+
+.overrideNote {
+  margin: 0;
+  font-size: 0.7rem;
+  color: #64748b;
+}
+
+/* Danger/bulk-reset button in Asset Library */
+
+.assetDangerButton {
+  padding: 0.45rem 0.85rem;
+  background: #1e293b;
+  border: 1px solid #ef4444;
+  color: #fca5a5;
+  border-radius: 0.375rem;
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  width: 100%;
+  text-align: left;
+}
+
+.assetDangerButton:hover:not(:disabled) {
+  background: #450a0a;
+  border-color: #f87171;
+  color: #fecaca;
+}
+
+.assetDangerButton:disabled {
+  opacity: 0.38;
+  cursor: default;
 }
 
 .assetCardName {

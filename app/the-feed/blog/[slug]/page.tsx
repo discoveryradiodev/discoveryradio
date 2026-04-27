@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { CSSProperties } from "react";
+import { WILLARD_IMAGE_OVERRIDES } from "@/app/the-feed/willard.generated.images";
 import { ArticleBlocks } from "@/components/feed/ArticleBlocks";
 import { getWeeklyBlogArticleBlocks } from "@/lib/feed/get-article-blocks";
 import { getArchivedWeeklyBlogBySlug, getWeeklyBlogBySlug } from "@/lib/feed/get-feed-data";
@@ -27,8 +28,9 @@ export default async function BlogPage({ params }: BlogPageProps) {
     month: "long",
     day: "numeric",
   });
+  const imageOverride = WILLARD_IMAGE_OVERRIDES["blog-image"];
   const blogImageStyle = {
-    "--blog-article-shape-url": `url("${blogPost.coverImageUrl ?? ""}")`,
+    "--blog-article-shape-url": `url("${imageOverride?.url ?? blogPost.coverImageUrl ?? ""}")`,
   } as CSSProperties;
 
   return (
@@ -55,8 +57,8 @@ export default async function BlogPage({ params }: BlogPageProps) {
           <section className={`${styles.module} ${styles.bodyModule}`} data-style-target="blog-body">
             <div className={styles.bodyGroup}>
               <img
-                src={blogPost.coverImageUrl ?? "/placeholder-blog-cover.jpg"}
-                alt={blogPost.coverImageAlt ?? "Weekly blog cover placeholder"}
+                src={imageOverride?.url ?? blogPost.coverImageUrl ?? "/placeholder-blog-cover.jpg"}
+                alt={imageOverride?.altText ?? blogPost.coverImageAlt ?? "Weekly blog cover placeholder"}
                 className={styles.image}
                 data-style-target="blog-image"
                 style={blogImageStyle}

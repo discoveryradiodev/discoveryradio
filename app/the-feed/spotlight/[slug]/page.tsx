@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { CSSProperties } from "react";
+import { WILLARD_IMAGE_OVERRIDES } from "@/app/the-feed/willard.generated.images";
 import { ArticleBlocks } from "@/components/feed/ArticleBlocks";
 import { getArtistSpotlightArticleBlocks } from "@/lib/feed/get-article-blocks";
 import { getArchivedArtistSpotlightBySlug, getArtistSpotlightBySlug } from "@/lib/feed/get-feed-data";
@@ -17,8 +18,9 @@ export default async function SpotlightPage({ params }: SpotlightPageProps) {
   const liveSpotlight = await getArtistSpotlightBySlug(slug);
   const spotlight = liveSpotlight ?? (await getArchivedArtistSpotlightBySlug(slug));
   const blocks = await getArtistSpotlightArticleBlocks(slug);
+  const imageOverride = WILLARD_IMAGE_OVERRIDES["article-image"];
   const spotlightImageStyle = {
-    "--spotlight-article-shape-url": `url("${spotlight?.headshotUrl ?? ""}")`,
+    "--spotlight-article-shape-url": `url("${imageOverride?.url ?? spotlight?.headshotUrl ?? ""}")`,
   } as CSSProperties;
 
   if (spotlight === null || blocks === null) {
@@ -58,8 +60,8 @@ export default async function SpotlightPage({ params }: SpotlightPageProps) {
           <section className={`${styles.module} ${styles.bodyModule}`} data-style-target="article-body">
             <div className={styles.bodyGroup}>
               <img
-                src={spotlight.headshotUrl}
-                alt={spotlight.headshotAlt}
+                src={imageOverride?.url ?? spotlight.headshotUrl}
+                alt={imageOverride?.altText ?? spotlight.headshotAlt}
                 className={styles.image}
                 data-style-target="article-image"
                 style={spotlightImageStyle}

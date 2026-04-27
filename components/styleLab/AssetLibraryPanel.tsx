@@ -5,9 +5,11 @@ import { useStyleLab } from "@/lib/dev/style-lab-context";
 import {
   createUsageId,
   type WillardAsset,
+  type WillardBackgroundBlendMode,
   type WillardBackgroundPosition,
   type WillardBackgroundRepeat,
   type WillardBackgroundSize,
+  type WillardImageObjectFit,
 } from "@/lib/dev/willard-assets";
 import {
   STYLE_TARGET_REGISTRY,
@@ -79,6 +81,25 @@ const CATEGORY_OPTIONS = [
   { value: "overlay", label: "Overlays" },
 ] as const;
 
+const IMAGE_OBJECT_FIT_OPTIONS: WillardImageObjectFit[] = [
+  "cover",
+  "contain",
+  "fill",
+  "none",
+  "scale-down",
+];
+
+const BACKGROUND_BLEND_MODE_OPTIONS: WillardBackgroundBlendMode[] = [
+  "normal",
+  "multiply",
+  "screen",
+  "overlay",
+  "darken",
+  "lighten",
+  "soft-light",
+  "hard-light",
+];
+
 export function AssetLibraryPanel({
   isOpen,
   onClose,
@@ -100,6 +121,8 @@ export function AssetLibraryPanel({
     backgroundOverrides,
     setBackgroundOverride,
     removeBackgroundOverride,
+    clearAllImageOverrides,
+    clearAllBackgroundOverrides,
   } = useStyleLab();
 
   const [isLoading, setIsLoading] = useState(false);
@@ -110,6 +133,7 @@ export function AssetLibraryPanel({
   const [backgroundSize, setBackgroundSize] = useState<WillardBackgroundSize>("cover");
   const [backgroundPosition, setBackgroundPosition] = useState<WillardBackgroundPosition>("center");
   const [backgroundRepeat, setBackgroundRepeat] = useState<WillardBackgroundRepeat>("no-repeat");
+  const [backgroundBlendMode, setBackgroundBlendMode] = useState<WillardBackgroundBlendMode>("normal");
 
   const [uploadFile, setUploadFile] = useState<File | null>(null);
   const [uploadCategory, setUploadCategory] = useState("image");
@@ -161,13 +185,47 @@ export function AssetLibraryPanel({
       setBackgroundSize("cover");
       setBackgroundPosition("center");
       setBackgroundRepeat("no-repeat");
+      setBackgroundBlendMode("normal");
       return;
     }
 
     setBackgroundSize(selectedBackgroundOverride.size);
     setBackgroundPosition(selectedBackgroundOverride.position);
     setBackgroundRepeat(selectedBackgroundOverride.repeat);
+    setBackgroundBlendMode(selectedBackgroundOverride.blendMode ?? "normal");
   }, [selectedBackgroundOverride]);
+
+  useEffect(() => {
+    if (!activeStyleTarget || activeTargetKind !== "container" || !selectedBackgroundOverride) {
+      return;
+    }
+
+    if (
+      selectedBackgroundOverride.size === backgroundSize &&
+      selectedBackgroundOverride.position === backgroundPosition &&
+      selectedBackgroundOverride.repeat === backgroundRepeat &&
+      (selectedBackgroundOverride.blendMode ?? "normal") === backgroundBlendMode
+    ) {
+      return;
+    }
+
+    setBackgroundOverride({
+      ...selectedBackgroundOverride,
+      size: backgroundSize,
+      position: backgroundPosition,
+      repeat: backgroundRepeat,
+      blendMode: backgroundBlendMode,
+    });
+  }, [
+    activeStyleTarget,
+    activeTargetKind,
+    selectedBackgroundOverride,
+    backgroundSize,
+    backgroundPosition,
+    backgroundRepeat,
+    backgroundBlendMode,
+    setBackgroundOverride,
+  ]);
 
   const loadAssets = async () => {
     setIsLoading(true);
@@ -244,7 +302,7 @@ export function AssetLibraryPanel({
       objectPositionX: 50,
       objectPositionY: 50,
       width: 100,
-      maxWidth: 100,
+      maxWidth: 1200,
       opacity: 1,
       borderRadius: 0,
       borderWidth: 0,
@@ -252,7 +310,7 @@ export function AssetLibraryPanel({
       xOffset: 0,
       yOffset: 0,
       rotation: 0,
-      zIndex: 1,
+      zIndex: 0,
     });
     addAssetUsage({
       id: createUsageId(),
@@ -286,7 +344,7 @@ export function AssetLibraryPanel({
       size: backgroundSize,
       position: backgroundPosition,
       repeat: backgroundRepeat,
-      blendMode: "normal",
+      blendMode: backgroundBlendMode,
     });
     addAssetUsage({
       id: createUsageId(),
@@ -305,6 +363,32 @@ export function AssetLibraryPanel({
 
     removeBackgroundOverride(activeStyleTarget);
     clearUsagesForTarget("background");
+  };
+
+  const updateSelectedImageOverride = (updates: {
+    objectFit?: WillardImageObjectFit;
+    objectPositionX?: number;
+    objectPositionY?: number;
+    width?: number;
+    maxWidth?: number;
+    opacity?: number;
+    borderRadius?: number;
+    borderWidth?: number;
+    borderColor?: string;
+    xOffset?: number;
+    yOffset?: number;
+    rotation?: number;
+    zIndex?: number;
+  }) => {
+    if (!activeStyleTarget || activeTargetKind !== "image" || !selectedImageOverride) {
+      return;
+    }
+
+    setImageOverride({
+      ...selectedImageOverride,
+      ...updates,
+      targetId: activeStyleTarget,
+    });
   };
 
   const handleUploadSubmit = async (event: FormEvent<HTMLFormElement>) => {
@@ -594,17 +678,286 @@ export function AssetLibraryPanel({
                   className={styles.assetSecondaryButton}
                   disabled={!selectedImageOverride}
                   onClick={handleRemoveImageOverride}
+                  title="Restores the original image src and styles. The asset stays in the library."
                 >
                   Remove image override
                 </button>
-                <button
-                  type="button"
-                  className={styles.assetSecondaryButton}
-                  disabled={!selectedImageOverride}
-                  onClick={handleRemoveImageOverride}
-                >
-                  Restore original image
-                </button>
+                <p className={styles.overrideNote}>Restores original image · Asset stays in library</p>
+
+                {selectedImageOverride ? (
+                  <div className={styles.assetOverrideControls}>
+                    <div className={styles.assetControlRow}>
+                      <label className={styles.assetControlLabel} htmlFor="willard-image-object-fit">
+                        Object fit
+                      </label>
+                      <select
+                        id="willard-image-object-fit"
+                        className={styles.assetCompactSelect}
+                        value={selectedImageOverride.objectFit}
+                        onChange={(event) =>
+                          updateSelectedImageOverride({
+                            objectFit: event.target.value as WillardImageObjectFit,
+                          })
+                        }
+                      >
+                        {IMAGE_OBJECT_FIT_OPTIONS.map((value) => (
+                          <option key={value} value={value}>
+                            {value}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div className={styles.assetControlRow}>
+                      <label className={styles.assetControlLabel} htmlFor="willard-image-focal-x">
+                        Focal X
+                      </label>
+                      <input
+                        id="willard-image-focal-x"
+                        type="range"
+                        min={0}
+                        max={100}
+                        step={1}
+                        className={styles.assetCompactRange}
+                        value={selectedImageOverride.objectPositionX}
+                        onChange={(event) =>
+                          updateSelectedImageOverride({
+                            objectPositionX: clampNumber(Number(event.target.value), 0, 100),
+                          })
+                        }
+                      />
+                      <span className={styles.assetValueLabel}>{selectedImageOverride.objectPositionX}%</span>
+                    </div>
+
+                    <div className={styles.assetControlRow}>
+                      <label className={styles.assetControlLabel} htmlFor="willard-image-focal-y">
+                        Focal Y
+                      </label>
+                      <input
+                        id="willard-image-focal-y"
+                        type="range"
+                        min={0}
+                        max={100}
+                        step={1}
+                        className={styles.assetCompactRange}
+                        value={selectedImageOverride.objectPositionY}
+                        onChange={(event) =>
+                          updateSelectedImageOverride({
+                            objectPositionY: clampNumber(Number(event.target.value), 0, 100),
+                          })
+                        }
+                      />
+                      <span className={styles.assetValueLabel}>{selectedImageOverride.objectPositionY}%</span>
+                    </div>
+
+                    <div className={styles.assetControlRow}>
+                      <label className={styles.assetControlLabel} htmlFor="willard-image-width">
+                        Width
+                      </label>
+                      <input
+                        id="willard-image-width"
+                        type="range"
+                        min={0}
+                        max={100}
+                        step={1}
+                        className={styles.assetCompactRange}
+                        value={selectedImageOverride.width}
+                        onChange={(event) =>
+                          updateSelectedImageOverride({
+                            width: clampNumber(Number(event.target.value), 0, 100),
+                          })
+                        }
+                      />
+                      <span className={styles.assetValueLabel}>{selectedImageOverride.width}%</span>
+                    </div>
+
+                    <div className={styles.assetControlRow}>
+                      <label className={styles.assetControlLabel} htmlFor="willard-image-max-width">
+                        Max width
+                      </label>
+                      <input
+                        id="willard-image-max-width"
+                        type="number"
+                        min={0}
+                        max={4000}
+                        step={10}
+                        className={styles.assetCompactNumber}
+                        value={selectedImageOverride.maxWidth}
+                        onChange={(event) =>
+                          updateSelectedImageOverride({
+                            maxWidth: clampNumber(Number(event.target.value), 0, 4000),
+                          })
+                        }
+                      />
+                      <span className={styles.assetValueLabel}>px</span>
+                    </div>
+
+                    <div className={styles.assetControlRow}>
+                      <label className={styles.assetControlLabel} htmlFor="willard-image-opacity">
+                        Opacity
+                      </label>
+                      <input
+                        id="willard-image-opacity"
+                        type="range"
+                        min={0}
+                        max={1}
+                        step={0.01}
+                        className={styles.assetCompactRange}
+                        value={selectedImageOverride.opacity}
+                        onChange={(event) =>
+                          updateSelectedImageOverride({
+                            opacity: clampNumber(Number(event.target.value), 0, 1),
+                          })
+                        }
+                      />
+                      <span className={styles.assetValueLabel}>{selectedImageOverride.opacity.toFixed(2)}</span>
+                    </div>
+
+                    <div className={styles.assetControlRow}>
+                      <label className={styles.assetControlLabel} htmlFor="willard-image-border-radius">
+                        Border radius
+                      </label>
+                      <input
+                        id="willard-image-border-radius"
+                        type="number"
+                        min={0}
+                        max={1000}
+                        step={1}
+                        className={styles.assetCompactNumber}
+                        value={selectedImageOverride.borderRadius}
+                        onChange={(event) =>
+                          updateSelectedImageOverride({
+                            borderRadius: clampNumber(Number(event.target.value), 0, 1000),
+                          })
+                        }
+                      />
+                      <span className={styles.assetValueLabel}>px</span>
+                    </div>
+
+                    <div className={styles.assetControlRow}>
+                      <label className={styles.assetControlLabel} htmlFor="willard-image-border-width">
+                        Border width
+                      </label>
+                      <input
+                        id="willard-image-border-width"
+                        type="number"
+                        min={0}
+                        max={100}
+                        step={1}
+                        className={styles.assetCompactNumber}
+                        value={selectedImageOverride.borderWidth}
+                        onChange={(event) =>
+                          updateSelectedImageOverride({
+                            borderWidth: clampNumber(Number(event.target.value), 0, 100),
+                          })
+                        }
+                      />
+                      <span className={styles.assetValueLabel}>px</span>
+                    </div>
+
+                    <div className={styles.assetControlRow}>
+                      <label className={styles.assetControlLabel} htmlFor="willard-image-border-color">
+                        Border color
+                      </label>
+                      <input
+                        id="willard-image-border-color"
+                        type="color"
+                        className={styles.assetCompactColor}
+                        value={normalizeColorInputValue(selectedImageOverride.borderColor)}
+                        onChange={(event) =>
+                          updateSelectedImageOverride({
+                            borderColor: event.target.value,
+                          })
+                        }
+                      />
+                      <span className={styles.assetValueLabel}>{selectedImageOverride.borderColor}</span>
+                    </div>
+
+                    <div className={styles.assetControlRow}>
+                      <label className={styles.assetControlLabel} htmlFor="willard-image-offset-x">
+                        X offset
+                      </label>
+                      <input
+                        id="willard-image-offset-x"
+                        type="range"
+                        min={-500}
+                        max={500}
+                        step={1}
+                        className={styles.assetCompactRange}
+                        value={selectedImageOverride.xOffset}
+                        onChange={(event) =>
+                          updateSelectedImageOverride({
+                            xOffset: clampNumber(Number(event.target.value), -500, 500),
+                          })
+                        }
+                      />
+                      <span className={styles.assetValueLabel}>{selectedImageOverride.xOffset}px</span>
+                    </div>
+
+                    <div className={styles.assetControlRow}>
+                      <label className={styles.assetControlLabel} htmlFor="willard-image-offset-y">
+                        Y offset
+                      </label>
+                      <input
+                        id="willard-image-offset-y"
+                        type="range"
+                        min={-500}
+                        max={500}
+                        step={1}
+                        className={styles.assetCompactRange}
+                        value={selectedImageOverride.yOffset}
+                        onChange={(event) =>
+                          updateSelectedImageOverride({
+                            yOffset: clampNumber(Number(event.target.value), -500, 500),
+                          })
+                        }
+                      />
+                      <span className={styles.assetValueLabel}>{selectedImageOverride.yOffset}px</span>
+                    </div>
+
+                    <div className={styles.assetControlRow}>
+                      <label className={styles.assetControlLabel} htmlFor="willard-image-rotation">
+                        Rotation
+                      </label>
+                      <input
+                        id="willard-image-rotation"
+                        type="range"
+                        min={-180}
+                        max={180}
+                        step={1}
+                        className={styles.assetCompactRange}
+                        value={selectedImageOverride.rotation}
+                        onChange={(event) =>
+                          updateSelectedImageOverride({
+                            rotation: clampNumber(Number(event.target.value), -180, 180),
+                          })
+                        }
+                      />
+                      <span className={styles.assetValueLabel}>{selectedImageOverride.rotation}deg</span>
+                    </div>
+
+                    <div className={styles.assetControlRow}>
+                      <label className={styles.assetControlLabel} htmlFor="willard-image-z-index">
+                        Z-index
+                      </label>
+                      <input
+                        id="willard-image-z-index"
+                        type="number"
+                        min={-20}
+                        max={20}
+                        step={1}
+                        className={styles.assetCompactNumber}
+                        value={selectedImageOverride.zIndex}
+                        onChange={(event) =>
+                          updateSelectedImageOverride({
+                            zIndex: clampNumber(Number(event.target.value), -20, 20),
+                          })
+                        }
+                      />
+                      <span className={styles.assetValueLabel}>safe</span>
+                    </div>
+                  </div>
+                ) : null}
               </div>
             ) : null}
 
@@ -653,6 +1006,22 @@ export function AssetLibraryPanel({
                   <option value="repeat">repeat</option>
                 </select>
 
+                <label className={styles.assetFieldLabel} htmlFor="willard-bg-blend-mode">
+                  Background blend mode
+                </label>
+                <select
+                  id="willard-bg-blend-mode"
+                  className={styles.assetSelect}
+                  value={backgroundBlendMode}
+                  onChange={(event) => setBackgroundBlendMode(event.target.value as WillardBackgroundBlendMode)}
+                >
+                  {BACKGROUND_BLEND_MODE_OPTIONS.map((mode) => (
+                    <option key={mode} value={mode}>
+                      {mode}
+                    </option>
+                  ))}
+                </select>
+
                 <button
                   type="button"
                   className={styles.assetPrimaryButton}
@@ -666,17 +1035,11 @@ export function AssetLibraryPanel({
                   className={styles.assetSecondaryButton}
                   disabled={!selectedBackgroundOverride}
                   onClick={handleRemoveBackgroundOverride}
+                  title="Restores the original background. The asset stays in the library."
                 >
                   Remove background override
                 </button>
-                <button
-                  type="button"
-                  className={styles.assetSecondaryButton}
-                  disabled={!selectedBackgroundOverride}
-                  onClick={handleRemoveBackgroundOverride}
-                >
-                  Restore original background
-                </button>
+                <p className={styles.overrideNote}>Restores original background · Asset stays in library</p>
               </div>
             ) : null}
 
@@ -685,6 +1048,47 @@ export function AssetLibraryPanel({
                 This target kind does not support asset replacement in Phase 3.
               </p>
             ) : null}
+          </section>
+
+          <section className={styles.assetLibrarySection}>
+            <h3 className={styles.assetLibrarySectionTitle}>Bulk Reset Overrides</h3>
+            <p className={styles.assetLibraryMuted}>
+              Clear all overrides of a type. Assets remain in the library. Style variables are not affected.
+            </p>
+            <div className={styles.assetActionStack}>
+              <button
+                type="button"
+                className={styles.assetDangerButton}
+                disabled={imageOverrides.length === 0}
+                onClick={() => {
+                  if (
+                    window.confirm(
+                      `Reset all ${imageOverrides.length} image override${imageOverrides.length !== 1 ? "s" : ""}? This removes all image replacements. Assets are not deleted.`
+                    )
+                  ) {
+                    clearAllImageOverrides();
+                  }
+                }}
+              >
+                Reset all image overrides ({imageOverrides.length})
+              </button>
+              <button
+                type="button"
+                className={styles.assetDangerButton}
+                disabled={backgroundOverrides.length === 0}
+                onClick={() => {
+                  if (
+                    window.confirm(
+                      `Reset all ${backgroundOverrides.length} background override${backgroundOverrides.length !== 1 ? "s" : ""}? This removes all background replacements. Assets are not deleted.`
+                    )
+                  ) {
+                    clearAllBackgroundOverrides();
+                  }
+                }}
+              >
+                Reset all background overrides ({backgroundOverrides.length})
+              </button>
+            </div>
           </section>
 
           <section className={styles.assetLibrarySection}>
@@ -826,4 +1230,19 @@ function formatBytes(bytes: number): string {
 
   const rounded = value >= 10 ? Math.round(value) : Math.round(value * 10) / 10;
   return `${rounded} ${units[unitIndex]}`;
+}
+
+function clampNumber(value: number, min: number, max: number): number {
+  if (!Number.isFinite(value)) {
+    return min;
+  }
+  return Math.min(max, Math.max(min, value));
+}
+
+function normalizeColorInputValue(value: string): string {
+  const trimmed = value.trim();
+  if (/^#[0-9a-fA-F]{6}$/.test(trimmed)) {
+    return trimmed;
+  }
+  return "#475569";
 }

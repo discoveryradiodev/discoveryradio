@@ -15,14 +15,30 @@ const GENERATED_HEADER = `/*
  * Manual edits may be overwritten the next time Apply is used.
  */`;
 
-export function buildGeneratedWillardCss(variables: Record<string, string>): string {
-  const css = buildTargetStylesheet(variables);
+export function buildGeneratedWillardCss(
+  variables: Record<string, string>,
+  backgroundOverrides: WillardBackgroundOverride[] = []
+): string {
+  const css = buildTargetStylesheet(variables, backgroundOverrides);
 
   if (!css.trim()) {
     return `${GENERATED_HEADER}\n\n/* No applied Willard overrides yet. */\n`;
   }
 
   return `${GENERATED_HEADER}\n\n${css}`;
+}
+
+export function summarizeWillardSourceApply(
+  variables: Record<string, string>,
+  backgroundOverrides: WillardBackgroundOverride[] = []
+): { styleTargetCount: number; backgroundOverrideCount: number } {
+  const targetFields = collectMeaningfulTargetFields(variables);
+  const backgroundMap = collectBackgroundOverrides(backgroundOverrides);
+
+  return {
+    styleTargetCount: targetFields.size,
+    backgroundOverrideCount: backgroundMap.size,
+  };
 }
 
 export function buildTargetStylesheet(
