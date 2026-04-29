@@ -1,20 +1,35 @@
 .shell {
-  display: flex;
-  flex-direction: column;
-  height: 100vh;
+  display: block;
+  min-height: 100vh;
+  overflow-y: auto;
   background: #0f1419;
   color: #e2e8f0;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 }
 
+.topStack {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  border-bottom: 1px solid #334155;
+}
+
 .compactToolbar {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 0.85rem;
   flex-wrap: wrap;
   padding: 0.65rem 0.9rem;
   background: #162131;
-  border-bottom: 1px solid #334155;
+}
+
+.toolbarBrand {
+  margin-top: 0.25rem;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #f8fafc;
 }
 
 .toolbarGroup {
@@ -67,10 +82,90 @@
 
 .toolbarMeta {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
+  flex-direction: column;
   gap: 0.5rem;
-  flex-wrap: wrap;
+  min-width: min(100%, 380px);
   margin-left: auto;
+}
+
+.selectedTargetLine {
+  margin: 0;
+  font-size: 0.74rem;
+  color: #cbd5e1;
+}
+
+.toolTabsRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  padding: 0.55rem 0.9rem;
+  background: #111b2a;
+  border-top: 1px solid #223045;
+  border-bottom: 1px solid #334155;
+}
+
+.toolTabButton {
+  padding: 0.35rem 0.7rem;
+  border: 1px solid #475569;
+  border-radius: 0.28rem;
+  background: #0f1419;
+  color: #cbd5e1;
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+}
+
+.toolTabButtonActive {
+  background: #2563eb;
+  border-color: #1d4ed8;
+  color: #fff;
+}
+
+.ribbonContent {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+  padding: 0.6rem 0.9rem;
+  background: #0f1724;
+  border-bottom: 1px solid #334155;
+}
+
+.ribbonText {
+  margin: 0;
+  font-size: 0.76rem;
+  color: #cbd5e1;
+}
+
+.ribbonActions {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+}
+
+.toolSurfacePanel {
+  margin: 0.85rem;
+  border: 1px solid #334155;
+  border-radius: 0.5rem;
+  overflow: hidden;
+  background: #111c2d;
+}
+
+.previewDockedSection {
+  margin: 0.85rem;
+  min-width: 0;
+}
+
+.previewHiddenNoticeWrap {
+  margin: 0.85rem;
+  padding: 0.75rem 0.9rem;
+  border: 1px solid #334155;
+  border-radius: 0.4rem;
+  background: #111c2d;
 }
 
 .shellHeader {
@@ -469,7 +564,7 @@
 .previewArea {
   display: flex;
   flex-direction: column;
-  height: 100%;
+  min-height: 72vh;
   padding: 1rem;
 }
 
@@ -494,14 +589,27 @@
 
 .previewFrame {
   flex: 1;
+  min-height: 64vh;
   display: flex;
-  align-items: center;
-  justify-content: center;
+  align-items: stretch;
+  justify-content: flex-start;
   background: #1a2332;
   border: 2px solid #334155;
   border-radius: 0.5rem;
   overflow: hidden;
   margin-bottom: 0.4rem;
+}
+
+.previewFrameFullPage {
+  min-height: auto;
+}
+
+.previewFrame iframe {
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-height: inherit;
+  flex: 1 1 auto;
 }
 
 .previewPlaceholder {
@@ -724,10 +832,85 @@
   color: #cbd5e1;
 }
 
+.assetModeTabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.assetModeTabButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.38rem;
+  padding: 0.34rem 0.58rem;
+  border: 1px solid #475569;
+  border-radius: 0.3rem;
+  background: #0f1419;
+  color: #cbd5e1;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  cursor: pointer;
+}
+
+.assetModeTabButtonActive {
+  border-color: #1d4ed8;
+  background: #1e3a8a;
+  color: #dbeafe;
+}
+
+.assetModeCount {
+  min-width: 1.55rem;
+  text-align: center;
+  border: 1px solid rgba(148, 163, 184, 0.45);
+  border-radius: 999px;
+  padding: 0.04rem 0.34rem;
+  font-size: 0.66rem;
+  color: #e2e8f0;
+}
+
+.assetModeMeta {
+  margin: 0;
+  font-size: 0.73rem;
+  color: #94a3b8;
+}
+
 .assetLibraryForm {
   display: flex;
   flex-direction: column;
   gap: 0.45rem;
+}
+
+.assetCollapsible {
+  border: 1px solid #334155;
+  border-radius: 0.35rem;
+  background: #0f1419;
+  padding: 0.45rem;
+}
+
+.assetCollapsibleSummary {
+  cursor: pointer;
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #cbd5e1;
+}
+
+.assetCollapsible[open] .assetCollapsibleSummary {
+  margin-bottom: 0.5rem;
+}
+
+.assetFilterGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.45rem;
+}
+
+.assetFilterField {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
 }
 
 .assetFieldLabel {
@@ -1042,6 +1225,89 @@
   color: #94a3b8;
 }
 
+.assetReviewList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.assetReviewCard {
+  display: grid;
+  grid-template-columns: 88px minmax(0, 1fr);
+  gap: 0.6rem;
+  border: 1px solid #334155;
+  border-radius: 0.36rem;
+  background: #0f1419;
+  padding: 0.5rem;
+}
+
+.assetReviewThumb {
+  width: 88px;
+  height: 88px;
+  object-fit: cover;
+  border: 1px solid rgba(148, 163, 184, 0.34);
+  border-radius: 0.25rem;
+  background: #1e293b;
+}
+
+.assetReviewBody {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.assetReviewName {
+  margin: 0;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #e2e8f0;
+}
+
+.assetReviewMeta {
+  margin: 0;
+  font-size: 0.71rem;
+  color: #94a3b8;
+}
+
+.assetInboxBadge {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  margin: 0 0 0.25rem;
+  padding: 0.16rem 0.42rem;
+  border-radius: 999px;
+  border: 1px solid #0ea5e9;
+  background: rgba(14, 165, 233, 0.14);
+  color: #7dd3fc;
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.assetReviewActions {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.assetApproveChooser {
+  border: 1px solid #334155;
+  border-radius: 0.3rem;
+  background: #111c2d;
+  padding: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.assetApproveChooserActions {
+  display: flex;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+}
+
 .assetDetails {
   display: grid;
   grid-template-columns: minmax(120px, 150px) minmax(0, 1fr);
@@ -1346,6 +1612,72 @@
   color: #94a3b8;
 }
 
+.confirmLayer {
+  position: fixed;
+  inset: 0;
+  z-index: 1500;
+  pointer-events: none;
+}
+
+.confirmBackdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(2, 6, 23, 0.6);
+  pointer-events: auto;
+}
+
+.confirmCard {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: min(560px, calc(100vw - 2rem));
+  border: 1px solid #334155;
+  border-radius: 0.5rem;
+  background: #0f1724;
+  padding: 0.95rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  pointer-events: auto;
+}
+
+.confirmTitle {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #f1f5f9;
+}
+
+.confirmText {
+  margin: 0;
+  font-size: 0.78rem;
+  color: #cbd5e1;
+}
+
+.confirmList {
+  margin: 0;
+  padding-left: 1.2rem;
+  display: grid;
+  gap: 0.22rem;
+  font-size: 0.76rem;
+  color: #e2e8f0;
+}
+
+.confirmCheckLabel {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  font-size: 0.76rem;
+  color: #cbd5e1;
+}
+
+.confirmActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
 /* Responsive */
 @media (max-width: 1024px) {
   .leftPanel {
@@ -1354,27 +1686,6 @@
 }
 
 @media (max-width: 768px) {
-  .shellBody {
-    flex-direction: column;
-  }
-
-  .shellBodyPreviewHidden {
-    display: block;
-  }
-
-  .leftPanel {
-    width: 100%;
-    border-right: none;
-    border-bottom: 1px solid #334155;
-    max-height: 40vh;
-    overflow-y: auto;
-  }
-
-  .rightPanel {
-    flex: 1;
-    overflow-y: auto;
-  }
-
   .previewArea {
     padding: 1rem;
   }
@@ -1386,6 +1697,12 @@
 
   .toolbarMeta {
     margin-left: 0;
+  }
+
+  .previewDockedSection,
+  .toolSurfacePanel,
+  .previewHiddenNoticeWrap {
+    margin: 0.65rem;
   }
 
   .previewModeBar {
@@ -1405,6 +1722,20 @@
 
   .assetLibraryPanel {
     width: min(560px, 100vw);
+  }
+
+  .assetFilterGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .assetReviewCard {
+    grid-template-columns: 1fr;
+  }
+
+  .assetReviewThumb {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 1 / 1;
   }
 
   .layersPanel {
@@ -1432,6 +1763,14 @@
   .toolbarMeta {
     width: 100%;
     gap: 0.4rem;
+  }
+
+  .toolTabsRow {
+    padding: 0.5rem 0.65rem;
+  }
+
+  .ribbonContent {
+    padding: 0.55rem 0.65rem;
   }
 
   .shellHeader {
@@ -1495,6 +1834,15 @@
 
   .assetGrid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .assetModeTabs {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .assetModeTabButton {
+    justify-content: space-between;
   }
 
   .assetDetails {

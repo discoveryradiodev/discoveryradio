@@ -107,14 +107,12 @@ export function ControlPanel({
     <div className={styles.controlPanel}>
       <div className={styles.panelHeader}>
         <div className={styles.panelHeaderTop}>
-          <h2 className={styles.panelTitle}>Style Lab Controls</h2>
+          <h2 className={styles.panelTitle}>{STYLE_TARGET_REGISTRY[activeStyleTarget].label}</h2>
           <button onClick={onClose} className={styles.closeButton} title="Close contextual editor">
             Close
           </button>
         </div>
-        <p className={styles.panelSubtitle}>
-          Selected: {STYLE_TARGET_REGISTRY[activeStyleTarget].label} ({activeKind})
-        </p>
+        <p className={styles.panelSubtitle}>Style controls</p>
       </div>
 
       <div ref={controlGroupsRef} className={styles.controlGroups}>

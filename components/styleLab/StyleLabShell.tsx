@@ -3,7 +3,12 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { StyleLabProvider } from "@/lib/dev/style-lab-context";
 import { useStyleLab } from "@/lib/dev/style-lab-context";
-import { isStyleTargetId, type StyleTargetId } from "@/lib/dev/style-lab-inspect";
+import {
+  STYLE_TARGET_REGISTRY,
+  TARGET_TO_KIND,
+  isStyleTargetId,
+  type StyleTargetId,
+} from "@/lib/dev/style-lab-inspect";
 import {
   WILLARD_PREVIEW_SELECTION_STORAGE_KEY,
   buildWillardPreviewUrl,
@@ -29,6 +34,9 @@ interface StyleLabShellProps {
 }
 
 type PreviewDisplayMode = "docked" | "popout" | "hidden";
+type PreviewHeightMode = "viewport" | "full-page";
+type ActiveTool = "style" | "assets" | "review" | "layers" | "shapes" | "source" | null;
+type ActiveModal = "apply-confirmation" | null;
 
 const PREVIEW_TARGETS = [
   {
@@ -48,25 +56,27 @@ const PREVIEW_TARGETS = [
   },
 ] as const;
 
-// Inner component has access to useStyleLab context
 function StyleLabShellInner({ canApplyToSource = false }: StyleLabShellProps) {
   const [activeTarget, setActiveTarget] = useState("feed-homepage");
   const [inspectMode, setInspectMode] = useState(false);
   const [activeStyleTarget, setActiveStyleTarget] = useState<StyleTargetId | null>(null);
-  const [isPanelOpen, setIsPanelOpen] = useState(false);
+  const [activeTool, setActiveTool] = useState<ActiveTool>(null);
+  const [activeModal, setActiveModal] = useState<ActiveModal>(null);
   const [previewDisplayMode, setPreviewDisplayMode] = useState<PreviewDisplayMode>("docked");
+  const [previewHeightMode, setPreviewHeightMode] = useState<PreviewHeightMode>("full-page");
   const [showDockedWhilePopout, setShowDockedWhilePopout] = useState(false);
   const [previewNotice, setPreviewNotice] = useState<string | null>(null);
   const [isApplying, setIsApplying] = useState(false);
-  const [isAssetLibraryOpen, setIsAssetLibraryOpen] = useState(false);
-  const [isLayersOpen, setIsLayersOpen] = useState(false);
   const [applyStatus, setApplyStatus] = useState<ApplyStatus>(null);
+  const [confirmApplyChecked, setConfirmApplyChecked] = useState(false);
   const previewRef = useRef<PreviewAreaHandle>(null);
   const popoutWindowRef = useRef<Window | null>(null);
   const previewChannelRef = useRef<BroadcastChannel | null>(null);
   const {
     resetToDefaults,
     variables,
+    getTargetValue,
+    assets,
     imageOverrides,
     backgroundOverrides,
     overlayDrafts,
@@ -84,30 +94,50 @@ function StyleLabShellInner({ canApplyToSource = false }: StyleLabShellProps) {
     return seen.size;
   }, [variables]);
 
+  const sourceChangesCount = changedTargetCount + imageOverrides.length + backgroundOverrides.length + overlayDrafts.length;
+  const hasSourceChanges = sourceChangesCount > 0;
+
+  const reviewQueueCount = useMemo(
+    () => assets.filter((asset) => String(asset.status ?? "").toLowerCase() === "staging").length,
+    [assets]
+  );
+
+  const activeSurface = normalizeWillardPreviewTarget(activeTarget);
+  const surfaceLayerCount = useMemo(
+    () => overlayDrafts.filter((draft) => draft.surface === activeSurface).length,
+    [overlayDrafts, activeSurface]
+  );
+
   const showDockedPreview =
     previewDisplayMode === "docked" ||
     (previewDisplayMode === "popout" && showDockedWhilePopout);
 
+  const openTool = (tool: Exclude<ActiveTool, null>) => {
+    setActiveModal(null);
+    setActiveTool(tool);
+  };
+
   const handleStyleTargetSelect = (targetId: StyleTargetId) => {
     setActiveStyleTarget(targetId);
-    setIsPanelOpen(true);
+    setActiveTool("style");
   };
 
-  const handleClosePanel = () => {
-    setIsPanelOpen(false);
+  const handleCloseStyleTool = () => {
+    setActiveTool(null);
     setActiveStyleTarget(null);
   };
 
-  /** Called when preview target changes — close the panel to avoid mismatched state. */
   const handleClearSelection = () => {
-    setIsPanelOpen(false);
     setActiveStyleTarget(null);
+    if (activeTool === "style") {
+      setActiveTool(null);
+    }
     postWillardPreviewMessage(previewChannelRef.current, { type: "clear-selection" });
   };
 
   const handlePreviewSelectionFromPopout = (targetId: StyleTargetId) => {
     setActiveStyleTarget(targetId);
-    setIsPanelOpen(true);
+    setActiveTool("style");
   };
 
   const handleTargetChange = (nextTarget: string) => {
@@ -165,17 +195,15 @@ function StyleLabShellInner({ canApplyToSource = false }: StyleLabShellProps) {
     });
   };
 
-  /** Reset clears state AND removes all CSS overrides from the iframe. */
   const handleReset = () => {
     previewRef.current?.clearAllStyles();
     resetToDefaults();
     setApplyStatus(null);
-    // Also close any open panel so stale controls aren't shown
-    handleClosePanel();
+    handleCloseStyleTool();
   };
 
-  const handleApplyToSource = async () => {
-    if (!canApplyToSource || isApplying) {
+  const performApplyToSource = async () => {
+    if (!canApplyToSource || isApplying || !hasSourceChanges) {
       return;
     }
 
@@ -215,7 +243,18 @@ function StyleLabShellInner({ canApplyToSource = false }: StyleLabShellProps) {
       setApplyStatus({ kind: "error", message });
     } finally {
       setIsApplying(false);
+      setActiveModal(null);
+      setConfirmApplyChecked(false);
     }
+  };
+
+  const openApplyConfirmation = () => {
+    if (!canApplyToSource || !isLoaded || isApplying || !hasSourceChanges) {
+      return;
+    }
+
+    setActiveModal("apply-confirmation");
+    setConfirmApplyChecked(false);
   };
 
   useEffect(() => {
@@ -330,193 +369,374 @@ function StyleLabShellInner({ canApplyToSource = false }: StyleLabShellProps) {
     };
   }, [previewDisplayMode]);
 
+  const styleRibbonText = (() => {
+    if (!activeStyleTarget) {
+      return "Turn on Inspect Mode and select a target to edit styles.";
+    }
+
+    const targetLabel = STYLE_TARGET_REGISTRY[activeStyleTarget]?.label ?? activeStyleTarget;
+    const targetKind = TARGET_TO_KIND[activeStyleTarget];
+
+    if (targetKind === "image") {
+      const fit = getTargetValue(activeStyleTarget, "object-fit") ?? "cover";
+      const width = getTargetValue(activeStyleTarget, "width") ?? "100";
+      const opacity = getTargetValue(activeStyleTarget, "opacity") ?? "1";
+      return `STYLE: ${targetLabel} | Fit ${fit} | Width ${width}% | Opacity ${opacity} | More...`;
+    }
+
+    return `STYLE: ${targetLabel} | Edit typography, spacing, color, and effects.`;
+  })();
+
   return (
     <div className={styles.shell}>
-      <div className={styles.compactToolbar}>
-        <div className={styles.toolbarGroup}>
-          <span className={styles.toolbarLabel}>Preview Target</span>
-          <div className={styles.toolbarButtons}>
-            {PREVIEW_TARGETS.map((target) => (
-              <button
-                key={target.id}
-                onClick={() => handleTargetChange(target.id)}
-                className={`${styles.toolbarButton} ${
-                  activeTarget === target.id ? styles.toolbarButtonActive : ""
-                }`}
-                title={target.description}
-              >
-                {target.label}
-              </button>
-            ))}
-          </div>
-        </div>
+      <div className={styles.topStack}>
+        <div className={styles.compactToolbar}>
+          <div className={styles.toolbarBrand}>WILLARD</div>
 
-        <div className={styles.toolbarGroup}>
-          <span className={styles.toolbarLabel}>Preview Mode</span>
-          <div className={styles.toolbarButtons}>
-            <button
-              onClick={() => setPreviewDisplayMode("docked")}
-              className={`${styles.toolbarButton} ${
-                previewDisplayMode === "docked" ? styles.toolbarButtonActive : ""
-              }`}
-              title="Keep preview docked inside /willard"
-            >
-              Docked
-            </button>
-            <button
-              onClick={handleOpenPopoutPreview}
-              className={`${styles.toolbarButton} ${
-                previewDisplayMode === "popout" ? styles.toolbarButtonActive : ""
-              }`}
-              title="Open preview in a separate window"
-            >
-              Pop Out Preview
-            </button>
-            <button
-              onClick={() => setPreviewDisplayMode("hidden")}
-              className={`${styles.toolbarButton} ${
-                previewDisplayMode === "hidden" ? styles.toolbarButtonActive : ""
-              }`}
-              title="Hide docked preview and focus on controls"
-            >
-              Hidden
-            </button>
-            {previewDisplayMode === "popout" ? (
+          <div className={styles.toolbarGroup}>
+            <span className={styles.toolbarLabel}>Preview Target</span>
+            <div className={styles.toolbarButtons}>
+              {PREVIEW_TARGETS.map((target) => (
+                <button
+                  key={target.id}
+                  onClick={() => handleTargetChange(target.id)}
+                  className={`${styles.toolbarButton} ${
+                    activeTarget === target.id ? styles.toolbarButtonActive : ""
+                  }`}
+                  title={target.description}
+                >
+                  {target.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className={styles.toolbarGroup}>
+            <span className={styles.toolbarLabel}>Preview Height</span>
+            <div className={styles.toolbarButtons}>
               <button
-                onClick={() => setShowDockedWhilePopout((prev) => !prev)}
-                className={styles.toolbarButton}
-                title="Toggle docked preview while pop-out is active"
+                onClick={() => setPreviewHeightMode("viewport")}
+                className={`${styles.toolbarButton} ${
+                  previewHeightMode === "viewport" ? styles.toolbarButtonActive : ""
+                }`}
+                title="Fixed viewport-like preview height"
               >
-                {showDockedWhilePopout ? "Hide Docked" : "Show Docked"}
+                Viewport
               </button>
+              <button
+                onClick={() => setPreviewHeightMode("full-page")}
+                className={`${styles.toolbarButton} ${
+                  previewHeightMode === "full-page" ? styles.toolbarButtonActive : ""
+                }`}
+                title="Expand iframe to full content height"
+              >
+                Full Page
+              </button>
+            </div>
+          </div>
+
+          <div className={styles.toolbarGroup}>
+            <span className={styles.toolbarLabel}>Preview Mode</span>
+            <div className={styles.toolbarButtons}>
+              <button
+                onClick={() => setPreviewDisplayMode("docked")}
+                className={`${styles.toolbarButton} ${
+                  previewDisplayMode === "docked" ? styles.toolbarButtonActive : ""
+                }`}
+                title="Keep preview docked inside /willard"
+              >
+                Docked
+              </button>
+              <button
+                onClick={handleOpenPopoutPreview}
+                className={`${styles.toolbarButton} ${
+                  previewDisplayMode === "popout" ? styles.toolbarButtonActive : ""
+                }`}
+                title="Open preview in a separate window"
+              >
+                Pop Out Preview
+              </button>
+              <button
+                onClick={() => setPreviewDisplayMode("hidden")}
+                className={`${styles.toolbarButton} ${
+                  previewDisplayMode === "hidden" ? styles.toolbarButtonActive : ""
+                }`}
+                title="Hide docked preview and focus on tools"
+              >
+                Hidden
+              </button>
+              {previewDisplayMode === "popout" ? (
+                <button
+                  onClick={() => setShowDockedWhilePopout((prev) => !prev)}
+                  className={styles.toolbarButton}
+                  title="Toggle docked preview while pop-out is active"
+                >
+                  {showDockedWhilePopout ? "Hide Docked" : "Show Docked"}
+                </button>
+              ) : null}
+            </div>
+          </div>
+
+          <div className={styles.toolbarGroup}>
+            <span className={styles.toolbarLabel}>Inspect</span>
+            <div className={styles.toolbarButtons}>
+              <button
+                onClick={() => setInspectMode((prev) => !prev)}
+                className={`${styles.inspectToggle} ${inspectMode ? styles.inspectActive : ""}`}
+                title={
+                  inspectMode
+                    ? "Inspect mode ON - click to turn off"
+                    : "Click to enable inspect mode"
+                }
+              >
+                {inspectMode ? "Inspect On" : "Inspect Off"}
+              </button>
+            </div>
+          </div>
+
+          <div className={styles.toolbarMeta}>
+            <p className={styles.selectedTargetLine}>
+              Selected target: {activeStyleTarget ? STYLE_TARGET_REGISTRY[activeStyleTarget].label : "None"}
+            </p>
+            {hasSourceChanges ? (
+              <p className={styles.changesSummary}>
+                Changed: {changedTargetCount} style target{changedTargetCount !== 1 ? "s" : ""} · {imageOverrides.length} image override{imageOverrides.length !== 1 ? "s" : ""} · {backgroundOverrides.length} background override{backgroundOverrides.length !== 1 ? "s" : ""} · {overlayDrafts.length} overlay layer{overlayDrafts.length !== 1 ? "s" : ""}
+              </p>
+            ) : null}
+            {previewNotice ? <p className={styles.previewModeNote}>{previewNotice}</p> : null}
+            {applyStatus ? (
+              <p
+                className={`${styles.applyStatus} ${
+                  applyStatus.kind === "error" ? styles.applyStatusError : styles.applyStatusSuccess
+                }`}
+              >
+                {applyStatus.message}
+              </p>
             ) : null}
           </div>
         </div>
 
-        <div className={styles.toolbarGroup}>
-          <span className={styles.toolbarLabel}>Actions</span>
-          <div className={styles.toolbarButtons}>
-            <button
-              onClick={() => setInspectMode((prev) => !prev)}
-              className={`${styles.inspectToggle} ${inspectMode ? styles.inspectActive : ""}`}
-              title={
-                inspectMode
-                  ? "Inspect mode ON - click to turn off"
-                  : "Click to enable inspect mode"
-              }
-            >
-              {inspectMode ? "✓ Inspect Mode" : "Inspect Mode"}
-            </button>
-            <button
-              onClick={handleApplyToSource}
-              className={styles.applyButton}
-              disabled={!canApplyToSource || !isLoaded || isApplying}
-              title={
-                canApplyToSource
-                  ? "Write the current Willard target styles into the local source file"
-                  : "Source apply is available only on local/dev runs"
-              }
-            >
-              {isApplying ? "Applying..." : "Apply to Source"}
-            </button>
-            <button
-              onClick={() => setIsAssetLibraryOpen(true)}
-              className={styles.toolbarButton}
-              title="Open the Willard asset library"
-            >
-              Asset Library
-            </button>
-            <button
-              onClick={() => setIsLayersOpen(true)}
-              className={styles.toolbarButton}
-              title="Open overlay layers"
-            >
-              Layers
-            </button>
-          </div>
-        </div>
-
-        <div className={styles.toolbarMeta}>
-          {changedTargetCount > 0 || imageOverrides.length > 0 || backgroundOverrides.length > 0 || overlayDrafts.length > 0 ? (
-            <p className={styles.changesSummary}>
-              Changed:{" "}
-              {changedTargetCount > 0 ? `${changedTargetCount} style target${changedTargetCount !== 1 ? "s" : ""}` : null}
-              {changedTargetCount > 0 && (imageOverrides.length > 0 || backgroundOverrides.length > 0 || overlayDrafts.length > 0) ? " · " : null}
-              {imageOverrides.length > 0 ? `${imageOverrides.length} image override${imageOverrides.length !== 1 ? "s" : ""}` : null}
-              {imageOverrides.length > 0 && (backgroundOverrides.length > 0 || overlayDrafts.length > 0) ? " · " : null}
-              {backgroundOverrides.length > 0 ? `${backgroundOverrides.length} background override${backgroundOverrides.length !== 1 ? "s" : ""}` : null}
-              {backgroundOverrides.length > 0 && overlayDrafts.length > 0 ? " · " : null}
-              {overlayDrafts.length > 0 ? `${overlayDrafts.length} overlay layer${overlayDrafts.length !== 1 ? "s" : ""}` : null}
-            </p>
-          ) : null}
-          {canApplyToSource ? (
-            <p className={styles.applyHint}>
-              Local apply writes the current Willard state into the feed source file.
-            </p>
-          ) : (
-            <p className={styles.applyHint}>
-              Live production stays sandboxed. Source apply is local-only.
-            </p>
-          )}
-          {previewNotice ? <p className={styles.previewModeNote}>{previewNotice}</p> : null}
-          {applyStatus ? (
-            <p
-              className={`${styles.applyStatus} ${
-                applyStatus.kind === "error" ? styles.applyStatusError : styles.applyStatusSuccess
-              }`}
-            >
-              {applyStatus.message}
-            </p>
-          ) : null}
-        </div>
-      </div>
-
-      <div
-        className={`${styles.shellBody} ${
-          showDockedPreview ? "" : styles.shellBodyPreviewHidden
-        }`}
-      >
-        {isPanelOpen && activeStyleTarget ? (
-          <aside
-            className={`${styles.leftPanel} ${
-              showDockedPreview ? "" : styles.leftPanelExpanded
-            }`}
+        <div className={styles.toolTabsRow}>
+          <button
+            type="button"
+            className={`${styles.toolTabButton} ${activeTool === "style" ? styles.toolTabButtonActive : ""}`}
+            onClick={() => openTool("style")}
           >
-            <ControlPanel
-              activeTarget={activeTarget}
-              activeStyleTarget={activeStyleTarget}
-              onClose={handleClosePanel}
-              onReset={handleReset}
-            />
-          </aside>
-        ) : null}
+            Style
+          </button>
+          <button
+            type="button"
+            className={`${styles.toolTabButton} ${activeTool === "assets" ? styles.toolTabButtonActive : ""}`}
+            onClick={() => openTool("assets")}
+          >
+            Assets
+          </button>
+          <button
+            type="button"
+            className={`${styles.toolTabButton} ${activeTool === "review" ? styles.toolTabButtonActive : ""}`}
+            onClick={() => openTool("review")}
+          >
+            Review Queue
+          </button>
+          <button
+            type="button"
+            className={`${styles.toolTabButton} ${activeTool === "layers" ? styles.toolTabButtonActive : ""}`}
+            onClick={() => openTool("layers")}
+          >
+            Layers
+          </button>
+          <button
+            type="button"
+            className={`${styles.toolTabButton} ${activeTool === "shapes" ? styles.toolTabButtonActive : ""}`}
+            onClick={() => openTool("shapes")}
+          >
+            Shapes
+          </button>
+          <button
+            type="button"
+            className={`${styles.toolTabButton} ${activeTool === "source" ? styles.toolTabButtonActive : ""}`}
+            onClick={() => openTool("source")}
+          >
+            Source
+          </button>
+        </div>
 
-        {showDockedPreview ? (
-          <main className={styles.rightPanel}>
-            <PreviewArea
-              ref={previewRef}
-              activeTarget={activeTarget}
-              inspectMode={inspectMode}
-              activeStyleTarget={activeStyleTarget}
-              onStyleTargetSelect={handleStyleTargetSelect}
-              onClearSelection={handleClearSelection}
-            />
-          </main>
+        {activeTool ? (
+          <div className={styles.ribbonContent}>
+            {activeTool === "style" ? (
+              <>
+                <p className={styles.ribbonText}>{styleRibbonText}</p>
+                <div className={styles.ribbonActions}>
+                  <button
+                    type="button"
+                    className={styles.toolbarButton}
+                    onClick={() => setActiveTool(null)}
+                  >
+                    Close
+                  </button>
+                </div>
+              </>
+            ) : null}
+
+            {activeTool === "assets" ? (
+              <>
+                <p className={styles.ribbonText}>ASSETS: Approved | Category: All | Search | Open Library</p>
+                <div className={styles.ribbonActions}>
+                  <button type="button" className={styles.toolbarButton} onClick={() => openTool("assets")}>
+                    Open Library
+                  </button>
+                </div>
+              </>
+            ) : null}
+
+            {activeTool === "review" ? (
+              <>
+                <p className={styles.ribbonText}>
+                  REVIEW: {reviewQueueCount} waiting | Newest first | Open Queue
+                </p>
+                <div className={styles.ribbonActions}>
+                  <button type="button" className={styles.toolbarButton} onClick={() => openTool("review")}>
+                    Open Queue
+                  </button>
+                </div>
+              </>
+            ) : null}
+
+            {activeTool === "layers" ? (
+              <>
+                <p className={styles.ribbonText}>LAYERS: {surfaceLayerCount} layers | Open Layers</p>
+                <div className={styles.ribbonActions}>
+                  <button type="button" className={styles.toolbarButton} onClick={() => openTool("layers")}>
+                    Open Layers
+                  </button>
+                </div>
+              </>
+            ) : null}
+
+            {activeTool === "shapes" ? (
+              <>
+                <p className={styles.ribbonText}>SHAPES: Coming soon | Open Shapes</p>
+                <div className={styles.ribbonActions}>
+                  <button type="button" className={styles.toolbarButton} disabled>
+                    Open Shapes
+                  </button>
+                </div>
+              </>
+            ) : null}
+
+            {activeTool === "source" ? (
+              <>
+                <p className={styles.ribbonText}>
+                  SOURCE: {changedTargetCount} style targets | {imageOverrides.length} image overrides | {backgroundOverrides.length} backgrounds | {overlayDrafts.length} overlay drafts | Apply to Source
+                </p>
+                <div className={styles.ribbonActions}>
+                  <button
+                    type="button"
+                    className={styles.applyButton}
+                    onClick={openApplyConfirmation}
+                    disabled={!canApplyToSource || !isLoaded || isApplying || !hasSourceChanges}
+                    title={
+                      canApplyToSource
+                        ? "Apply current Willard changes to local generated source files"
+                        : "Source apply is available only on local/dev runs"
+                    }
+                  >
+                    {isApplying ? "Applying..." : "Apply to Source"}
+                  </button>
+                  <button type="button" className={styles.toolbarButton} onClick={() => setActiveTool(null)}>
+                    Close
+                  </button>
+                </div>
+              </>
+            ) : null}
+          </div>
         ) : null}
       </div>
+
+      {activeTool === "style" && activeStyleTarget ? (
+        <section className={styles.toolSurfacePanel}>
+          <ControlPanel
+            activeTarget={activeTarget}
+            activeStyleTarget={activeStyleTarget}
+            onClose={handleCloseStyleTool}
+            onReset={handleReset}
+          />
+        </section>
+      ) : null}
+
+      {showDockedPreview ? (
+        <section className={styles.previewDockedSection}>
+          <PreviewArea
+            ref={previewRef}
+            activeTarget={activeTarget}
+            inspectMode={inspectMode}
+            activeStyleTarget={activeStyleTarget}
+            onStyleTargetSelect={handleStyleTargetSelect}
+            onClearSelection={handleClearSelection}
+            previewHeightMode={previewHeightMode}
+          />
+        </section>
+      ) : (
+        <section className={styles.previewHiddenNoticeWrap}>
+          <p className={styles.previewModeNote}>Docked preview is hidden. Use Pop Out Preview or switch back to Docked mode.</p>
+        </section>
+      )}
 
       <AssetLibraryPanel
-        isOpen={isAssetLibraryOpen}
-        onClose={() => setIsAssetLibraryOpen(false)}
+        isOpen={activeTool === "assets" || activeTool === "review"}
+        onClose={() => setActiveTool(null)}
         activeStyleTarget={activeStyleTarget}
-        activeSurface={normalizeWillardPreviewTarget(activeTarget)}
+        activeSurface={activeSurface}
+        forcedFilter={activeTool === "review" ? "needs-review" : "approved"}
       />
 
       <LayersPanel
-        isOpen={isLayersOpen}
-        onClose={() => setIsLayersOpen(false)}
-        activeSurface={normalizeWillardPreviewTarget(activeTarget)}
+        isOpen={activeTool === "layers"}
+        onClose={() => setActiveTool(null)}
+        activeSurface={activeSurface}
       />
+
+      {activeModal === "apply-confirmation" ? (
+        <div className={styles.confirmLayer} role="dialog" aria-modal="true" aria-label="Confirm apply to source">
+          <div className={styles.confirmBackdrop} onClick={() => setActiveModal(null)} />
+          <div className={styles.confirmCard}>
+            <h2 className={styles.confirmTitle}>Apply Willard Changes to Source?</h2>
+            <p className={styles.confirmText}>This writes local generated source files and should be intentional.</p>
+            <ul className={styles.confirmList}>
+              <li>Changed style targets: {changedTargetCount}</li>
+              <li>Image overrides: {imageOverrides.length}</li>
+              <li>Background overrides: {backgroundOverrides.length}</li>
+              <li>Overlay drafts: {overlayDrafts.length}</li>
+            </ul>
+            <p className={styles.confirmText}>Expected files:</p>
+            <ul className={styles.confirmList}>
+              <li>app/the-feed/willard.generated.css</li>
+              <li>app/the-feed/willard.generated.images.ts</li>
+            </ul>
+            <label className={styles.confirmCheckLabel}>
+              <input
+                type="checkbox"
+                checked={confirmApplyChecked}
+                onChange={(event) => setConfirmApplyChecked(event.target.checked)}
+              />
+              I understand this writes local generated source files.
+            </label>
+            <div className={styles.confirmActions}>
+              <button type="button" className={styles.assetSecondaryButton} onClick={() => setActiveModal(null)}>
+                Cancel
+              </button>
+              <button
+                type="button"
+                className={styles.applyButton}
+                onClick={performApplyToSource}
+                disabled={!confirmApplyChecked || isApplying}
+              >
+                {isApplying ? "Applying..." : "Apply"}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }

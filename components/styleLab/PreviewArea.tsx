@@ -1,6 +1,6 @@
 "use client";
 
-import { forwardRef, useEffect, useImperativeHandle, useRef } from "react";
+import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "react";
 import { useStyleLab } from "@/lib/dev/style-lab-context";
 import { STYLE_LAB_DEFAULTS } from "@/lib/dev/style-lab-defaults";
 import { injectStyleLabVariables, removeStyleLabVariables } from "@/lib/dev/style-lab-inject";
@@ -36,6 +36,7 @@ interface PreviewAreaProps {
   onStyleTargetSelect?: (targetId: StyleTargetId) => void;
   /** Called when preview target changes so parent can close any open panel. */
   onClearSelection?: () => void;
+  previewHeightMode?: "viewport" | "full-page";
 }
 
 export const PreviewArea = forwardRef<PreviewAreaHandle, PreviewAreaProps>(
@@ -46,11 +47,14 @@ export const PreviewArea = forwardRef<PreviewAreaHandle, PreviewAreaProps>(
       activeStyleTarget,
       onStyleTargetSelect,
       onClearSelection,
+      previewHeightMode = "full-page",
     },
     ref
   ) {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const cleanupRef = useRef<(() => void) | null>(null);
+  const resizeObserverRef = useRef<ResizeObserver | null>(null);
+  const [measuredHeight, setMeasuredHeight] = useState<number | null>(null);
   const { variables, imageOverrides, backgroundOverrides, overlayDrafts } = useStyleLab();
 
   /** Removes all style-lab custom properties and the runtime stylesheet from the iframe. */
@@ -70,6 +74,66 @@ export const PreviewArea = forwardRef<PreviewAreaHandle, PreviewAreaProps>(
   };
 
   useImperativeHandle(ref, () => ({ clearAllStyles }));
+
+  /** Measures the actual content height of the iframe document. */
+  const measureIframeHeight = () => {
+    const iframe = iframeRef.current;
+    const doc = iframe?.contentDocument;
+    if (!doc) {
+      setMeasuredHeight(null);
+      return;
+    }
+
+    try {
+      const docElement = doc.documentElement;
+      const body = doc.body;
+      
+      // Get the maximum scroll height from both documentElement and body
+      const height = Math.max(
+        docElement.scrollHeight || 0,
+        body?.scrollHeight || 0
+      );
+
+      // Set a reasonable height (at least 350px, but cap at 3000px to avoid absurd heights)
+      const finalHeight = Math.max(350, Math.min(height, 3000));
+      setMeasuredHeight(finalHeight);
+    } catch (error) {
+      // Fallback if measurement fails (cross-origin or other issues)
+      console.warn("Failed to measure iframe height:", error);
+      setMeasuredHeight(null);
+    }
+  };
+
+  /** Sets up ResizeObserver inside iframe to track content height changes. */
+  const setupResizeObserver = () => {
+    const iframe = iframeRef.current;
+    const doc = iframe?.contentDocument;
+    if (!doc) return;
+
+    try {
+      // Clean up old observer if it exists
+      if (resizeObserverRef.current) {
+        resizeObserverRef.current.disconnect();
+      }
+
+      // Create new ResizeObserver that triggers on content changes
+      const observer = new ResizeObserver(() => {
+        // Debounce measurement to avoid excessive updates
+        const timeoutId = window.setTimeout(() => {
+          measureIframeHeight();
+        }, 100);
+
+        return () => window.clearTimeout(timeoutId);
+      });
+
+      // Observe the document element
+      observer.observe(doc.documentElement);
+      resizeObserverRef.current = observer;
+    } catch (error) {
+      // ResizeObserver might not be available or fail in sandboxed iframe
+      console.warn("ResizeObserver not available:", error);
+    }
+  };
 
   const detachInspectListeners = () => {
     if (cleanupRef.current) {
@@ -113,6 +177,16 @@ export const PreviewArea = forwardRef<PreviewAreaHandle, PreviewAreaProps>(
           applyOverlayDraftsToDocument(doc, getSurfaceOverlayDrafts(overlayDrafts, activeTarget));
         }
         attachInspectIfNeeded(doc);
+
+        // Measure iframe height after load
+        if (previewHeightMode === "full-page") {
+          // Use a small timeout to allow images/fonts to render
+          const timeoutId = window.setTimeout(() => {
+            measureIframeHeight();
+            setupResizeObserver();
+          }, 200);
+          return () => window.clearTimeout(timeoutId);
+        }
       } catch (error) {
         console.error("Failed to process iframe load:", error);
       }
@@ -130,8 +204,12 @@ export const PreviewArea = forwardRef<PreviewAreaHandle, PreviewAreaProps>(
       if (doc) {
         clearSelection(doc);
       }
+      if (resizeObserverRef.current) {
+        resizeObserverRef.current.disconnect();
+        resizeObserverRef.current = null;
+      }
     };
-  }, [activeTarget, inspectMode, onStyleTargetSelect, variables, imageOverrides, backgroundOverrides, overlayDrafts]);
+  }, [activeTarget, inspectMode, onStyleTargetSelect, variables, imageOverrides, backgroundOverrides, overlayDrafts, previewHeightMode]);
 
   // Inject variables whenever they change
   useEffect(() => {
@@ -158,7 +236,15 @@ export const PreviewArea = forwardRef<PreviewAreaHandle, PreviewAreaProps>(
     injectComprehensiveStylesheet(doc, RUNTIME_STYLE_ID, variables, backgroundOverrides);
     applyImageOverridesToDocument(doc, imageOverrides);
     applyOverlayDraftsToDocument(doc, getSurfaceOverlayDrafts(overlayDrafts, activeTarget));
-  }, [variables, imageOverrides, backgroundOverrides, overlayDrafts, activeTarget]);
+
+    // Re-measure after style/image/overlay changes in full-page mode
+    if (previewHeightMode === "full-page") {
+      const timeoutId = window.setTimeout(() => {
+        measureIframeHeight();
+      }, 200);
+      return () => window.clearTimeout(timeoutId);
+    }
+  }, [variables, imageOverrides, backgroundOverrides, overlayDrafts, activeTarget, previewHeightMode]);
 
   // Immediate inspect-mode toggle handling without waiting for iframe load.
   useEffect(() => {
@@ -199,18 +285,25 @@ export const PreviewArea = forwardRef<PreviewAreaHandle, PreviewAreaProps>(
 
   const safePreviewTarget = normalizeWillardPreviewTarget(activeTarget);
 
+  // Compute inline styles based on preview height mode
+  const frameStyles = previewHeightMode === "full-page" && measuredHeight
+    ? { height: `${measuredHeight}px` }
+    : undefined;
+
+  const iframeStyles = {
+    width: "100%",
+    height: previewHeightMode === "full-page" && measuredHeight ? `${measuredHeight}px` : "100%",
+    border: "none",
+    borderRadius: "0.375rem",
+  } as React.CSSProperties;
+
   return (
     <div className={styles.previewArea}>
-      <div className={styles.previewFrame}>
+      <div className={`${styles.previewFrame} ${previewHeightMode === "full-page" ? styles.previewFrameFullPage : ""}`} style={frameStyles}>
         <iframe
           ref={iframeRef}
           src={getPreviewPathForTarget(safePreviewTarget)}
-          style={{
-            width: "100%",
-            height: "100%",
-            border: "none",
-            borderRadius: "0.375rem",
-          }}
+          style={iframeStyles}
           title={`Preview: ${getPreviewLabelForTarget(safePreviewTarget)}`}
           sandbox="allow-same-origin allow-scripts allow-popups"
         />
