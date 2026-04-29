@@ -3,6 +3,7 @@ export type WillardAssetSourceKind = "uploaded" | "project-public" | "remote-url
 export type WillardStorageProvider =
   | "vercel-blob"
   | "public-folder"
+  | "public-inbox"
   | "remote-url"
   | "unknown";
 
@@ -29,10 +30,17 @@ export type WillardAssetStatus = "approved" | "staging" | "denied" | "rejected" 
 
 export type WillardAssetDominantKind =
   | "texture"
+  | "paper-texture"
   | "transparent-overlay"
-  | "photo"
-  | "illustration"
-  | "shape"
+  | "torn-edge"
+  | "frame"
+  | "tape"
+  | "sticker"
+  | "pattern"
+  | "vector-shape"
+  | "callout"
+  | "mask"
+  | "module-frame"
   | "unknown";
 
 export type WillardAsset = {

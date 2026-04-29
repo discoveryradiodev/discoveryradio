@@ -24,29 +24,26 @@ type AssetLibraryPanelProps = {
   onClose: () => void;
   activeStyleTarget: StyleTargetId | null;
   activeSurface: "feed-homepage" | "live-spotlight" | "live-blog";
+  forcedFilter?: "approved" | "needs-review" | "denied";
 };
 
-type AssetFilterId =
-  | "approved"
-  | "needs-review"
-  | "denied"
-  | "demo-hidden"
-  | "rejected"
+type AssetPanelMode = "library" | "review-queue" | "hidden-denied" | "upload-register";
+type LibrarySortMode = "newest" | "oldest" | "name-asc" | "name-desc" | "category";
+type LibraryCategoryFilter =
   | "all"
   | "images"
-  | "article-covers"
-  | "blog-covers"
-  | "spotlight-headshots"
-  | "homepage-images"
   | "backgrounds"
   | "textures"
-  | "stickers"
-  | "tape"
-  | "frames"
+  | "paper"
   | "overlays"
-  | "project-public"
-  | "uploaded"
-  | "unused";
+  | "tape"
+  | "stickers"
+  | "frames"
+  | "shapes"
+  | "masks"
+  | "edges"
+  | "callouts"
+  | "module-frames";
 
 type StorageCapabilities = {
   hasBlobToken: boolean;
@@ -55,26 +52,35 @@ type StorageCapabilities = {
   canRegisterPublicAssets: boolean;
 };
 
-const FILTER_OPTIONS: Array<{ id: AssetFilterId; label: string }> = [
-  { id: "approved", label: "Approved (Default)" },
-  { id: "needs-review", label: "Review Queue" },
-  { id: "denied", label: "Denied / Rejected" },
-  { id: "demo-hidden", label: "Demo / Hidden" },
+type IntakeSummary = {
+  filesStaged: number;
+  duplicatesSkipped: number;
+  unsupportedSkipped: number;
+};
+
+const LIBRARY_CATEGORY_OPTIONS: Array<{ id: LibraryCategoryFilter; label: string }> = [
   { id: "all", label: "All" },
   { id: "images", label: "Images" },
-  { id: "article-covers", label: "Article Covers" },
-  { id: "blog-covers", label: "Blog Covers" },
-  { id: "spotlight-headshots", label: "Spotlight Headshots" },
-  { id: "homepage-images", label: "Homepage Images" },
   { id: "backgrounds", label: "Backgrounds" },
   { id: "textures", label: "Textures" },
-  { id: "stickers", label: "Stickers" },
-  { id: "tape", label: "Tape" },
-  { id: "frames", label: "Frames" },
+  { id: "paper", label: "Paper" },
   { id: "overlays", label: "Overlays" },
-  { id: "project-public", label: "Project/Public" },
-  { id: "uploaded", label: "Uploaded" },
-  { id: "unused", label: "Unused" },
+  { id: "tape", label: "Tape" },
+  { id: "stickers", label: "Stickers" },
+  { id: "frames", label: "Frames" },
+  { id: "shapes", label: "Shapes" },
+  { id: "masks", label: "Masks" },
+  { id: "edges", label: "Edges" },
+  { id: "callouts", label: "Callouts" },
+  { id: "module-frames", label: "Module Frames" },
+];
+
+const SORT_OPTIONS: Array<{ id: LibrarySortMode; label: string }> = [
+  { id: "newest", label: "Newest first" },
+  { id: "oldest", label: "Oldest first" },
+  { id: "name-asc", label: "Filename A-Z" },
+  { id: "name-desc", label: "Filename Z-A" },
+  { id: "category", label: "Category" },
 ];
 
 const CATEGORY_OPTIONS = [
@@ -121,6 +127,7 @@ export function AssetLibraryPanel({
   onClose,
   activeStyleTarget,
   activeSurface,
+  forcedFilter,
 }: AssetLibraryPanelProps) {
   const {
     assets,
@@ -145,7 +152,10 @@ export function AssetLibraryPanel({
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [capabilities, setCapabilities] = useState<StorageCapabilities | null>(null);
 
-  const [selectedFilter, setSelectedFilter] = useState<AssetFilterId>("approved");
+  const [activeMode, setActiveMode] = useState<AssetPanelMode>("library");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [libraryCategory, setLibraryCategory] = useState<LibraryCategoryFilter>("all");
+  const [librarySort, setLibrarySort] = useState<LibrarySortMode>("newest");
   const [backgroundSize, setBackgroundSize] = useState<WillardBackgroundSize>("cover");
   const [backgroundPosition, setBackgroundPosition] = useState<WillardBackgroundPosition>("center");
   const [backgroundRepeat, setBackgroundRepeat] = useState<WillardBackgroundRepeat>("no-repeat");
@@ -160,7 +170,18 @@ export function AssetLibraryPanel({
   const [publicCategory, setPublicCategory] = useState("image");
   const [isRegisteringPublic, setIsRegisteringPublic] = useState(false);
   const [registerError, setRegisterError] = useState<string | null>(null);
+  const [isImportingInbox, setIsImportingInbox] = useState(false);
+  const [importInboxResult, setImportInboxResult] = useState<IntakeSummary | null>(null);
+  const [importInboxError, setImportInboxError] = useState<string | null>(null);
+  const [isPullingTextures, setIsPullingTextures] = useState(false);
+  const [pullProvider, setPullProvider] = useState("all-trusted");
+  const [pullCategory, setPullCategory] = useState("texture");
+  const [pullCount, setPullCount] = useState(10);
+  const [pullTextureResult, setPullTextureResult] = useState<IntakeSummary | null>(null);
+  const [pullTextureError, setPullTextureError] = useState<string | null>(null);
   const [actionAssetId, setActionAssetId] = useState<string | null>(null);
+  const [approveDraftAssetId, setApproveDraftAssetId] = useState<string | null>(null);
+  const [approveDraftCategory, setApproveDraftCategory] = useState("image");
 
   const selectedAsset = useMemo(() => {
     if (!selectedAssetId) {
@@ -169,7 +190,22 @@ export function AssetLibraryPanel({
     return assets.find((asset) => asset.id === selectedAssetId) ?? null;
   }, [assets, selectedAssetId]);
 
-  const usedAssetIds = useMemo(() => new Set(assetUsages.map((usage) => usage.assetId)), [assetUsages]);
+  const approvedAssets = useMemo(
+    () => assets.filter((asset) => resolveAssetStatus(asset) === "approved"),
+    [assets]
+  );
+  const reviewQueueAssets = useMemo(
+    () => assets.filter((asset) => isReviewAsset(asset)).sort((a, b) => assetTimestamp(b) - assetTimestamp(a)),
+    [assets]
+  );
+  const hiddenDeniedAssets = useMemo(
+    () => assets.filter((asset) => isHiddenDeniedAsset(asset)).sort((a, b) => assetTimestamp(b) - assetTimestamp(a)),
+    [assets]
+  );
+
+  const approvedCount = approvedAssets.length;
+  const reviewQueueCount = reviewQueueAssets.length;
+  const hiddenDeniedCount = hiddenDeniedAssets.length;
 
   const activeTargetKind = activeStyleTarget ? TARGET_TO_KIND[activeStyleTarget] : null;
   const activeTargetLabel = activeStyleTarget
@@ -188,11 +224,60 @@ export function AssetLibraryPanel({
     return backgroundOverrides.find((item) => item.targetId === activeStyleTarget) ?? null;
   }, [activeStyleTarget, backgroundOverrides]);
 
-  const filteredAssets = useMemo(() => {
-    return assets
-      .filter((asset) => matchesFilter(asset, selectedFilter, usedAssetIds))
-      .sort((a, b) => assetTimestamp(b) - assetTimestamp(a));
-  }, [assets, selectedFilter, usedAssetIds]);
+  const filteredLibraryAssets = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase();
+    const next = approvedAssets
+      .filter((asset) => matchesLibraryCategory(asset, libraryCategory))
+      .filter((asset) => {
+        if (!query) {
+          return true;
+        }
+        const haystack = [
+          asset.filename,
+          asset.originalFilename,
+          asset.category,
+          asset.storageProvider,
+          asset.sourceKind,
+          asset.credit,
+          asset.altText ?? "",
+          asset.sourceNotes ?? "",
+          asset.pathname ?? "",
+          extractSearchTags(asset),
+        ]
+          .join(" ")
+          .toLowerCase();
+        return haystack.includes(query);
+      });
+
+    return next.sort((a, b) => {
+      if (librarySort === "newest") {
+        return assetTimestamp(b) - assetTimestamp(a);
+      }
+      if (librarySort === "oldest") {
+        return assetTimestamp(a) - assetTimestamp(b);
+      }
+      if (librarySort === "name-asc") {
+        return a.filename.localeCompare(b.filename);
+      }
+      if (librarySort === "category") {
+        const byCategory = a.category.localeCompare(b.category);
+        if (byCategory !== 0) {
+          return byCategory;
+        }
+        return a.filename.localeCompare(b.filename);
+      }
+      return b.filename.localeCompare(a.filename);
+    });
+  }, [approvedAssets, libraryCategory, librarySort, searchQuery]);
+
+  const currentFilteredCount =
+    activeMode === "library"
+      ? filteredLibraryAssets.length
+      : activeMode === "review-queue"
+        ? reviewQueueAssets.length
+        : activeMode === "hidden-denied"
+          ? hiddenDeniedAssets.length
+          : 0;
 
   const canUpload = capabilities?.canUploadToBlob ?? false;
 
@@ -286,8 +371,16 @@ export function AssetLibraryPanel({
       return;
     }
 
+    if (forcedFilter === "needs-review") {
+      setActiveMode("review-queue");
+    } else if (forcedFilter === "denied") {
+      setActiveMode("hidden-denied");
+    } else {
+      setActiveMode("library");
+    }
+
     loadAssets();
-  }, [isOpen]);
+  }, [isOpen, forcedFilter]);
 
   const clearUsagesForTarget = (usageType: "selected-target-override" | "background") => {
     if (!activeStyleTarget) {
@@ -500,22 +593,94 @@ export function AssetLibraryPanel({
 
   const canCurateLocally = process.env.NODE_ENV === "development";
 
-  const handleApproveAsset = async (asset: WillardAsset) => {
+  const handleImportInbox = async () => {
+    if (!canCurateLocally || isImportingInbox) {
+      return;
+    }
+
+    setIsImportingInbox(true);
+    setImportInboxError(null);
+    setImportInboxResult(null);
+
+    try {
+      const response = await fetch("/api/willard/assets/ingest-inbox", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ move: false }),
+      });
+
+      const payload = (await response.json().catch(() => null)) as
+        | { error?: string; summary?: IntakeSummary }
+        | null;
+
+      if (!response.ok || !payload?.summary) {
+        throw new Error(payload?.error ?? "Inbox import failed.");
+      }
+
+      setImportInboxResult(payload.summary);
+      await loadAssets();
+    } catch (error) {
+      setImportInboxError(error instanceof Error ? error.message : "Inbox import failed.");
+    } finally {
+      setIsImportingInbox(false);
+    }
+  };
+
+  const handlePullTexturePack = async () => {
+    if (!canCurateLocally || isPullingTextures) {
+      return;
+    }
+
+    setIsPullingTextures(true);
+    setPullTextureError(null);
+    setPullTextureResult(null);
+
+    try {
+      const response = await fetch("/api/willard/assets/pull-textures", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          provider: pullProvider,
+          category: pullCategory,
+          count: clampNumber(pullCount, 1, 50),
+        }),
+      });
+
+      const payload = (await response.json().catch(() => null)) as
+        | { error?: string; summary?: IntakeSummary }
+        | null;
+
+      if (!response.ok || !payload?.summary) {
+        throw new Error(payload?.error ?? "Texture pull failed.");
+      }
+
+      setPullTextureResult(payload.summary);
+      await loadAssets();
+    } catch (error) {
+      setPullTextureError(error instanceof Error ? error.message : "Texture pull failed.");
+    } finally {
+      setIsPullingTextures(false);
+    }
+  };
+
+  const openApproveChooser = (asset: WillardAsset) => {
+    const suggested = asset.suggestedCategory || asset.category || "image";
+    setApproveDraftAssetId(asset.id);
+    setApproveDraftCategory(suggested);
+  };
+
+  const closeApproveChooser = () => {
+    setApproveDraftAssetId(null);
+    setApproveDraftCategory("image");
+  };
+
+  const handleApproveAsset = async (asset: WillardAsset, categoryInput: string) => {
     if (!canCurateLocally) {
       window.alert("Approve is only available in local/dev mode.");
       return;
     }
 
-    const suggested = asset.suggestedCategory || asset.category || "image";
-    const input = window.prompt(
-      "Approve asset category (image, background, texture, paper, overlay, tape, sticker, frame, shape, mask, edge, callout, module-frame)",
-      suggested
-    );
-    if (!input) {
-      return;
-    }
-
-    const category = normalizeReviewCategory(input);
+    const category = normalizeReviewCategory(categoryInput);
     if (!category) {
       window.alert("Invalid category.");
       return;
@@ -539,6 +704,7 @@ export function AssetLibraryPanel({
       }
 
       await loadAssets();
+      closeApproveChooser();
     } catch (error) {
       window.alert(error instanceof Error ? error.message : "Approve failed.");
     } finally {
@@ -552,7 +718,10 @@ export function AssetLibraryPanel({
       return;
     }
 
-    if (!window.confirm(`Deny and remove ${asset.filename}?`)) {
+    const denyMessage = isInboxCandidate(asset)
+      ? `Deny ${asset.filename}? This will delete the inbox file.`
+      : `Deny ${asset.filename}? This will remove the local staging file when possible, otherwise mark it denied.`;
+    if (!window.confirm(denyMessage)) {
       return;
     }
 
@@ -599,222 +768,462 @@ export function AssetLibraryPanel({
 
         <div className={styles.assetLibraryContent}>
           <section className={styles.assetLibrarySection}>
-            <h3 className={styles.assetLibrarySectionTitle}>Upload Image</h3>
-            <form onSubmit={handleUploadSubmit} className={styles.assetLibraryForm}>
-              <label className={styles.assetFieldLabel} htmlFor="willard-upload-file">
-                Choose image
-              </label>
-              <input
-                id="willard-upload-file"
-                type="file"
-                accept="image/jpeg,image/png,image/webp,image/gif"
-                className={styles.assetFileInput}
-                onChange={(event) => {
-                  const file = event.target.files?.[0] ?? null;
-                  setUploadFile(file);
-                }}
-              />
-
-              <label className={styles.assetFieldLabel} htmlFor="willard-upload-category">
-                Category
-              </label>
-              <select
-                id="willard-upload-category"
-                className={styles.assetSelect}
-                value={uploadCategory}
-                onChange={(event) => setUploadCategory(event.target.value)}
+            <div className={styles.assetModeTabs}>
+              <button
+                type="button"
+                className={`${styles.assetModeTabButton} ${activeMode === "library" ? styles.assetModeTabButtonActive : ""}`}
+                onClick={() => setActiveMode("library")}
               >
-                {CATEGORY_OPTIONS.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
+                Library <span className={styles.assetModeCount}>{approvedCount}</span>
+              </button>
+              <button
+                type="button"
+                className={`${styles.assetModeTabButton} ${activeMode === "review-queue" ? styles.assetModeTabButtonActive : ""}`}
+                onClick={() => setActiveMode("review-queue")}
+              >
+                Review Queue <span className={styles.assetModeCount}>{reviewQueueCount}</span>
+              </button>
+              <button
+                type="button"
+                className={`${styles.assetModeTabButton} ${activeMode === "hidden-denied" ? styles.assetModeTabButtonActive : ""}`}
+                onClick={() => setActiveMode("hidden-denied")}
+              >
+                Hidden / Denied <span className={styles.assetModeCount}>{hiddenDeniedCount}</span>
+              </button>
+              <button
+                type="button"
+                className={`${styles.assetModeTabButton} ${activeMode === "upload-register" ? styles.assetModeTabButtonActive : ""}`}
+                onClick={() => setActiveMode("upload-register")}
+              >
+                Upload / Register
+              </button>
+            </div>
+            <p className={styles.assetModeMeta}>Current filtered count: {currentFilteredCount}</p>
+          </section>
 
-              {!canUpload ? (
-                <p className={styles.assetLibraryMuted}>Image uploads are not configured for this environment.</p>
+          {activeMode === "library" ? (
+            <section className={styles.assetLibrarySection}>
+              <div className={styles.assetListHeader}>
+                <h3 className={styles.assetLibrarySectionTitle}>Library</h3>
+                <button type="button" className={styles.assetSecondaryButton} onClick={loadAssets} disabled={isLoading}>
+                  {isLoading ? "Loading..." : "Refresh"}
+                </button>
+              </div>
+
+              <div className={styles.assetFilterGrid}>
+                <div className={styles.assetFilterField}>
+                  <label className={styles.assetFieldLabel} htmlFor="willard-asset-search">
+                    Search
+                  </label>
+                  <input
+                    id="willard-asset-search"
+                    type="text"
+                    className={styles.assetTextInput}
+                    value={searchQuery}
+                    placeholder="Search filename/category/notes"
+                    onChange={(event) => setSearchQuery(event.target.value)}
+                  />
+                </div>
+
+                <div className={styles.assetFilterField}>
+                  <label className={styles.assetFieldLabel} htmlFor="willard-asset-category">
+                    Category
+                  </label>
+                  <select
+                    id="willard-asset-category"
+                    className={styles.assetSelect}
+                    value={libraryCategory}
+                    onChange={(event) => setLibraryCategory(event.target.value as LibraryCategoryFilter)}
+                  >
+                    {LIBRARY_CATEGORY_OPTIONS.map((option) => (
+                      <option key={option.id} value={option.id}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className={styles.assetFilterField}>
+                  <label className={styles.assetFieldLabel} htmlFor="willard-asset-sort">
+                    Sort
+                  </label>
+                  <select
+                    id="willard-asset-sort"
+                    className={styles.assetSelect}
+                    value={librarySort}
+                    onChange={(event) => setLibrarySort(event.target.value as LibrarySortMode)}
+                  >
+                    {SORT_OPTIONS.map((option) => (
+                      <option key={option.id} value={option.id}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              {fetchError ? <p className={styles.assetLibraryError}>{fetchError}</p> : null}
+              {isLoading ? <p className={styles.assetLibraryMuted}>Loading assets...</p> : null}
+
+              {!isLoading && !fetchError && filteredLibraryAssets.length === 0 ? (
+                <p className={styles.assetLibraryEmpty}>
+                  No approved assets yet. Review staged assets or upload/register assets.
+                </p>
               ) : null}
 
-              {uploadError ? <p className={styles.assetLibraryError}>{uploadError}</p> : null}
+              {!isLoading && filteredLibraryAssets.length > 0 ? (
+                <div className={styles.assetGrid}>
+                  {filteredLibraryAssets.map((asset) => {
+                    const isSelected = asset.id === selectedAssetId;
+                    return (
+                      <button
+                        key={asset.id}
+                        type="button"
+                        className={`${styles.assetCard} ${isSelected ? styles.assetCardActive : ""}`}
+                        onClick={() => setSelectedAssetId(asset.id)}
+                        title={asset.filename}
+                      >
+                        <img src={asset.url} alt={asset.altText ?? asset.filename} className={styles.assetThumb} />
+                        <span className={styles.assetCardName}>{asset.filename}</span>
+                        <span className={styles.assetCardMeta}>{asset.category} · approved</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              ) : null}
+            </section>
+          ) : null}
 
-              <button
-                type="submit"
-                className={styles.assetPrimaryButton}
-                disabled={!canUpload || !uploadFile || isUploading}
-              >
-                {isUploading ? "Uploading..." : "Upload Image"}
-              </button>
-            </form>
-          </section>
-
-          <section className={styles.assetLibrarySection}>
-            <h3 className={styles.assetLibrarySectionTitle}>Use Project/Public Image</h3>
-            <form onSubmit={handleRegisterPublic} className={styles.assetLibraryForm}>
-              <label className={styles.assetFieldLabel} htmlFor="willard-public-path">
-                Public path
-              </label>
-              <input
-                id="willard-public-path"
-                type="text"
-                className={styles.assetTextInput}
-                value={publicPath}
-                placeholder="/YE.jpg"
-                onChange={(event) => setPublicPath(event.target.value)}
-              />
-
-              <label className={styles.assetFieldLabel} htmlFor="willard-public-category">
-                Category
-              </label>
-              <select
-                id="willard-public-category"
-                className={styles.assetSelect}
-                value={publicCategory}
-                onChange={(event) => setPublicCategory(event.target.value)}
-              >
-                {CATEGORY_OPTIONS.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-
-              {registerError ? <p className={styles.assetLibraryError}>{registerError}</p> : null}
-
-              <button type="submit" className={styles.assetPrimaryButton} disabled={!publicPath.trim() || isRegisteringPublic}>
-                {isRegisteringPublic ? "Registering..." : "Use Project Image"}
-              </button>
-            </form>
-          </section>
-
-          <section className={styles.assetLibrarySection}>
-            <div className={styles.assetListHeader}>
-              <h3 className={styles.assetLibrarySectionTitle}>Assets</h3>
-              <button type="button" className={styles.assetSecondaryButton} onClick={loadAssets} disabled={isLoading}>
-                {isLoading ? "Loading..." : "Refresh"}
-              </button>
-            </div>
-
-            <label className={styles.assetFieldLabel} htmlFor="willard-asset-filter">
-              Category filter
-            </label>
-            <select
-              id="willard-asset-filter"
-              className={styles.assetSelect}
-              value={selectedFilter}
-              onChange={(event) => setSelectedFilter(event.target.value as AssetFilterId)}
-            >
-              {FILTER_OPTIONS.map((option) => (
-                <option key={option.id} value={option.id}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-
-            {fetchError ? <p className={styles.assetLibraryError}>{fetchError}</p> : null}
-
-            {isLoading ? <p className={styles.assetLibraryMuted}>Loading assets...</p> : null}
-
-            {!isLoading && !fetchError && filteredAssets.length === 0 ? (
-              <p className={styles.assetLibraryEmpty}>
-                Upload textures, images, stickers, tape, frames, or backgrounds.
-              </p>
-            ) : null}
-
-            {!isLoading && filteredAssets.length > 0 && selectedFilter === "needs-review" ? (
-              <div className={styles.assetActionStack}>
-                {filteredAssets.map((asset) => {
-                  const disabled = actionAssetId === asset.id;
-                  return (
-                    <div key={asset.id} className={styles.assetDetails}>
-                      <img src={asset.url} alt={asset.altText ?? asset.filename} className={styles.assetDetailsThumb} />
-                      <dl className={styles.assetDetailsList}>
-                        <div>
-                          <dt>Filename</dt>
-                          <dd>{asset.filename}</dd>
-                        </div>
-                        <div>
-                          <dt>Suggested category</dt>
-                          <dd>{asset.suggestedCategory ?? asset.category ?? "image"}</dd>
-                        </div>
-                        <div>
-                          <dt>Provider / license</dt>
-                          <dd>{asset.sourceNotes ?? "Unknown source"}</dd>
-                        </div>
-                        <div>
-                          <dt>Status</dt>
-                          <dd>{resolveAssetStatus(asset)}</dd>
-                        </div>
-                      </dl>
-                      <div className={styles.assetActionStack}>
-                        <button
-                          type="button"
-                          className={styles.assetPrimaryButton}
-                          disabled={disabled || !canCurateLocally}
-                          onClick={() => handleApproveAsset(asset)}
-                          title={!canCurateLocally ? "Local/dev only" : "Approve asset"}
-                        >
-                          {disabled ? "Working..." : "Approve"}
-                        </button>
-                        <button
-                          type="button"
-                          className={styles.assetDangerButton}
-                          disabled={disabled || !canCurateLocally}
-                          onClick={() => handleDenyAsset(asset)}
-                          title={!canCurateLocally ? "Local/dev only" : "Deny asset"}
-                        >
-                          {disabled ? "Working..." : "Deny"}
-                        </button>
-                      </div>
-                    </div>
-                  );
-                })}
+          {activeMode === "review-queue" ? (
+            <section className={styles.assetLibrarySection}>
+              <div className={styles.assetListHeader}>
+                <h3 className={styles.assetLibrarySectionTitle}>Review Queue</h3>
+                <button type="button" className={styles.assetSecondaryButton} onClick={loadAssets} disabled={isLoading}>
+                  {isLoading ? "Loading..." : "Refresh"}
+                </button>
               </div>
-            ) : null}
 
-            {!isLoading && filteredAssets.length > 0 && selectedFilter !== "needs-review" ? (
-              <div className={styles.assetGrid}>
-                {filteredAssets.map((asset) => {
-                  const isSelected = asset.id === selectedAssetId;
-                  return (
-                    <button
-                      key={asset.id}
-                      type="button"
-                      className={`${styles.assetCard} ${isSelected ? styles.assetCardActive : ""}`}
-                      onClick={() => setSelectedAssetId(asset.id)}
-                      title={asset.filename}
-                    >
-                      <img src={asset.url} alt={asset.altText ?? asset.filename} className={styles.assetThumb} />
-                      <span className={styles.assetCardName}>{asset.filename}</span>
-                      <span className={styles.assetCardMeta}>{asset.category} · {resolveAssetStatus(asset)}</span>
-                    </button>
-                  );
-                })}
+              {fetchError ? <p className={styles.assetLibraryError}>{fetchError}</p> : null}
+              {isLoading ? <p className={styles.assetLibraryMuted}>Loading assets...</p> : null}
+              <p className={styles.assetLibraryMuted}>Drop files into public/willard-assets-inbox, then click Import Inbox to stage them.</p>
+
+              <div className={styles.assetLibraryForm}>
+                <button
+                  type="button"
+                  className={styles.assetPrimaryButton}
+                  disabled={!canCurateLocally || isImportingInbox}
+                  onClick={handleImportInbox}
+                  title={!canCurateLocally ? "Inbox import is local-only." : "Ingest staged assets from inbox"}
+                >
+                  {isImportingInbox ? "Importing..." : "Import Inbox"}
+                </button>
+                {importInboxError ? <p className={styles.assetLibraryError}>{importInboxError}</p> : null}
+                {importInboxResult ? (
+                  <p className={styles.assetLibraryMuted}>
+                    Imported {importInboxResult.filesStaged}; duplicates {importInboxResult.duplicatesSkipped}; unsupported {importInboxResult.unsupportedSkipped}.
+                  </p>
+                ) : null}
+
+                <label className={styles.assetFieldLabel} htmlFor="pull-texture-provider">
+                  Provider
+                </label>
+                <select
+                  id="pull-texture-provider"
+                  className={styles.assetSelect}
+                  value={pullProvider}
+                  onChange={(event) => setPullProvider(event.target.value)}
+                >
+                  <option value="all-trusted">All Trusted</option>
+                  <option value="ambientcg">AmbientCG</option>
+                  <option value="polyhaven">Poly Haven</option>
+                </select>
+
+                <label className={styles.assetFieldLabel} htmlFor="pull-texture-category">
+                  Texture pack
+                </label>
+                <select
+                  id="pull-texture-category"
+                  className={styles.assetSelect}
+                  value={pullCategory}
+                  onChange={(event) => setPullCategory(event.target.value)}
+                >
+                  <option value="texture">Texture</option>
+                  <option value="paper">Paper</option>
+                  <option value="cardboard">Cardboard</option>
+                  <option value="concrete">Concrete</option>
+                  <option value="fabric">Fabric</option>
+                  <option value="grunge">Grunge</option>
+                </select>
+
+                <label className={styles.assetFieldLabel} htmlFor="pull-texture-count">
+                  Count
+                </label>
+                <input
+                  id="pull-texture-count"
+                  type="number"
+                  min={1}
+                  max={50}
+                  step={1}
+                  className={styles.assetTextInput}
+                  value={pullCount}
+                  onChange={(event) => setPullCount(clampNumber(Number(event.target.value), 1, 50))}
+                />
+
+                <button
+                  type="button"
+                  className={styles.assetSecondaryButton}
+                  disabled={!canCurateLocally || isPullingTextures}
+                  onClick={handlePullTexturePack}
+                  title={!canCurateLocally ? "Texture pull is local-only." : "Pull from trusted providers"}
+                >
+                  {isPullingTextures ? "Pulling..." : "Pull Texture Pack"}
+                </button>
+                {pullTextureError ? <p className={styles.assetLibraryError}>{pullTextureError}</p> : null}
+                {pullTextureResult ? (
+                  <p className={styles.assetLibraryMuted}>
+                    Pulled {pullTextureResult.filesStaged}; duplicates {pullTextureResult.duplicatesSkipped}; unsupported {pullTextureResult.unsupportedSkipped}.
+                  </p>
+                ) : null}
+                {!canCurateLocally ? <p className={styles.assetLibraryMuted}>Inbox import is local-only.</p> : null}
               </div>
-            ) : null}
-          </section>
+
+              {!isLoading && !fetchError && reviewQueueAssets.length === 0 ? (
+                <p className={styles.assetLibraryEmpty}>No assets waiting for review.</p>
+              ) : null}
+
+              {!isLoading && reviewQueueAssets.length > 0 ? (
+                <div className={styles.assetReviewList}>
+                  {reviewQueueAssets.map((asset) => {
+                    const disabled = actionAssetId === asset.id;
+                    const showingApproveChooser = approveDraftAssetId === asset.id;
+                    return (
+                      <article key={asset.id} className={styles.assetReviewCard}>
+                        <img src={asset.url} alt={asset.altText ?? asset.filename} className={styles.assetReviewThumb} />
+                        <div className={styles.assetReviewBody}>
+                          {isInboxCandidate(asset) ? <span className={styles.assetInboxBadge}>Inbox</span> : null}
+                          <p className={styles.assetReviewName}>{asset.filename}</p>
+                          <p className={styles.assetReviewMeta}>Suggested: {asset.suggestedCategory ?? asset.category ?? "image"}</p>
+                          <p className={styles.assetReviewMeta}>Current category: {asset.category}</p>
+                          <p className={styles.assetReviewMeta}>Provider/source: {asset.storageProvider} · {asset.sourceKind}</p>
+                          <p className={styles.assetReviewMeta}>License: {asset.credit ?? asset.sourceNotes ?? "Not provided"}</p>
+                        </div>
+                        <div className={styles.assetReviewActions}>
+                          <button
+                            type="button"
+                            className={styles.assetPrimaryButton}
+                            disabled={disabled || !canCurateLocally}
+                            onClick={() => openApproveChooser(asset)}
+                            title={!canCurateLocally ? "Local/dev only" : "Approve asset"}
+                          >
+                            {disabled ? "Working..." : "Approve"}
+                          </button>
+                          <button
+                            type="button"
+                            className={styles.assetDangerButton}
+                            disabled={disabled || !canCurateLocally}
+                            onClick={() => handleDenyAsset(asset)}
+                            title={!canCurateLocally ? "Local/dev only" : "Deny asset"}
+                          >
+                            {disabled ? "Working..." : "Deny"}
+                          </button>
+                          {showingApproveChooser ? (
+                            <div className={styles.assetApproveChooser}>
+                              <label className={styles.assetFieldLabel} htmlFor={`approve-category-${asset.id}`}>
+                                Final category
+                              </label>
+                              <select
+                                id={`approve-category-${asset.id}`}
+                                className={styles.assetSelect}
+                                value={approveDraftCategory}
+                                onChange={(event) => setApproveDraftCategory(event.target.value)}
+                              >
+                                {CATEGORY_OPTIONS.map((option) => (
+                                  <option key={option.value} value={option.value}>
+                                    {option.label}
+                                  </option>
+                                ))}
+                              </select>
+                              <div className={styles.assetApproveChooserActions}>
+                                <button
+                                  type="button"
+                                  className={styles.assetPrimaryButton}
+                                  disabled={disabled}
+                                  onClick={() => handleApproveAsset(asset, approveDraftCategory)}
+                                >
+                                  Confirm Approve
+                                </button>
+                                <button type="button" className={styles.assetSecondaryButton} onClick={closeApproveChooser}>
+                                  Cancel
+                                </button>
+                              </div>
+                            </div>
+                          ) : null}
+                        </div>
+                      </article>
+                    );
+                  })}
+                </div>
+              ) : null}
+            </section>
+          ) : null}
+
+          {activeMode === "hidden-denied" ? (
+            <section className={styles.assetLibrarySection}>
+              <div className={styles.assetListHeader}>
+                <h3 className={styles.assetLibrarySectionTitle}>Hidden / Denied</h3>
+                <button type="button" className={styles.assetSecondaryButton} onClick={loadAssets} disabled={isLoading}>
+                  {isLoading ? "Loading..." : "Refresh"}
+                </button>
+              </div>
+
+              {fetchError ? <p className={styles.assetLibraryError}>{fetchError}</p> : null}
+              {isLoading ? <p className={styles.assetLibraryMuted}>Loading assets...</p> : null}
+
+              {!isLoading && !fetchError && hiddenDeniedAssets.length === 0 ? (
+                <p className={styles.assetLibraryEmpty}>No hidden or denied assets.</p>
+              ) : null}
+
+              {!isLoading && hiddenDeniedAssets.length > 0 ? (
+                <div className={styles.assetGrid}>
+                  {hiddenDeniedAssets.map((asset) => {
+                    const isSelected = asset.id === selectedAssetId;
+                    return (
+                      <button
+                        key={asset.id}
+                        type="button"
+                        className={`${styles.assetCard} ${isSelected ? styles.assetCardActive : ""}`}
+                        onClick={() => setSelectedAssetId(asset.id)}
+                        title={asset.filename}
+                      >
+                        <img src={asset.url} alt={asset.altText ?? asset.filename} className={styles.assetThumb} />
+                        <span className={styles.assetCardName}>{asset.filename}</span>
+                        <span className={styles.assetCardMeta}>{asset.category} · {resolveAssetStatus(asset)}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              ) : null}
+            </section>
+          ) : null}
+
+          {activeMode === "upload-register" ? (
+            <section className={styles.assetLibrarySection}>
+              <h3 className={styles.assetLibrarySectionTitle}>Upload / Register</h3>
+              <p className={styles.assetLibraryMuted}>For normal intake, use Review Queue from public/willard-assets-inbox.</p>
+
+              <details className={styles.assetCollapsible}>
+                <summary className={styles.assetCollapsibleSummary}>Upload Image</summary>
+                <form onSubmit={handleUploadSubmit} className={styles.assetLibraryForm}>
+                  <label className={styles.assetFieldLabel} htmlFor="willard-upload-file">
+                    Choose image
+                  </label>
+                  <input
+                    id="willard-upload-file"
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp,image/gif"
+                    className={styles.assetFileInput}
+                    onChange={(event) => {
+                      const file = event.target.files?.[0] ?? null;
+                      setUploadFile(file);
+                    }}
+                  />
+
+                  <label className={styles.assetFieldLabel} htmlFor="willard-upload-category">
+                    Category
+                  </label>
+                  <select
+                    id="willard-upload-category"
+                    className={styles.assetSelect}
+                    value={uploadCategory}
+                    onChange={(event) => setUploadCategory(event.target.value)}
+                  >
+                    {CATEGORY_OPTIONS.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+
+                  {!canUpload ? (
+                    <p className={styles.assetLibraryMuted}>Image uploads are not configured for this environment.</p>
+                  ) : null}
+
+                  {uploadError ? <p className={styles.assetLibraryError}>{uploadError}</p> : null}
+
+                  <button
+                    type="submit"
+                    className={styles.assetPrimaryButton}
+                    disabled={!canUpload || !uploadFile || isUploading}
+                  >
+                    {isUploading ? "Uploading..." : "Upload Image"}
+                  </button>
+                </form>
+              </details>
+
+              <details className={styles.assetCollapsible}>
+                <summary className={styles.assetCollapsibleSummary}>Use Project/Public Image</summary>
+                <form onSubmit={handleRegisterPublic} className={styles.assetLibraryForm}>
+                  <label className={styles.assetFieldLabel} htmlFor="willard-public-path">
+                    Public path
+                  </label>
+                  <input
+                    id="willard-public-path"
+                    type="text"
+                    className={styles.assetTextInput}
+                    value={publicPath}
+                    placeholder="/YE.jpg"
+                    onChange={(event) => setPublicPath(event.target.value)}
+                  />
+
+                  <label className={styles.assetFieldLabel} htmlFor="willard-public-category">
+                    Category
+                  </label>
+                  <select
+                    id="willard-public-category"
+                    className={styles.assetSelect}
+                    value={publicCategory}
+                    onChange={(event) => setPublicCategory(event.target.value)}
+                  >
+                    {CATEGORY_OPTIONS.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+
+                  {registerError ? <p className={styles.assetLibraryError}>{registerError}</p> : null}
+
+                  <button type="submit" className={styles.assetPrimaryButton} disabled={!publicPath.trim() || isRegisteringPublic}>
+                    {isRegisteringPublic ? "Registering..." : "Use Project Image"}
+                  </button>
+                </form>
+              </details>
+            </section>
+          ) : null}
 
           <section className={styles.assetLibrarySection}>
-            <h3 className={styles.assetLibrarySectionTitle}>Target Actions</h3>
+            <details className={styles.assetCollapsible} open={Boolean(selectedAsset && activeStyleTarget)}>
+              <summary className={styles.assetCollapsibleSummary}>Target Actions</summary>
 
-            <div className={styles.assetActionSummary}>
-              <p className={styles.assetActionLine}>
-                <span>Selected target:</span> {activeTargetLabel ?? "None"}
-              </p>
-              <p className={styles.assetActionLine}>
-                <span>Target kind:</span> {activeTargetKind ?? "None"}
-              </p>
-              <p className={styles.assetActionLine}>
-                <span>Selected asset:</span> {selectedAsset?.filename ?? "None"}
-              </p>
-            </div>
+              <div className={styles.assetActionSummary}>
+                <p className={styles.assetActionLine}>
+                  <span>Selected target:</span> {activeTargetLabel ?? "None"}
+                </p>
+                <p className={styles.assetActionLine}>
+                  <span>Target kind:</span> {activeTargetKind ?? "None"}
+                </p>
+                <p className={styles.assetActionLine}>
+                  <span>Selected asset:</span> {selectedAsset?.filename ?? "None"}
+                </p>
+              </div>
 
-            {!selectedAsset ? (
-              <p className={styles.assetLibraryMuted}>Select an asset first.</p>
-            ) : null}
+              {!selectedAsset ? (
+                <p className={styles.assetLibraryMuted}>Select an asset first.</p>
+              ) : null}
 
-            {!activeStyleTarget ? (
-              <p className={styles.assetLibraryMuted}>Select a target in the preview to use this asset.</p>
-            ) : null}
+              {!activeStyleTarget ? (
+                <p className={styles.assetLibraryMuted}>Select a target in the preview to use this asset.</p>
+              ) : null}
 
             {activeStyleTarget && activeTargetKind === "image" ? (
               <div className={styles.assetActionStack}>
@@ -1114,7 +1523,7 @@ export function AssetLibraryPanel({
               </div>
             ) : null}
 
-            {activeStyleTarget && activeTargetKind === "container" ? (
+              {activeStyleTarget && activeTargetKind === "container" ? (
               <div className={styles.assetActionStack}>
                 <label className={styles.assetFieldLabel} htmlFor="willard-bg-size">
                   Background size
@@ -1196,116 +1605,121 @@ export function AssetLibraryPanel({
               </div>
             ) : null}
 
-            {activeStyleTarget && activeTargetKind !== "image" && activeTargetKind !== "container" ? (
+              {activeStyleTarget && activeTargetKind !== "image" && activeTargetKind !== "container" ? (
+                <p className={styles.assetLibraryMuted}>
+                  This target kind does not support asset replacement in Phase 3.
+                </p>
+              ) : null}
+            </details>
+          </section>
+
+          <section className={styles.assetLibrarySection}>
+            <details className={styles.assetCollapsible}>
+              <summary className={styles.assetCollapsibleSummary}>Bulk Reset / Danger Zone</summary>
               <p className={styles.assetLibraryMuted}>
-                This target kind does not support asset replacement in Phase 3.
+                Clear all overrides of a type. Assets remain in the library. Style variables are not affected.
               </p>
-            ) : null}
-          </section>
-
-          <section className={styles.assetLibrarySection}>
-            <h3 className={styles.assetLibrarySectionTitle}>Bulk Reset Overrides</h3>
-            <p className={styles.assetLibraryMuted}>
-              Clear all overrides of a type. Assets remain in the library. Style variables are not affected.
-            </p>
-            <div className={styles.assetActionStack}>
-              <button
-                type="button"
-                className={styles.assetDangerButton}
-                disabled={imageOverrides.length === 0}
-                onClick={() => {
-                  if (
-                    window.confirm(
-                      `Reset all ${imageOverrides.length} image override${imageOverrides.length !== 1 ? "s" : ""}? This removes all image replacements. Assets are not deleted.`
-                    )
-                  ) {
-                    clearAllImageOverrides();
-                  }
-                }}
-              >
-                Reset all image overrides ({imageOverrides.length})
-              </button>
-              <button
-                type="button"
-                className={styles.assetDangerButton}
-                disabled={backgroundOverrides.length === 0}
-                onClick={() => {
-                  if (
-                    window.confirm(
-                      `Reset all ${backgroundOverrides.length} background override${backgroundOverrides.length !== 1 ? "s" : ""}? This removes all background replacements. Assets are not deleted.`
-                    )
-                  ) {
-                    clearAllBackgroundOverrides();
-                  }
-                }}
-              >
-                Reset all background overrides ({backgroundOverrides.length})
-              </button>
-            </div>
-          </section>
-
-          <section className={styles.assetLibrarySection}>
-            <h3 className={styles.assetLibrarySectionTitle}>Selected Asset</h3>
-
-            {!selectedAsset ? (
-              <p className={styles.assetLibraryMuted}>Select an asset to view details.</p>
-            ) : (
-              <div className={styles.assetDetails}>
-                <img
-                  src={selectedAsset.url}
-                  alt={selectedAsset.altText ?? selectedAsset.filename}
-                  className={styles.assetDetailsThumb}
-                />
-                <dl className={styles.assetDetailsList}>
-                  <div>
-                    <dt>Filename</dt>
-                    <dd>{selectedAsset.filename}</dd>
-                  </div>
-                  <div>
-                    <dt>Original filename</dt>
-                    <dd>{selectedAsset.originalFilename}</dd>
-                  </div>
-                  <div>
-                    <dt>Category</dt>
-                    <dd>{selectedAsset.category}</dd>
-                  </div>
-                  <div>
-                    <dt>Source kind</dt>
-                    <dd>{selectedAsset.sourceKind}</dd>
-                  </div>
-                  <div>
-                    <dt>Storage provider</dt>
-                    <dd>{selectedAsset.storageProvider}</dd>
-                  </div>
-                  <div>
-                    <dt>Size</dt>
-                    <dd>{selectedAsset.size > 0 ? formatBytes(selectedAsset.size) : "Not reported"}</dd>
-                  </div>
-                  <div>
-                    <dt>Alt text</dt>
-                    <dd>{selectedAsset.altText || "Not set"}</dd>
-                  </div>
-                  <div>
-                    <dt>URL / path</dt>
-                    <dd className={styles.assetDetailsPath}>{selectedAsset.pathname ?? selectedAsset.url}</dd>
-                  </div>
-                  <div>
-                    <dt>Status</dt>
-                    <dd>
-                      {resolveAssetStatus(selectedAsset)} · {selectedAsset.readonly ? "Read-only" : "Editable"}
-                    </dd>
-                  </div>
-                  <div>
-                    <dt>Quality score</dt>
-                    <dd>{typeof selectedAsset.qualityScore === "number" ? selectedAsset.qualityScore : "Not scored"}</dd>
-                  </div>
-                  <div>
-                    <dt>Needs review</dt>
-                    <dd>{selectedAsset.reviewRequired ? "Yes" : "No"}</dd>
-                  </div>
-                </dl>
+              <div className={styles.assetActionStack}>
+                <button
+                  type="button"
+                  className={styles.assetDangerButton}
+                  disabled={imageOverrides.length === 0}
+                  onClick={() => {
+                    if (
+                      window.confirm(
+                        `Reset all ${imageOverrides.length} image override${imageOverrides.length !== 1 ? "s" : ""}? This removes all image replacements. Assets are not deleted.`
+                      )
+                    ) {
+                      clearAllImageOverrides();
+                    }
+                  }}
+                >
+                  Reset all image overrides ({imageOverrides.length})
+                </button>
+                <button
+                  type="button"
+                  className={styles.assetDangerButton}
+                  disabled={backgroundOverrides.length === 0}
+                  onClick={() => {
+                    if (
+                      window.confirm(
+                        `Reset all ${backgroundOverrides.length} background override${backgroundOverrides.length !== 1 ? "s" : ""}? This removes all background replacements. Assets are not deleted.`
+                      )
+                    ) {
+                      clearAllBackgroundOverrides();
+                    }
+                  }}
+                >
+                  Reset all background overrides ({backgroundOverrides.length})
+                </button>
               </div>
-            )}
+            </details>
+          </section>
+
+          <section className={styles.assetLibrarySection}>
+            <details className={styles.assetCollapsible}>
+              <summary className={styles.assetCollapsibleSummary}>Selected Asset Details</summary>
+
+              {!selectedAsset ? (
+                <p className={styles.assetLibraryMuted}>Select an asset to view details.</p>
+              ) : (
+                <div className={styles.assetDetails}>
+                  <img
+                    src={selectedAsset.url}
+                    alt={selectedAsset.altText ?? selectedAsset.filename}
+                    className={styles.assetDetailsThumb}
+                  />
+                  <dl className={styles.assetDetailsList}>
+                    <div>
+                      <dt>Filename</dt>
+                      <dd>{selectedAsset.filename}</dd>
+                    </div>
+                    <div>
+                      <dt>Original filename</dt>
+                      <dd>{selectedAsset.originalFilename}</dd>
+                    </div>
+                    <div>
+                      <dt>Category</dt>
+                      <dd>{selectedAsset.category}</dd>
+                    </div>
+                    <div>
+                      <dt>Source kind</dt>
+                      <dd>{selectedAsset.sourceKind}</dd>
+                    </div>
+                    <div>
+                      <dt>Storage provider</dt>
+                      <dd>{selectedAsset.storageProvider}</dd>
+                    </div>
+                    <div>
+                      <dt>Size</dt>
+                      <dd>{selectedAsset.size > 0 ? formatBytes(selectedAsset.size) : "Not reported"}</dd>
+                    </div>
+                    <div>
+                      <dt>Alt text</dt>
+                      <dd>{selectedAsset.altText || "Not set"}</dd>
+                    </div>
+                    <div>
+                      <dt>URL / path</dt>
+                      <dd className={styles.assetDetailsPath}>{selectedAsset.pathname ?? selectedAsset.url}</dd>
+                    </div>
+                    <div>
+                      <dt>Status</dt>
+                      <dd>
+                        {resolveAssetStatus(selectedAsset)} · {selectedAsset.readonly ? "Read-only" : "Editable"}
+                      </dd>
+                    </div>
+                    <div>
+                      <dt>Quality score</dt>
+                      <dd>{typeof selectedAsset.qualityScore === "number" ? selectedAsset.qualityScore : "Not scored"}</dd>
+                    </div>
+                    <div>
+                      <dt>Needs review</dt>
+                      <dd>{selectedAsset.reviewRequired ? "Yes" : "No"}</dd>
+                    </div>
+                  </dl>
+                </div>
+              )}
+            </details>
           </section>
         </div>
       </aside>
@@ -1313,87 +1727,80 @@ export function AssetLibraryPanel({
   );
 }
 
-function matchesFilter(asset: WillardAsset, filterId: AssetFilterId, usedAssetIds: Set<string>): boolean {
+function isReviewAsset(asset: WillardAsset): boolean {
+  return asset.reviewRequired === true || resolveAssetStatus(asset) === "staging";
+}
+
+function isInboxCandidate(asset: WillardAsset): boolean {
+  return asset.storageProvider === "public-inbox" || (asset.pathname ?? asset.url).startsWith("/willard-assets-inbox/");
+}
+
+function isHiddenDeniedAsset(asset: WillardAsset): boolean {
   const status = resolveAssetStatus(asset);
+  return status === "denied" || status === "rejected" || status === "demo";
+}
 
-  if (filterId === "approved") {
-    return status === "approved";
-  }
-
-  if (filterId === "needs-review") {
-    return asset.reviewRequired === true || status === "staging";
-  }
-
-  if (filterId === "demo-hidden") {
-    return status === "demo";
-  }
-
-  if (filterId === "denied") {
-    return status === "denied" || status === "rejected";
-  }
-
-  if (filterId === "rejected") {
-    return status === "rejected" || status === "denied";
-  }
-
-  if (filterId === "all") {
+function matchesLibraryCategory(asset: WillardAsset, category: LibraryCategoryFilter): boolean {
+  if (category === "all") {
     return true;
   }
 
-  if (filterId === "project-public") {
-    return asset.sourceKind === "project-public";
+  if (category === "images") {
+    return (
+      asset.category === "image" ||
+      asset.category === "article-cover" ||
+      asset.category === "blog-cover" ||
+      asset.category === "spotlight-headshot" ||
+      asset.category === "homepage-image"
+    );
   }
 
-  if (filterId === "uploaded") {
-    return asset.sourceKind === "uploaded";
-  }
-
-  if (filterId === "unused") {
-    return !usedAssetIds.has(asset.id);
-  }
-
-  if (filterId === "images") {
-    return asset.category === "image";
-  }
-
-  if (filterId === "article-covers") {
-    return asset.category === "article-cover";
-  }
-
-  if (filterId === "blog-covers") {
-    return asset.category === "blog-cover";
-  }
-
-  if (filterId === "spotlight-headshots") {
-    return asset.category === "spotlight-headshot";
-  }
-
-  if (filterId === "homepage-images") {
-    return asset.category === "homepage-image";
-  }
-
-  if (filterId === "backgrounds") {
+  if (category === "backgrounds") {
     return asset.category === "background";
   }
 
-  if (filterId === "textures") {
-    return asset.category === "texture" || asset.category === "paper";
+  if (category === "textures") {
+    return asset.category === "texture";
   }
 
-  if (filterId === "stickers") {
-    return asset.category === "sticker";
+  if (category === "paper") {
+    return asset.category === "paper";
   }
 
-  if (filterId === "tape") {
+  if (category === "overlays") {
+    return asset.category === "overlay";
+  }
+
+  if (category === "tape") {
     return asset.category === "tape";
   }
 
-  if (filterId === "frames") {
+  if (category === "stickers") {
+    return asset.category === "sticker";
+  }
+
+  if (category === "frames") {
     return asset.category === "frame";
   }
 
-  if (filterId === "overlays") {
-    return asset.category === "overlay";
+  if (category === "shapes") {
+    return asset.category === "shape";
+  }
+
+  if (category === "masks") {
+    return asset.category === "mask";
+  }
+
+  if (category === "edges") {
+    return asset.category === "edge";
+  }
+
+  if (category === "callouts") {
+    return asset.category === "callout";
+  }
+
+  if (category === "module-frames") {
+    return asset.category === "module-frame";
   }
 
   return true;
@@ -1482,4 +1889,17 @@ function normalizeColorInputValue(value: string): string {
     return trimmed;
   }
   return "#475569";
+}
+
+function extractSearchTags(asset: WillardAsset): string {
+  const candidate = (asset as { tags?: unknown }).tags;
+  if (Array.isArray(candidate)) {
+    return candidate
+      .filter((tag): tag is string => typeof tag === "string")
+      .join(" ");
+  }
+  if (typeof candidate === "string") {
+    return candidate;
+  }
+  return "";
 }

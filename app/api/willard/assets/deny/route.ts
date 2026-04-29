@@ -1,4 +1,5 @@
 import { promises as fs } from "node:fs";
+import path from "node:path";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import { isStyleLabEnabled } from "@/lib/dev/is-style-lab-enabled";
@@ -7,6 +8,9 @@ import { isWillardAuthenticated } from "@/lib/dev/style-lab-auth";
 import { normalizePublicAssetPath, readWillardManifest, resolveAssetAbsolutePath, writeWillardManifest } from "@/lib/dev/willard-asset-manifest";
 
 export const runtime = "nodejs";
+
+const PUBLIC_ROOT = process.cwd();
+const INBOX_PREFIX = "/willard-assets-inbox/";
 
 type DenyAssetRequest = {
   localPath?: string;
@@ -53,8 +57,9 @@ export async function POST(request: Request) {
   );
   const existing = index >= 0 ? manifest.assets[index] : null;
 
-  const absolutePath = resolveAssetAbsolutePath(localPath);
-  const isLocalProjectAsset = body.sourceKind === "project-public" || localPath.startsWith("/willard-assets/");
+  const absolutePath = resolveWillardMutableAbsolutePath(localPath);
+  const isInboxAsset = localPath.startsWith(INBOX_PREFIX);
+  const isLocalProjectAsset = body.sourceKind === "project-public" || localPath.startsWith("/willard-assets/") || isInboxAsset;
 
   if (isLocalProjectAsset && absolutePath) {
     try {
@@ -62,6 +67,24 @@ export async function POST(request: Request) {
     } catch {
       // Keep tombstone even when local file removal fails.
     }
+  }
+
+  if (isInboxAsset) {
+    if (index >= 0) {
+      manifest.assets.splice(index, 1);
+      await writeWillardManifest(manifest);
+    }
+
+    return NextResponse.json({
+      ok: true,
+      denied: {
+        localPath,
+        status: "denied",
+        deniedAt: now,
+        deniedBy: actor,
+        rejectionReason: reason,
+      },
+    });
   }
 
   const tombstone = {
@@ -99,7 +122,7 @@ export async function POST(request: Request) {
 }
 
 function pickLocalPath(body: DenyAssetRequest): string {
-  const direct = normalizePublicAssetPath(body.localPath || body.pathname);
+  const direct = normalizeWillardPath(body.localPath || body.pathname);
   if (direct) {
     return direct;
   }
@@ -111,10 +134,47 @@ function pickLocalPath(body: DenyAssetRequest): string {
 
   try {
     const parsed = new URL(url);
-    return normalizePublicAssetPath(parsed.pathname);
+    return normalizeWillardPath(parsed.pathname);
   } catch {
-    return normalizePublicAssetPath(url);
+    return normalizeWillardPath(url);
   }
+}
+
+function normalizeWillardPath(value: string | undefined): string {
+  const normalizedAssetPath = normalizePublicAssetPath(value);
+  if (normalizedAssetPath) {
+    return normalizedAssetPath;
+  }
+
+  const input = String(value || "").trim().replace(/\\/g, "/");
+  if (!input) {
+    return "";
+  }
+  const normalized = input.startsWith("/") ? input : `/${input}`;
+  if (!normalized.startsWith(INBOX_PREFIX)) {
+    return "";
+  }
+  return normalized;
+}
+
+function resolveWillardMutableAbsolutePath(localPath: string): string | null {
+  const normalAssetPath = normalizePublicAssetPath(localPath);
+  if (normalAssetPath) {
+    return resolveAssetAbsolutePath(normalAssetPath);
+  }
+
+  const inboxPath = normalizeWillardPath(localPath);
+  if (!inboxPath || !inboxPath.startsWith(INBOX_PREFIX)) {
+    return null;
+  }
+
+  const publicRoot = path.resolve(PUBLIC_ROOT, "public");
+  const inboxRoot = path.resolve(publicRoot, "willard-assets-inbox");
+  const resolved = path.resolve(publicRoot, inboxPath.slice(1));
+  if (!resolved.toLowerCase().startsWith((inboxRoot + path.sep).toLowerCase()) && resolved.toLowerCase() !== inboxRoot.toLowerCase()) {
+    return null;
+  }
+  return resolved;
 }
 
 function sanitizeActor(value: string | undefined): string | undefined {

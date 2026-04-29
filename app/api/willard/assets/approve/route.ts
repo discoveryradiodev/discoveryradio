@@ -16,6 +16,9 @@ import { normalizeAssetCategory, type WillardAssetCategory } from "@/lib/dev/wil
 
 export const runtime = "nodejs";
 
+const PUBLIC_ROOT = path.resolve(process.cwd(), "public");
+const INBOX_PREFIX = "/willard-assets-inbox/";
+
 type ApproveAssetRequest = {
   localPath?: string;
   pathname?: string;
@@ -52,20 +55,20 @@ export async function POST(request: Request) {
   }
 
   const selectedCategory = normalizeApprovalCategory(body.category);
-  const targetFolder = folderForCategory(selectedCategory);
+  const targetFolder = folderForApprovedCategory(selectedCategory);
 
   const manifest = await readWillardManifest();
   const now = new Date().toISOString();
   const actor = sanitizeActor(body.actor) ?? "local-user";
 
   const index = manifest.assets.findIndex(
-    (item) => normalizePublicAssetPath(item.localPath).toLowerCase() === localPath.toLowerCase()
+    (item) => normalizeWillardPath(item.localPath).toLowerCase() === localPath.toLowerCase()
   );
 
   const existing = index >= 0 ? manifest.assets[index] : null;
 
   let nextLocalPath = localPath;
-  if (body.sourceKind === "project-public" || localPath.startsWith("/willard-assets/")) {
+  if (body.sourceKind === "project-public" || localPath.startsWith("/willard-assets/") || localPath.startsWith(INBOX_PREFIX)) {
     nextLocalPath = await maybeMoveLocalAsset(localPath, targetFolder);
   }
 
@@ -111,7 +114,7 @@ export async function POST(request: Request) {
 }
 
 function pickLocalPath(body: ApproveAssetRequest): string {
-  const direct = normalizePublicAssetPath(body.localPath || body.pathname);
+  const direct = normalizeWillardPath(body.localPath || body.pathname);
   if (direct) {
     return direct;
   }
@@ -123,10 +126,27 @@ function pickLocalPath(body: ApproveAssetRequest): string {
 
   try {
     const parsed = new URL(url);
-    return normalizePublicAssetPath(parsed.pathname);
+    return normalizeWillardPath(parsed.pathname);
   } catch {
-    return normalizePublicAssetPath(url);
+    return normalizeWillardPath(url);
   }
+}
+
+function normalizeWillardPath(value: string | undefined): string {
+  const normalizedAssetPath = normalizePublicAssetPath(value);
+  if (normalizedAssetPath) {
+    return normalizedAssetPath;
+  }
+
+  const input = String(value || "").trim().replace(/\\/g, "/");
+  if (!input) {
+    return "";
+  }
+  const normalized = input.startsWith("/") ? input : `/${input}`;
+  if (!normalized.startsWith(INBOX_PREFIX)) {
+    return "";
+  }
+  return normalized;
 }
 
 function normalizeApprovalCategory(value: string | undefined): WillardAssetCategory {
@@ -138,7 +158,7 @@ function normalizeApprovalCategory(value: string | undefined): WillardAssetCateg
 }
 
 async function maybeMoveLocalAsset(localPath: string, folder: string): Promise<string> {
-  const currentAbs = resolveAssetAbsolutePath(localPath);
+  const currentAbs = resolveWillardMutableAbsolutePath(localPath);
   if (!currentAbs) {
     return localPath;
   }
@@ -154,7 +174,7 @@ async function maybeMoveLocalAsset(localPath: string, folder: string): Promise<s
     return localPath;
   }
 
-  const destinationDir = path.resolve(process.cwd(), "public", "willard-assets", folder);
+  const destinationDir = path.resolve(PUBLIC_ROOT, "willard-assets", folder);
   await fs.mkdir(destinationDir, { recursive: true });
 
   const extension = path.extname(currentAbs);
@@ -170,12 +190,63 @@ async function maybeMoveLocalAsset(localPath: string, folder: string): Promise<s
       continue;
     } catch {
       await fs.rename(currentAbs, destinationAbs);
-      const rel = path.relative(path.resolve(process.cwd(), "public"), destinationAbs).replace(/\\/g, "/");
+      const rel = path.relative(PUBLIC_ROOT, destinationAbs).replace(/\\/g, "/");
       return `/${rel}`;
     }
   }
 
   return localPath;
+}
+
+function resolveWillardMutableAbsolutePath(localPath: string): string | null {
+  const assetPath = normalizePublicAssetPath(localPath);
+  if (assetPath) {
+    return resolveAssetAbsolutePath(assetPath);
+  }
+
+  const inboxPath = normalizeWillardPath(localPath);
+  if (!inboxPath || !inboxPath.startsWith(INBOX_PREFIX)) {
+    return null;
+  }
+
+  const resolved = path.resolve(PUBLIC_ROOT, inboxPath.slice(1));
+  const inboxRoot = path.resolve(PUBLIC_ROOT, "willard-assets-inbox");
+  if (!resolved.toLowerCase().startsWith((inboxRoot + path.sep).toLowerCase()) && resolved.toLowerCase() !== inboxRoot.toLowerCase()) {
+    return null;
+  }
+
+  return resolved;
+}
+
+function folderForApprovedCategory(category: WillardAssetCategory): string {
+  switch (category) {
+    case "background":
+      return "backgrounds";
+    case "texture":
+      return "textures";
+    case "paper":
+      return "paper";
+    case "overlay":
+      return "overlays";
+    case "tape":
+      return "tape";
+    case "sticker":
+      return "stickers";
+    case "frame":
+      return "frames";
+    case "edge":
+      return "edges";
+    case "callout":
+      return "callouts";
+    case "shape":
+      return "shapes";
+    case "mask":
+      return "masks";
+    case "module-frame":
+      return "module-frames";
+    default:
+      return folderForCategory(category);
+  }
 }
 
 function sanitizeActor(value: string | undefined): string | undefined {

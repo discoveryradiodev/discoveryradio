@@ -9,6 +9,7 @@ export const WILLARD_ASSET_MANIFEST_PATH = path.join(WILLARD_ASSET_ROOT, "willar
 export type WillardManifestAsset = {
   sourceUrl?: string;
   provider?: string;
+  hash?: string;
   license?: string;
   licenseUrl?: string;
   author?: string;
@@ -229,10 +230,17 @@ function normalizeDominantKind(value: string | undefined): WillardAssetDominantK
   const normalized = String(value || "").trim().toLowerCase();
   if (
     normalized === "texture" ||
+    normalized === "paper-texture" ||
     normalized === "transparent-overlay" ||
-    normalized === "photo" ||
-    normalized === "illustration" ||
-    normalized === "shape"
+    normalized === "torn-edge" ||
+    normalized === "frame" ||
+    normalized === "tape" ||
+    normalized === "sticker" ||
+    normalized === "pattern" ||
+    normalized === "vector-shape" ||
+    normalized === "callout" ||
+    normalized === "mask" ||
+    normalized === "module-frame"
   ) {
     return normalized;
   }
