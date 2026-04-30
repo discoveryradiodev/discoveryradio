@@ -7,8 +7,13 @@ const PUBLIC_ROOT = path.join(ROOT, "public");
 const INBOX_ROOT = path.join(PUBLIC_ROOT, "willard-assets-inbox");
 const ASSET_ROOT = path.join(PUBLIC_ROOT, "willard-assets");
 const STAGING_ROOT = path.join(ASSET_ROOT, "staging");
+const STAGING_THUMBS_ROOT = path.join(STAGING_ROOT, "thumbs");
 const MANIFEST_PATH = path.join(ASSET_ROOT, "willard-asset-manifest.json");
 const MANIFEST_VERSION = 3;
+const MAX_LIBRARY_ASSET_BYTES = 12 * 1024 * 1024;
+const MAX_ORIGINAL_DIMENSION = 4096;
+const MAX_DERIVATIVE_WIDTH = 2048;
+const THUMBNAIL_WIDTH = 480;
 
 const IMAGE_EXTENSIONS = new Set([".png", ".webp", ".jpg", ".jpeg", ".svg", ".gif"]);
 const SUPPORTED_EXTENSIONS = new Set([".png", ".webp", ".jpg", ".jpeg", ".svg", ".gif"]);
@@ -92,6 +97,7 @@ export async function ingestInbox(options = {}) {
       noteSeed: String(mergedMetadata.notes || "").trim(),
       dryRun: normalizedOptions.dryRun,
       moveSourcePath: normalizedOptions.move ? fileInfo.absolutePath : "",
+      originalStorage: "local-inbox",
     });
 
     applyStageResultToSummary(summary, stageResult);
@@ -184,6 +190,7 @@ export async function pullTrustedTextures(options = {}) {
       noteSeed: "Pulled from trusted texture provider.",
       dryRun: false,
       moveSourcePath: "",
+      originalStorage: "none",
     });
 
     applyStageResultToSummary(summary, stageResult);
@@ -264,6 +271,7 @@ async function stageCandidate({
   noteSeed,
   dryRun,
   moveSourcePath,
+  originalStorage,
 }) {
   if (!SUPPORTED_EXTENSIONS.has(extension)) {
     return { kind: "unsupported" };
@@ -278,7 +286,12 @@ async function stageCandidate({
     return { kind: "duplicate" };
   }
 
-  const inspection = inspectImage(bytes, extension);
+  const inspection = await inspectImageWithSharp(bytes, extension);
+  const oversizedOriginal = isOversizedWillardAsset({
+    sizeBytes: bytes.length,
+    width: inspection.width,
+    height: inspection.height,
+  });
   const noAlphaDesign =
     DESIGN_CATEGORIES.has(category) && extension !== ".svg" && inspection.hasAlpha === false;
 
@@ -291,21 +304,75 @@ async function stageCandidate({
   }
 
   const baseName = sanitizeFilenameBase(baseNameHint || originalFilename || `asset-${Date.now()}`);
-  const target = await allocateStagingTarget(baseName, extension, hash, existing.byLocalPath);
+  let stagedBytes = bytes;
+  let stagedExtension = extension;
+  let stagedInspection = inspection;
+  let optimizedPublicPath = "";
+  let thumbPublicPath = "";
+  let optimizedSize = bytes.length;
+
+  if (oversizedOriginal) {
+    const optimized = await buildOptimizedDerivative({
+      bytes,
+      extension,
+      category,
+      hasAlpha: inspection.hasAlpha,
+    });
+
+    if (!optimized) {
+      return {
+        kind: "unsupported",
+        warning: "Skipped oversized asset because optimization failed. Original was not staged.",
+      };
+    }
+
+    stagedBytes = optimized.optimizedBytes;
+    stagedExtension = optimized.optimizedExtension;
+    stagedInspection = optimized.optimizedInspection;
+    optimizedSize = optimized.optimizedBytes.length;
+
+    const thumbTarget = await allocateTargetInFolder(
+      "staging/thumbs",
+      `${baseName}-thumb`,
+      ".webp",
+      createSha256(optimized.thumbnailBytes),
+      existing.byLocalPath
+    );
+    if (thumbTarget) {
+      thumbPublicPath = thumbTarget.publicPath;
+      if (!dryRun) {
+        await fs.mkdir(path.dirname(thumbTarget.absolutePath), { recursive: true });
+        await fs.writeFile(thumbTarget.absolutePath, optimized.thumbnailBytes);
+      }
+      existing.byLocalPath.add(normalizePublicPath(thumbPublicPath));
+    }
+
+    notes.push(
+      `Generated web-safe derivative (${stagedInspection.width || "?"}x${stagedInspection.height || "?"}, ${Math.round(
+        optimizedSize / 1024
+      )} KB) from oversized original (${inspection.width || "?"}x${inspection.height || "?"}, ${Math.round(
+        bytes.length / 1024
+      )} KB).`
+    );
+  }
+
+  const target = await allocateStagingTarget(baseName, stagedExtension, createSha256(stagedBytes), existing.byLocalPath);
   if (!target) {
     return { kind: "duplicate" };
   }
 
   if (!dryRun) {
     await fs.mkdir(path.dirname(target.absolutePath), { recursive: true });
-    if (moveSourcePath) {
+    // Never move/rename oversized originals into public staging; only write optimized derivatives.
+    if (moveSourcePath && !oversizedOriginal) {
       await fs.rename(moveSourcePath, target.absolutePath);
     } else {
-      await fs.writeFile(target.absolutePath, bytes);
+      await fs.writeFile(target.absolutePath, stagedBytes);
     }
   }
+  optimizedPublicPath = target.publicPath;
 
-  const hasAlpha = typeof inspection.hasAlpha === "boolean" ? inspection.hasAlpha : "unknown";
+  const hasAlpha = typeof stagedInspection.hasAlpha === "boolean" ? stagedInspection.hasAlpha : "unknown";
   const record = {
     sourceUrl,
     provider: String(metadata.provider || "manual").trim() || "manual",
@@ -316,21 +383,33 @@ async function stageCandidate({
     localPath: target.publicPath,
     filename: path.basename(target.publicPath),
     originalFilename: originalFilename || path.basename(target.publicPath),
+    originalWidth: inspection.width,
+    originalHeight: inspection.height,
+    originalSize: bytes.length,
+    optimizedWidth: stagedInspection.width,
+    optimizedHeight: stagedInspection.height,
+    optimizedSize,
+    optimizedPath: optimizedPublicPath || undefined,
+    optimizedUrl: optimizedPublicPath || undefined,
+    thumbnailPath: thumbPublicPath || undefined,
+    thumbnailUrl: thumbPublicPath || undefined,
+    oversizedOriginal,
+    originalStorage: originalStorage || "none",
     importedAt,
     createdAt: importedAt,
     category,
     suggestedCategory: category,
     status: "staging",
     reviewRequired: true,
-    width: inspection.width,
-    height: inspection.height,
+    width: stagedInspection.width,
+    height: stagedInspection.height,
     hasAlpha,
     dominantKind,
-    hash,
+    hash: createSha256(stagedBytes),
     curatorNotes: notes.length > 0 ? notes.join(" ") : undefined,
   };
 
-  existing.byHash.add(hash);
+  existing.byHash.add(record.hash);
   if (sourceUrl) {
     existing.bySourceUrl.add(sourceUrl);
   }
@@ -343,6 +422,7 @@ async function ensurePaths() {
   await fs.mkdir(INBOX_ROOT, { recursive: true });
   await fs.mkdir(ASSET_ROOT, { recursive: true });
   await fs.mkdir(STAGING_ROOT, { recursive: true });
+  await fs.mkdir(STAGING_THUMBS_ROOT, { recursive: true });
 
   try {
     await fs.access(MANIFEST_PATH);
@@ -632,11 +712,15 @@ function inferSourceUrl(fileInfo) {
 }
 
 async function allocateStagingTarget(baseName, extension, hash, existingLocalPaths) {
+  return allocateTargetInFolder("staging", baseName, extension, hash, existingLocalPaths);
+}
+
+async function allocateTargetInFolder(folderName, baseName, extension, hash, existingLocalPaths) {
   const hashSuffix = hash.slice(0, 8);
   for (let index = 0; index < 500; index += 1) {
     const filename =
       index === 0 ? `${baseName}-${hashSuffix}${extension}` : `${baseName}-${hashSuffix}-${index}${extension}`;
-    const publicPath = `/willard-assets/staging/${filename}`;
+    const publicPath = `/willard-assets/${folderName}/${filename}`;
     const normalized = normalizePublicPath(publicPath);
     if (existingLocalPaths.has(normalized)) {
       continue;
@@ -700,6 +784,85 @@ function normalizePublicPath(value) {
 
 function createSha256(bytes) {
   return crypto.createHash("sha256").update(bytes).digest("hex");
+}
+
+function isOversizedWillardAsset(input) {
+  const sizeBytes = Number.isFinite(input?.sizeBytes) ? Number(input.sizeBytes) : undefined;
+  const width = Number.isFinite(input?.width) ? Number(input.width) : undefined;
+  const height = Number.isFinite(input?.height) ? Number(input.height) : undefined;
+
+  if (typeof sizeBytes === "number" && sizeBytes > MAX_LIBRARY_ASSET_BYTES) {
+    return true;
+  }
+  if (typeof width === "number" && width > MAX_ORIGINAL_DIMENSION) {
+    return true;
+  }
+  if (typeof height === "number" && height > MAX_ORIGINAL_DIMENSION) {
+    return true;
+  }
+
+  if ((typeof width !== "number" || typeof height !== "number") && typeof sizeBytes === "number") {
+    return sizeBytes > MAX_LIBRARY_ASSET_BYTES / 2;
+  }
+
+  return false;
+}
+
+async function inspectImageWithSharp(bytes, extension) {
+  try {
+    const sharp = (await import("sharp")).default;
+    const meta = await sharp(bytes, { limitInputPixels: false }).metadata();
+    return {
+      width: Number.isFinite(meta.width) ? meta.width : undefined,
+      height: Number.isFinite(meta.height) ? meta.height : undefined,
+      hasAlpha: typeof meta.hasAlpha === "boolean" ? meta.hasAlpha : undefined,
+    };
+  } catch {
+    return inspectImage(bytes, extension);
+  }
+}
+
+async function buildOptimizedDerivative({ bytes, extension, category, hasAlpha }) {
+  try {
+    const sharp = (await import("sharp")).default;
+    const preserveAlpha =
+      DESIGN_CATEGORIES.has(category) || extension === ".svg" || hasAlpha === true;
+
+    const optimizedPipeline = sharp(bytes, { limitInputPixels: false })
+      .rotate()
+      .resize({ width: MAX_DERIVATIVE_WIDTH, fit: "inside", withoutEnlargement: true });
+
+    let optimizedBytes;
+    let optimizedExtension = ".webp";
+    try {
+      optimizedBytes = await optimizedPipeline
+        .clone()
+        .webp({ quality: preserveAlpha ? 84 : 82, alphaQuality: 85 })
+        .toBuffer();
+    } catch {
+      if (!preserveAlpha) {
+        throw new Error("webp-optimization-failed");
+      }
+      optimizedExtension = ".png";
+      optimizedBytes = await optimizedPipeline.clone().png({ compressionLevel: 9 }).toBuffer();
+    }
+
+    const thumbBytes = await sharp(optimizedBytes, { limitInputPixels: false })
+      .resize({ width: THUMBNAIL_WIDTH, fit: "inside", withoutEnlargement: true })
+      .webp({ quality: 72, alphaQuality: 72 })
+      .toBuffer();
+
+    const optimizedInspection = await inspectImageWithSharp(optimizedBytes, optimizedExtension);
+
+    return {
+      optimizedBytes,
+      optimizedExtension,
+      optimizedInspection,
+      thumbnailBytes: thumbBytes,
+    };
+  } catch {
+    return null;
+  }
 }
 
 function sanitizeFilenameBase(name) {

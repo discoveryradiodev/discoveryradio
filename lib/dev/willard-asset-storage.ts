@@ -1,6 +1,10 @@
 import path from "node:path";
 
 export const MAX_UPLOAD_SIZE_BYTES = 4 * 1024 * 1024;
+export const MAX_LIBRARY_ASSET_BYTES = 12 * 1024 * 1024;
+export const MAX_ORIGINAL_DIMENSION = 4096;
+export const MAX_DERIVATIVE_WIDTH = 2048;
+export const THUMBNAIL_WIDTH = 480;
 
 export const ALLOWED_UPLOAD_MIME_TYPES = [
   "image/jpeg",
@@ -57,6 +61,35 @@ export function getWillardStorageCapabilities(): WillardStorageCapabilities {
 export function isAllowedUploadMimeType(mimeType: string): boolean {
   const normalized = (mimeType ?? "").trim().toLowerCase();
   return (ALLOWED_UPLOAD_MIME_TYPES as readonly string[]).includes(normalized);
+}
+
+export function isOversizedWillardAsset(input: {
+  sizeBytes?: number;
+  width?: number;
+  height?: number;
+}): boolean {
+  const sizeBytes = Number.isFinite(input.sizeBytes) ? Number(input.sizeBytes) : undefined;
+  const width = Number.isFinite(input.width) ? Number(input.width) : undefined;
+  const height = Number.isFinite(input.height) ? Number(input.height) : undefined;
+
+  if (typeof sizeBytes === "number" && sizeBytes > MAX_LIBRARY_ASSET_BYTES) {
+    return true;
+  }
+
+  if (typeof width === "number" && width > MAX_ORIGINAL_DIMENSION) {
+    return true;
+  }
+
+  if (typeof height === "number" && height > MAX_ORIGINAL_DIMENSION) {
+    return true;
+  }
+
+  // Missing dimensions should not automatically pass for large unknown files.
+  if ((typeof width !== "number" || typeof height !== "number") && typeof sizeBytes === "number") {
+    return sizeBytes > MAX_LIBRARY_ASSET_BYTES / 2;
+  }
+
+  return false;
 }
 
 export function sanitizeFilename(filename: string): string {

@@ -55,6 +55,18 @@ export type WillardAsset = {
   size: number;
   width?: number;
   height?: number;
+  originalWidth?: number;
+  originalHeight?: number;
+  originalSize?: number;
+  optimizedWidth?: number;
+  optimizedHeight?: number;
+  optimizedSize?: number;
+  optimizedUrl?: string;
+  optimizedPath?: string;
+  thumbnailUrl?: string;
+  thumbnailPath?: string;
+  oversizedOriginal?: boolean;
+  originalStorage?: "local-inbox" | "vercel-blob" | "none";
   hasAlpha?: boolean;
   category: WillardAssetCategory;
   suggestedCategory?: WillardAssetCategory;

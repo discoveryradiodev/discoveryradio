@@ -692,7 +692,8 @@ export function AssetLibraryPanel({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          localPath: asset.pathname ?? asset.url,
+          localPath: asset.optimizedPath ?? asset.pathname ?? asset.url,
+          optimizedLocalPath: asset.optimizedPath,
           sourceKind: asset.sourceKind,
           category,
         }),
@@ -883,7 +884,11 @@ export function AssetLibraryPanel({
                         onClick={() => setSelectedAssetId(asset.id)}
                         title={asset.filename}
                       >
-                        <img src={asset.url} alt={asset.altText ?? asset.filename} className={styles.assetThumb} />
+                          <img
+                            src={asset.thumbnailUrl ?? asset.thumbnailPath ?? asset.url}
+                            alt={asset.altText ?? asset.filename}
+                            className={styles.assetThumb}
+                          />
                         <span className={styles.assetCardName}>{asset.filename}</span>
                         <span className={styles.assetCardMeta}>{asset.category} · approved</span>
                       </button>
@@ -998,12 +1003,24 @@ export function AssetLibraryPanel({
                     const showingApproveChooser = approveDraftAssetId === asset.id;
                     return (
                       <article key={asset.id} className={styles.assetReviewCard}>
-                        <img src={asset.url} alt={asset.altText ?? asset.filename} className={styles.assetReviewThumb} />
+                        <img
+                          src={asset.thumbnailUrl ?? asset.thumbnailPath ?? asset.url}
+                          alt={asset.altText ?? asset.filename}
+                          className={styles.assetReviewThumb}
+                        />
                         <div className={styles.assetReviewBody}>
                           {isInboxCandidate(asset) ? <span className={styles.assetInboxBadge}>Inbox</span> : null}
+                          {asset.oversizedOriginal ? (
+                            <span className={styles.assetOptimizedBadge}>Optimized preview · original oversized</span>
+                          ) : null}
                           <p className={styles.assetReviewName}>{asset.filename}</p>
                           <p className={styles.assetReviewMeta}>Suggested: {asset.suggestedCategory ?? asset.category ?? "image"}</p>
                           <p className={styles.assetReviewMeta}>Current category: {asset.category}</p>
+                          {asset.oversizedOriginal ? (
+                            <p className={styles.assetReviewMeta}>
+                              Original: {formatDimension(asset.originalWidth, asset.originalHeight)} · {formatBytes(asset.originalSize ?? asset.size)}
+                            </p>
+                          ) : null}
                           <p className={styles.assetReviewMeta}>Provider/source: {asset.storageProvider} · {asset.sourceKind}</p>
                           <p className={styles.assetReviewMeta}>License: {asset.credit ?? asset.sourceNotes ?? "Not provided"}</p>
                         </div>
@@ -1095,7 +1112,11 @@ export function AssetLibraryPanel({
                         onClick={() => setSelectedAssetId(asset.id)}
                         title={asset.filename}
                       >
-                        <img src={asset.url} alt={asset.altText ?? asset.filename} className={styles.assetThumb} />
+                          <img
+                            src={asset.thumbnailUrl ?? asset.thumbnailPath ?? asset.url}
+                            alt={asset.altText ?? asset.filename}
+                            className={styles.assetThumb}
+                          />
                         <span className={styles.assetCardName}>{asset.filename}</span>
                         <span className={styles.assetCardMeta}>{asset.category} · {resolveAssetStatus(asset)}</span>
                       </button>
@@ -1874,6 +1895,13 @@ function formatBytes(bytes: number): string {
 
   const rounded = value >= 10 ? Math.round(value) : Math.round(value * 10) / 10;
   return `${rounded} ${units[unitIndex]}`;
+}
+
+function formatDimension(width?: number, height?: number): string {
+  if (typeof width === "number" && typeof height === "number") {
+    return `${width}x${height}`;
+  }
+  return "unknown dimensions";
 }
 
 function clampNumber(value: number, min: number, max: number): number {

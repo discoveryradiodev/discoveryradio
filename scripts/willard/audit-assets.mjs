@@ -2,10 +2,19 @@
 
 import { promises as fs } from "node:fs";
 import path from "node:path";
+import { execFileSync } from "node:child_process";
 
 const ROOT = process.cwd();
 const WILLARD_ROOT = path.join(ROOT, "public", "willard-assets");
 const MANIFEST_PATH = path.join(WILLARD_ROOT, "willard-asset-manifest.json");
+const WILLARD_INBOX_ROOT = path.join(ROOT, "public", "willard-assets-inbox");
+const MAX_LIBRARY_ASSET_BYTES = 12 * 1024 * 1024;
+const MAX_ORIGINAL_DIMENSION = 4096;
+const STRICT_LOCAL = process.argv.includes("--strict-local");
+const GENERATED_SOURCE_FILES = [
+  path.join(ROOT, "app", "the-feed", "willard.generated.css"),
+  path.join(ROOT, "app", "the-feed", "willard.generated.images.ts"),
+];
 
 const FOLDERS = [
   "backgrounds",
@@ -43,6 +52,8 @@ const DOMINANT_VALUES = [
 async function main() {
   const manifest = await readManifest();
   const filesOnDisk = await scanPublicAssetFiles();
+  const trackedFiles = getTrackedFilesSet();
+  const ignoredFiles = getIgnoredFilesSet(["public/willard-assets/staging", "public/willard-assets/textures"]);
 
   const duplicatesBySource = findDuplicates(manifest.assets, (row) => normalizeUrl(row.sourceUrl));
   const duplicatesByLocalPath = findDuplicates(manifest.assets, (row) => normalizePublicPath(row.localPath));
@@ -55,6 +66,88 @@ async function main() {
 
   const unmanifestedFiles = [...filesOnDisk].filter((diskPath) => {
     return !manifest.assets.some((row) => normalizePublicPath(row.localPath) === diskPath);
+  });
+
+  const publicImageMetrics = await collectPublicImageMetrics(filesOnDisk, trackedFiles, ignoredFiles);
+  const oversizedTrackedFiles = findOversizedTrackedPublicFiles(publicImageMetrics);
+  const trackedOversizedDimensionFiles = findTrackedOversizedDimensionFiles(publicImageMetrics);
+  const localOversizedStagingTextureFiles = findLocalOversizedStagingTextureFiles(publicImageMetrics);
+  const oversizedMap = new Map(publicImageMetrics.map((row) => [row.path, row]));
+  const approvedInStaging = manifest.assets.filter(
+    (row) => normalizeStatus(row.status) === "approved" && /\/staging\//i.test(String(row.localPath || ""))
+  );
+  const approvedInOriginals = manifest.assets.filter(
+    (row) => normalizeStatus(row.status) === "approved" && /\/originals\//i.test(String(row.localPath || ""))
+  );
+  const generatedSourceScan = await scanGeneratedSourceGuardrails();
+  const generatedSourceGuardrailHits = generatedSourceScan.hits;
+  const generatedSourceText = generatedSourceScan.sourceText;
+
+  const approvedOversizedWithoutOptimized = manifest.assets.filter((row) => {
+    if (normalizeStatus(row.status) !== "approved") {
+      return false;
+    }
+    if (!row.oversizedOriginal) {
+      return false;
+    }
+    return !hasOptimizedDerivative(row);
+  });
+
+  const approvedDisplayRawOversized = manifest.assets.filter((row) => {
+    if (normalizeStatus(row.status) !== "approved") {
+      return false;
+    }
+
+    const localPath = normalizePublicPath(row.localPath);
+    if (!localPath) {
+      return false;
+    }
+
+    const displayPath = resolveDisplayPath(row);
+    if (!displayPath) {
+      return false;
+    }
+
+    const displayMetric = oversizedMap.get(displayPath);
+    if (!displayMetric || !displayMetric.isOversizedDimension) {
+      return false;
+    }
+
+    return displayPath === localPath;
+  });
+
+  const localQuarantineNotices = localOversizedStagingTextureFiles.filter((row) => {
+    if (!row.isIgnored) {
+      return false;
+    }
+    const referencedByApproved = manifest.assets.some(
+      (entry) => normalizeStatus(entry.status) === "approved" && normalizePublicPath(entry.localPath) === row.path
+    );
+    const referencedByGeneratedSource = generatedSourceText.includes(row.path);
+    return !referencedByApproved && !referencedByGeneratedSource;
+  });
+
+  const warningLocalOversized = localOversizedStagingTextureFiles.filter((row) => {
+    return !localQuarantineNotices.some((notice) => notice.path === row.path);
+  });
+
+  const oversizedInboxFiles = await findOversizedInboxFiles();
+
+  const optionalOptimizationWarnings = manifest.assets.filter((row) => {
+    if (normalizeStatus(row.status) === "approved") {
+      return false;
+    }
+    const localPath = normalizePublicPath(row.localPath);
+    if (!localPath) {
+      return false;
+    }
+    if (generatedSourceText.includes(localPath)) {
+      return false;
+    }
+    if (!row.oversizedOriginal) {
+      return false;
+    }
+    return !hasAnyOptimizationMetadata(row);
   });
 
   const invalidMetadata = manifest.assets.filter((row) => {
@@ -108,6 +201,18 @@ async function main() {
     visibleInDefault,
     hiddenFromDefault,
     newestStaging,
+    oversizedTrackedFiles,
+    trackedOversizedDimensionFiles,
+    warningLocalOversized,
+    localQuarantineNotices,
+    oversizedInboxFiles,
+    optionalOptimizationWarnings,
+    approvedInStaging,
+    approvedInOriginals,
+    generatedSourceGuardrailHits,
+    approvedOversizedWithoutOptimized,
+    approvedDisplayRawOversized,
+    strictLocal: STRICT_LOCAL,
   });
 
   const approvedCount = countsByStatus.get("approved") || 0;
@@ -132,13 +237,38 @@ async function main() {
     console.warn(`WARNING: approved shapes/callouts/edges/module-frames < 50 (current: ${approvedShapeCount}).`);
   }
 
-  const hasCriticalIssues =
-    duplicatesBySource.length > 0 ||
-    duplicatesByLocalPath.length > 0 ||
-    missingFiles.length > 0 ||
-    invalidMetadata.length > 0;
+  const blockingErrors =
+    oversizedTrackedFiles.length > 0 ||
+    trackedOversizedDimensionFiles.length > 0 ||
+    approvedInStaging.length > 0 ||
+    approvedInOriginals.length > 0 ||
+    generatedSourceGuardrailHits.length > 0 ||
+    approvedOversizedWithoutOptimized.length > 0 ||
+    approvedDisplayRawOversized.length > 0;
 
-  process.exitCode = hasCriticalIssues ? 1 : 0;
+  const warningsCount = warningLocalOversized.length + oversizedInboxFiles.length + optionalOptimizationWarnings.length;
+  const quarantineCount = localQuarantineNotices.length;
+  const strictLocalBlocking = STRICT_LOCAL ? warningsCount + quarantineCount : 0;
+
+  const blockingCount =
+    oversizedTrackedFiles.length +
+    trackedOversizedDimensionFiles.length +
+    approvedInStaging.length +
+    approvedInOriginals.length +
+    generatedSourceGuardrailHits.length +
+    approvedOversizedWithoutOptimized.length +
+    approvedDisplayRawOversized.length +
+    strictLocalBlocking;
+
+  console.log(`\nBlocking errors: ${blockingCount}`);
+  console.log(`Warnings: ${warningsCount}`);
+  console.log(`Local quarantine notices: ${quarantineCount}`);
+
+  if (STRICT_LOCAL && strictLocalBlocking > 0) {
+    console.log(`STRICT LOCAL MODE: promoting local warnings/quarantine notices to blocking errors.`);
+  }
+
+  process.exitCode = blockingCount > 0 ? 1 : 0;
 }
 
 async function readManifest() {
@@ -167,28 +297,42 @@ async function scanPublicAssetFiles() {
 
   for (const folder of FOLDERS) {
     const abs = path.join(WILLARD_ROOT, folder);
-    let entries = [];
-    try {
-      entries = await fs.readdir(abs, { withFileTypes: true });
-    } catch {
-      continue;
-    }
-
-    for (const entry of entries) {
-      if (!entry.isFile()) {
-        continue;
-      }
-
-      const ext = path.extname(entry.name).toLowerCase();
-      if (!IMAGE_EXTENSIONS.has(ext)) {
-        continue;
-      }
-
-      files.add(`/willard-assets/${folder}/${entry.name}`.toLowerCase());
+    const nested = await listImageFilesRecursive(abs);
+    for (const filePath of nested) {
+      const rel = path.relative(WILLARD_ROOT, filePath).replace(/\\/g, "/");
+      files.add(`/${path.posix.join("willard-assets", rel)}`.toLowerCase());
     }
   }
 
   return files;
+}
+
+async function listImageFilesRecursive(startPath) {
+  const output = [];
+  let entries = [];
+  try {
+    entries = await fs.readdir(startPath, { withFileTypes: true });
+  } catch {
+    return output;
+  }
+
+  for (const entry of entries) {
+    const abs = path.join(startPath, entry.name);
+    if (entry.isDirectory()) {
+      output.push(...(await listImageFilesRecursive(abs)));
+      continue;
+    }
+    if (!entry.isFile()) {
+      continue;
+    }
+    const ext = path.extname(entry.name).toLowerCase();
+    if (!IMAGE_EXTENSIONS.has(ext)) {
+      continue;
+    }
+    output.push(abs);
+  }
+
+  return output;
 }
 
 function tally(rows, keySelector) {
@@ -314,6 +458,18 @@ function printSummary({
   visibleInDefault,
   hiddenFromDefault,
   newestStaging,
+  oversizedTrackedFiles,
+  trackedOversizedDimensionFiles,
+  warningLocalOversized,
+  localQuarantineNotices,
+  oversizedInboxFiles,
+  optionalOptimizationWarnings,
+  approvedInStaging,
+  approvedInOriginals,
+  generatedSourceGuardrailHits,
+  approvedOversizedWithoutOptimized,
+  approvedDisplayRawOversized,
+  strictLocal,
 }) {
   console.log(`Manifest: ${MANIFEST_PATH}`);
   console.log(`Manifest version: ${manifest.version}`);
@@ -368,6 +524,259 @@ function printSummary({
   console.log(`Files present but not in manifest: ${unmanifestedFiles.length}`);
   console.log(`Manifest entries whose files are missing: ${missingFiles.length}`);
   console.log(`Manifest entries with incomplete metadata: ${invalidMetadata.length}`);
+
+  console.log(`\nGuardrail oversized tracked public files (> 12 MB): ${oversizedTrackedFiles.length}`);
+  for (const row of oversizedTrackedFiles.slice(0, 40)) {
+    console.log(`- ${row.path} (${row.sizeBytes} bytes)`);
+  }
+
+  console.log(`\nGuardrail tracked oversized dimensions (> 4096): ${trackedOversizedDimensionFiles.length}`);
+  for (const row of trackedOversizedDimensionFiles.slice(0, 40)) {
+    console.log(`- ${row.path} (${row.width}x${row.height})`);
+  }
+
+  console.log(`\nWarning local oversized files in staging/textures (untracked or ignored): ${warningLocalOversized.length}`);
+  for (const row of warningLocalOversized.slice(0, 40)) {
+    const reason = row.isIgnored ? "ignored" : "untracked";
+    console.log(`- ${row.path} (${row.width}x${row.height}, ${row.sizeBytes} bytes, ${reason})`);
+  }
+
+  console.log(`\nLocal quarantine notices (ignored + unreferenced oversized): ${localQuarantineNotices.length}`);
+  for (const row of localQuarantineNotices.slice(0, 40)) {
+    console.log(`- ${row.path} (${row.width}x${row.height}, ${row.sizeBytes} bytes)`);
+  }
+
+  console.log(`\nWarning oversized inbox files (not ingested): ${oversizedInboxFiles.length}`);
+  for (const row of oversizedInboxFiles.slice(0, 40)) {
+    console.log(`- ${row.path} (${row.width}x${row.height}, ${row.sizeBytes} bytes)`);
+  }
+
+  console.log(`\nWarning staging/review entries missing optional optimization metadata: ${optionalOptimizationWarnings.length}`);
+  for (const row of optionalOptimizationWarnings.slice(0, 40)) {
+    console.log(`- ${row.localPath || "(missing localPath)"}`);
+  }
+
+  console.log(`\nApproved manifest entries pointing to /staging/: ${approvedInStaging.length}`);
+  for (const row of approvedInStaging.slice(0, 40)) {
+    console.log(`- ${row.localPath}`);
+  }
+
+  console.log(`\nApproved manifest entries pointing to /originals/: ${approvedInOriginals.length}`);
+  for (const row of approvedInOriginals.slice(0, 40)) {
+    console.log(`- ${row.localPath}`);
+  }
+
+  console.log(`\nApproved oversizedOriginal entries without optimized derivative: ${approvedOversizedWithoutOptimized.length}`);
+  for (const row of approvedOversizedWithoutOptimized.slice(0, 40)) {
+    console.log(`- ${row.localPath}`);
+  }
+
+  console.log(`\nApproved/public-used assets resolving display URL to raw oversized original: ${approvedDisplayRawOversized.length}`);
+  for (const row of approvedDisplayRawOversized.slice(0, 40)) {
+    console.log(`- ${row.localPath}`);
+  }
+
+  console.log(`\nGenerated source guardrail hits (/staging/, /originals/, _8k, _16k): ${generatedSourceGuardrailHits.length}`);
+  for (const row of generatedSourceGuardrailHits.slice(0, 40)) {
+    console.log(`- ${row.file}: ${row.match}`);
+  }
+
+  if (strictLocal) {
+    console.log("\nSTRICT LOCAL MODE enabled: local oversized warnings and quarantine notices are promoted to blocking errors.");
+  }
+}
+
+function findOversizedTrackedPublicFiles(publicImageMetrics) {
+  return publicImageMetrics.filter((row) => row.isTracked && row.isStagingOrTextures && row.isOversizedSize);
+}
+
+function findTrackedOversizedDimensionFiles(publicImageMetrics) {
+  return publicImageMetrics.filter((row) => row.isTracked && row.isOversizedDimension);
+}
+
+function findLocalOversizedStagingTextureFiles(publicImageMetrics) {
+  return publicImageMetrics.filter((row) => {
+    return !row.isTracked && row.isStagingOrTextures && (row.isOversizedSize || row.isOversizedDimension);
+  });
+}
+
+async function collectPublicImageMetrics(filesOnDisk, trackedFiles, ignoredFiles) {
+  const output = [];
+  for (const publicPath of filesOnDisk) {
+    const abs = path.join(ROOT, "public", publicPath.slice(1).replace(/\//g, path.sep));
+    const relGitPath = `public/${publicPath.slice(1)}`;
+    const dimensions = await inspectImageDimensions(abs);
+    let sizeBytes = 0;
+    try {
+      const stat = await fs.stat(abs);
+      if (stat.isFile()) {
+        sizeBytes = stat.size;
+      }
+    } catch {
+      continue;
+    }
+
+    output.push({
+      path: publicPath,
+      width: dimensions?.width ?? 0,
+      height: dimensions?.height ?? 0,
+      sizeBytes,
+      isTracked: trackedFiles.has(relGitPath),
+      isIgnored: ignoredFiles.has(relGitPath),
+      isOversizedSize: sizeBytes > MAX_LIBRARY_ASSET_BYTES,
+      isOversizedDimension:
+        (Number.isFinite(dimensions?.width) && dimensions.width > MAX_ORIGINAL_DIMENSION) ||
+        (Number.isFinite(dimensions?.height) && dimensions.height > MAX_ORIGINAL_DIMENSION),
+      isStagingOrTextures: /\/willard-assets\/(staging|textures)\//i.test(publicPath),
+    });
+  }
+  return output;
+}
+
+async function findOversizedInboxFiles() {
+  const hits = [];
+  const files = await listImageFilesRecursive(WILLARD_INBOX_ROOT);
+  for (const abs of files) {
+    const rel = path.relative(ROOT, abs).replace(/\\/g, "/");
+    const relDisplay = `/${rel}`;
+    const dimensions = await inspectImageDimensions(abs);
+    let sizeBytes = 0;
+    try {
+      const stat = await fs.stat(abs);
+      if (stat.isFile()) {
+        sizeBytes = stat.size;
+      }
+    } catch {
+      continue;
+    }
+
+    const oversizedBySize = sizeBytes > MAX_LIBRARY_ASSET_BYTES;
+    const oversizedByDimensions =
+      (Number.isFinite(dimensions?.width) && dimensions.width > MAX_ORIGINAL_DIMENSION) ||
+      (Number.isFinite(dimensions?.height) && dimensions.height > MAX_ORIGINAL_DIMENSION);
+
+    if (!oversizedBySize && !oversizedByDimensions) {
+      continue;
+    }
+
+    hits.push({
+      path: relDisplay,
+      width: dimensions?.width ?? 0,
+      height: dimensions?.height ?? 0,
+      sizeBytes,
+    });
+  }
+  return hits;
+}
+
+async function inspectImageDimensions(absPath) {
+  try {
+    const sharp = (await import("sharp")).default;
+    const metadata = await sharp(absPath, { limitInputPixels: false }).metadata();
+    if (!Number.isFinite(metadata.width) || !Number.isFinite(metadata.height)) {
+      return null;
+    }
+    return { width: metadata.width, height: metadata.height };
+  } catch {
+    return null;
+  }
+}
+
+function getTrackedFilesSet() {
+  try {
+    const output = execFileSync("git", ["ls-files"], { cwd: ROOT, encoding: "utf8" });
+    return new Set(
+      output
+        .split(/\r?\n/)
+        .map((line) => line.trim().replace(/\\/g, "/"))
+        .filter(Boolean)
+    );
+  } catch {
+    return new Set();
+  }
+}
+
+function getIgnoredFilesSet(prefixes) {
+  try {
+    const output = execFileSync(
+      "git",
+      ["ls-files", "--others", "--ignored", "--exclude-standard", "--", ...prefixes],
+      { cwd: ROOT, encoding: "utf8" }
+    );
+    return new Set(
+      output
+        .split(/\r?\n/)
+        .map((line) => line.trim().replace(/\\/g, "/"))
+        .filter(Boolean)
+    );
+  } catch {
+    return new Set();
+  }
+}
+
+async function scanGeneratedSourceGuardrails() {
+  const hits = [];
+  const chunks = [];
+  const patterns = [/\/staging\//i, /\/originals\//i, /_8k/i, /_16k/i];
+  for (const file of GENERATED_SOURCE_FILES) {
+    let text = "";
+    try {
+      text = await fs.readFile(file, "utf8");
+    } catch {
+      continue;
+    }
+    chunks.push(text.toLowerCase());
+    const rel = path.relative(ROOT, file).replace(/\\/g, "/");
+    for (const pattern of patterns) {
+      if (pattern.test(text)) {
+        hits.push({ file: rel, match: String(pattern) });
+      }
+    }
+  }
+  return {
+    hits,
+    sourceText: chunks.join("\n"),
+  };
+}
+
+function hasOptimizedDerivative(row) {
+  return Boolean(String(row.optimizedPath || "").trim() || String(row.optimizedUrl || "").trim());
+}
+
+function hasAnyOptimizationMetadata(row) {
+  return Boolean(
+    String(row.optimizedPath || "").trim() ||
+      String(row.optimizedUrl || "").trim() ||
+      String(row.thumbnailPath || "").trim() ||
+      String(row.thumbnailUrl || "").trim()
+  );
+}
+
+function resolveDisplayPath(row) {
+  const preferred = normalizePublicReference(row.optimizedPath || row.optimizedUrl || row.localPath);
+  if (!preferred) {
+    return "";
+  }
+  return preferred;
+}
+
+function normalizePublicReference(value) {
+  const raw = String(value || "").trim();
+  if (!raw) {
+    return "";
+  }
+
+  const normalizedLocal = normalizePublicPath(raw);
+  if (normalizedLocal) {
+    return normalizedLocal;
+  }
+
+  try {
+    const parsed = new URL(raw);
+    return normalizePublicPath(parsed.pathname);
+  } catch {
+    return "";
+  }
 }
 
 async function pathExists(targetPath) {

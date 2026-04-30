@@ -21,6 +21,7 @@ const INBOX_PREFIX = "/willard-assets-inbox/";
 
 type ApproveAssetRequest = {
   localPath?: string;
+  optimizedLocalPath?: string;
   pathname?: string;
   url?: string;
   sourceKind?: string;
@@ -114,6 +115,11 @@ export async function POST(request: Request) {
 }
 
 function pickLocalPath(body: ApproveAssetRequest): string {
+  const optimized = normalizeWillardPath(body.optimizedLocalPath);
+  if (optimized) {
+    return optimized;
+  }
+
   const direct = normalizeWillardPath(body.localPath || body.pathname);
   if (direct) {
     return direct;
