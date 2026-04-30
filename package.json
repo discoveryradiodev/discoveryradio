@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "willard:import-assets": "node scripts/willard/import-free-assets.mjs",
+    "willard:ingest-asset-pack": "node scripts/willard/ingest-asset-pack.mjs",
     "willard:audit-assets": "node scripts/willard/audit-assets.mjs"
   },
   "dependencies": {

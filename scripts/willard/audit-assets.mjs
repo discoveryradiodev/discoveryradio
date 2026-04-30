@@ -8,6 +8,7 @@ const WILLARD_ROOT = path.join(ROOT, "public", "willard-assets");
 const MANIFEST_PATH = path.join(WILLARD_ROOT, "willard-asset-manifest.json");
 
 const FOLDERS = [
+  "backgrounds",
   "overlays",
   "textures",
   "tape",
@@ -23,7 +24,21 @@ const FOLDERS = [
 ];
 const IMAGE_EXTENSIONS = new Set([".jpg", ".jpeg", ".png", ".webp", ".gif", ".svg"]);
 const STATUS_VALUES = ["approved", "staging", "denied", "rejected", "demo"];
-const DOMINANT_VALUES = ["texture", "transparent-overlay", "photo", "illustration", "shape", "unknown"];
+const DOMINANT_VALUES = [
+  "texture",
+  "paper-texture",
+  "transparent-overlay",
+  "torn-edge",
+  "frame",
+  "tape",
+  "sticker",
+  "pattern",
+  "vector-shape",
+  "callout",
+  "mask",
+  "module-frame",
+  "unknown",
+];
 
 async function main() {
   const manifest = await readManifest();

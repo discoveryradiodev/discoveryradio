@@ -27,3 +27,9 @@ tsconfig.tsbuildinfo
 Billy 2.0.txt
 billy_2.1.txt
 source-dump.txt
+
+# Willard local/staged asset packs - do not commit raw pulled texture blobs
+public/willard-assets/staging/*
+public/willard-assets/textures/*
+!public/willard-assets/staging/.gitkeep
+!public/willard-assets/textures/.gitkeep
