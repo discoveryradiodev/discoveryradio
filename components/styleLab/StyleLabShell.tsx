@@ -94,8 +94,10 @@ function StyleLabShellInner({ canApplyToSource = false }: StyleLabShellProps) {
     return seen.size;
   }, [variables]);
 
-  const sourceChangesCount = changedTargetCount + imageOverrides.length + backgroundOverrides.length + overlayDrafts.length;
-  const hasSourceChanges = sourceChangesCount > 0;
+  const sourceApplicableChangesCount =
+    changedTargetCount + imageOverrides.length + backgroundOverrides.length;
+  const hasSourceChanges = sourceApplicableChangesCount > 0;
+  const overlayPreviewOnlyCount = overlayDrafts.length;
 
   const reviewQueueCount = useMemo(
     () => assets.filter((asset) => String(asset.status ?? "").toLowerCase() === "staging").length,
@@ -627,7 +629,7 @@ function StyleLabShellInner({ canApplyToSource = false }: StyleLabShellProps) {
             {activeTool === "source" ? (
               <>
                 <p className={styles.ribbonText}>
-                  SOURCE: {changedTargetCount} style targets | {imageOverrides.length} image overrides | {backgroundOverrides.length} backgrounds | {overlayDrafts.length} overlay drafts | Apply to Source
+                  SOURCE: {changedTargetCount} style targets source-applicable | {imageOverrides.length} image overrides source-applicable | {backgroundOverrides.length} backgrounds source-applicable | {overlayPreviewOnlyCount} overlay drafts preview-only | Apply to Source
                 </p>
                 <div className={styles.ribbonActions}>
                   <button
@@ -706,13 +708,16 @@ function StyleLabShellInner({ canApplyToSource = false }: StyleLabShellProps) {
               <li>Changed style targets: {changedTargetCount}</li>
               <li>Image overrides: {imageOverrides.length}</li>
               <li>Background overrides: {backgroundOverrides.length}</li>
-              <li>Overlay drafts: {overlayDrafts.length}</li>
+              <li>Overlay drafts: {overlayPreviewOnlyCount} preview-only, not written yet</li>
             </ul>
             <p className={styles.confirmText}>Expected files:</p>
             <ul className={styles.confirmList}>
               <li>app/the-feed/willard.generated.css</li>
               <li>app/the-feed/willard.generated.images.ts</li>
             </ul>
+            <p className={styles.confirmText}>
+              Overlay layers are currently preview-only. They will not be written until a generated overlay source file exists.
+            </p>
             <label className={styles.confirmCheckLabel}>
               <input
                 type="checkbox"
