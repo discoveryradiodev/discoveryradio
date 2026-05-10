@@ -92,6 +92,8 @@ function rowToSpotlight(row: SheetRow): ArtistSpotlight {
 }
 
 function rowToBlog(row: SheetRow): WeeklyBlogPost {
+  const coverImageUrl = normalizeImagePath(clean(row['cover_image_url']));
+
   return {
     id: clean(row['id']),
     status: (row['status'] as WeeklyBlogPost['status']) ?? 'published',
@@ -99,7 +101,7 @@ function rowToBlog(row: SheetRow): WeeklyBlogPost {
     title: clean(row['title']),
     excerpt: clean(row['excerpt']) || clean(row['exerpt']),
     docId: clean(row['doc_id']),
-    coverImageUrl: clean(row['cover_image_url']) || undefined,
+    coverImageUrl: coverImageUrl || undefined,
     coverImageAlt: clean(row['cover_image_alt']) || undefined,
     publishedAt: clean(row['published_at']) || new Date().toISOString(),
     updatedAt: clean(row['updated_at']) || undefined,
