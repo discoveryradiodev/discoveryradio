@@ -1,9 +1,6 @@
 import Link from "next/link";
-import {
-  getArchivedArtistSpotlights,
-  getArchivedWeeklyBlogs,
-  getFeedPageData,
-} from "@/lib/feed/get-feed-data";
+import { getArchiveOverviewData } from "@/lib/feed/get-feed-modules";
+import { PREVIEW_CHARS, createPreviewText } from "@/lib/feed/module-rules";
 import styles from "./page.module.css";
 
 function formatDate(dateString: string): string {
@@ -15,27 +12,9 @@ function formatDate(dateString: string): string {
 }
 
 export default async function FeedArchivePage() {
-  const [feedData, archivedBlogs, archivedSpotlights] = await Promise.all([
-    getFeedPageData(),
-    getArchivedWeeklyBlogs(),
-    getArchivedArtistSpotlights(),
-  ]);
-  const recentLimit = 1;
-
-  const youtubeItems = feedData.archive
-    .filter((item) => item.type === 'youtube')
-    .sort(
-    (a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime(),
-    );
-  const recentYouTubeItems = youtubeItems.slice(0, recentLimit);
-  const blogItems = archivedBlogs.sort(
-    (a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime(),
-  );
-  const recentBlogItems = blogItems.slice(0, recentLimit);
-  const spotlightItems = archivedSpotlights.sort(
-    (a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime(),
-  );
-  const recentSpotlightItems = spotlightItems.slice(0, recentLimit);
+  // Item count per section is controlled by ARCHIVE_OVERVIEW_PREVIEW_LIMIT in module-rules.ts.
+  const { youtubeItems: recentYouTubeItems, blogItems: recentBlogItems, spotlightItems: recentSpotlightItems } =
+    await getArchiveOverviewData();
 
   return (
     <main className={styles.page}>
@@ -81,7 +60,7 @@ export default async function FeedArchivePage() {
                   </h3>
                   <p className={styles.cardMeta}>{formatDate(item.publishedAt)}</p>
                   {item.description ? (
-                    <p className={styles.cardDescription}>{item.description}</p>
+                    <p className={styles.cardDescription}>{createPreviewText(item.description, PREVIEW_CHARS.archiveOverviewCard)}</p>
                   ) : null}
                 </div>
               </article>
@@ -103,11 +82,13 @@ export default async function FeedArchivePage() {
 
           {recentBlogItems.map((post) => (
             <article key={post.id} className={styles.featureCard}>
-              <img
-                src={post.coverImageUrl ?? "/placeholder-blog-cover.jpg"}
-                alt={post.coverImageAlt ?? "Weekly blog cover placeholder"}
-                className={styles.featureImage}
-              />
+              {post.coverImageUrl ? (
+                <img
+                  src={post.coverImageUrl}
+                  alt={post.coverImageAlt ?? post.title}
+                  className={styles.featureImage}
+                />
+              ) : null}
 
               <div className={styles.featureBody}>
                 <p className={styles.metaLabel}>Weekly Blog</p>
@@ -117,7 +98,7 @@ export default async function FeedArchivePage() {
                   </Link>
                 </h3>
                 <p className={styles.cardMeta}>{formatDate(post.publishedAt)}</p>
-                <p className={styles.excerpt}>{post.excerpt}</p>
+                <p className={styles.excerpt}>{createPreviewText(post.excerpt, PREVIEW_CHARS.archiveOverviewCard)}</p>
               </div>
             </article>
           ))}
@@ -152,7 +133,7 @@ export default async function FeedArchivePage() {
                   {item.artistLocation ? <span>{item.artistLocation}</span> : null}
                   {item.artistGenre ? <span>{item.artistGenre}</span> : null}
                 </p>
-                <p className={styles.excerpt}>{item.excerpt}</p>
+                <p className={styles.excerpt}>{createPreviewText(item.excerpt, PREVIEW_CHARS.archiveOverviewCard)}</p>
               </div>
             </article>
           ))}

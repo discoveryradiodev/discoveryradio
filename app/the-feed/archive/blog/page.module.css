@@ -194,6 +194,11 @@
     grid-template-columns: minmax(260px, 320px) minmax(0, 1fr);
   }
 
+  /* When no cover image is rendered, body fills the full card width. */
+  .body:only-child {
+    grid-column: 1 / -1;
+  }
+
   .image {
     aspect-ratio: auto;
     height: 100%;

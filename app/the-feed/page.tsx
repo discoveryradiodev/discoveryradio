@@ -1,16 +1,11 @@
 import Link from "next/link";
 import styles from "./page.module.css";
-import ArtistSpotlightCard from "@/components/feed/ArtistSpotlightCard";
-import ArtistProfileCard from "@/components/feed/ArtistProfileCard";
-import WeeklyBlogCard from "@/components/feed/WeeklyBlogCard";
-import MonthlyPlaylistCard from "@/components/feed/MonthlyPlaylistCard";
-import ArchiveCard from "@/components/feed/ArchiveCard";
-import SocialLinksCard from "@/components/feed/SocialLinksCard";
-import DiscordCard from "@/components/feed/DiscordCard";
-import { getFeedPageData } from "@/lib/feed/get-feed-data";
+import FeedModuleRenderer from "@/components/feed/FeedModuleRenderer";
+import YouTubeHeroModule from "@/components/feed/YouTubeHeroModule";
+import { getHomepageFeedModules } from "@/lib/feed/get-feed-modules";
 
 export default async function FeedPage() {
-  const feedData = await getFeedPageData();
+  const modules = await getHomepageFeedModules();
 
   return (
     <main className={styles.page} data-feed-page="true" data-style-target="feed-shell">
@@ -30,58 +25,44 @@ export default async function FeedPage() {
           </div>
         </header>
 
-        <section className={styles.youtubeHero}>
-          <p className={styles.youtubeHeroLabel}>{feedData.featuredYouTube?.title ?? "Latest Interview"}</p>
-          <div className={styles.youtubeHeroMediaShell}>
-            <div className={styles.youtubeHeroFrame}>
-              <iframe
-                src={feedData.featuredYouTube?.youtubeEmbedUrl ?? "https://www.youtube.com/embed/FQFGy_KpvaY?autoplay=1&mute=1&controls=1&loop=1&playlist=FQFGy_KpvaY&playsinline=1&rel=0&modestbranding=1"}
-                title="Latest Interview"
-                allow="autoplay; encrypted-media; picture-in-picture"
-                allowFullScreen
-              />
-            </div>
-          </div>
-        </section>
+        <YouTubeHeroModule module={modules.youtube} />
 
         <section className={styles.composition}>
           <div className={styles.rowOne}>
-            {feedData.artistSpotlight ? (
+            {modules.spotlight ? (
               <div className={`${styles.panel} ${styles.spotlightPanel}`}>
-                <ArtistSpotlightCard spotlight={feedData.artistSpotlight} />
+                <FeedModuleRenderer module={modules.spotlight} />
               </div>
             ) : null}
 
             <div className={`${styles.panel} ${styles.profilePanel}`}>
-              <ArtistProfileCard profile={feedData.artistProfile} />
+              <FeedModuleRenderer module={modules.profile} />
             </div>
           </div>
 
-          {feedData.weeklyBlog ? (
+          {modules.blog ? (
             <div className={`${styles.panel} ${styles.blogFeature}`}>
-              <WeeklyBlogCard post={feedData.weeklyBlog} />
+              <FeedModuleRenderer module={modules.blog} />
             </div>
           ) : null}
 
           <div className={styles.rowThree}>
             <div className={`${styles.panel} ${styles.archivePanel}`}>
-              <ArchiveCard
-                items={feedData.archivePreview?.length ? feedData.archivePreview : feedData.archive}
-              />
+              <FeedModuleRenderer module={modules.archivePreview} />
             </div>
 
             <div className={`${styles.panel} ${styles.playlistPanel}`}>
-              <MonthlyPlaylistCard playlist={feedData.monthlyPlaylist} />
+              <FeedModuleRenderer module={modules.playlist} />
             </div>
           </div>
 
           <div className={styles.bottomClosing}>
             <div className={`${styles.panel} ${styles.socialPanel}`}>
-              <SocialLinksCard links={feedData.socialLinks} />
+              <FeedModuleRenderer module={modules.socialLinks} />
             </div>
 
             <div className={`${styles.panel} ${styles.discordPanel}`}>
-              <DiscordCard discordUrl={feedData.discordUrl} />
+              <FeedModuleRenderer module={modules.community} />
             </div>
           </div>
         </section>

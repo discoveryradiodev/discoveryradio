@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { getArchivedWeeklyBlogs } from "@/lib/feed/get-feed-data";
+import { getBlogArchiveModules } from "@/lib/feed/get-feed-modules";
+import { PREVIEW_CHARS, createPreviewText } from "@/lib/feed/module-rules";
 import styles from "./page.module.css";
 
 function formatDate(dateString: string): string {
@@ -11,9 +12,7 @@ function formatDate(dateString: string): string {
 }
 
 export default async function BlogArchivePage() {
-  const blogItems = (await getArchivedWeeklyBlogs()).sort(
-    (a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime(),
-  );
+  const blogItems = await getBlogArchiveModules();
 
   return (
     <main className={styles.page}>
@@ -34,11 +33,13 @@ export default async function BlogArchivePage() {
           <div className={styles.list}>
           {blogItems.map((post) => (
             <article key={post.id} className={styles.card}>
-              <img
-                src={post.coverImageUrl ?? "/placeholder-blog-cover.jpg"}
-                alt={post.coverImageAlt ?? "Weekly blog cover placeholder"}
-                className={styles.image}
-              />
+              {post.coverImageUrl ? (
+                <img
+                  src={post.coverImageUrl}
+                  alt={post.coverImageAlt ?? post.title}
+                  className={styles.image}
+                />
+              ) : null}
               <div className={styles.body}>
                 <p className={styles.metaLabel}>Weekly Blog</p>
                 <h2 className={styles.cardTitle}>
@@ -47,7 +48,7 @@ export default async function BlogArchivePage() {
                   </Link>
                 </h2>
                 <p className={styles.dateMeta}>{formatDate(post.publishedAt)}</p>
-                <p className={styles.excerpt}>{post.excerpt}</p>
+                <p className={styles.excerpt}>{createPreviewText(post.excerpt, PREVIEW_CHARS.archiveCategoryCard)}</p>
               </div>
             </article>
           ))}

@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { getFeedPageData } from "@/lib/feed/get-feed-data";
+import { getYouTubeArchiveModules } from "@/lib/feed/get-feed-modules";
+import { PREVIEW_CHARS, createPreviewText } from "@/lib/feed/module-rules";
 import styles from "./page.module.css";
 
 function formatDate(dateString: string): string {
@@ -11,13 +12,7 @@ function formatDate(dateString: string): string {
 }
 
 export default async function YouTubeArchivePage() {
-  const feedData = await getFeedPageData();
-
-  const youtubeItems = feedData.archive
-    .filter((item) => item.type === 'youtube')
-    .sort(
-    (a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime(),
-    );
+  const youtubeItems = await getYouTubeArchiveModules();
 
   return (
     <main className={styles.page}>
@@ -45,7 +40,7 @@ export default async function YouTubeArchivePage() {
                 </a>
               </h2>
               <p className={styles.dateMeta}>{formatDate(item.publishedAt)}</p>
-              {item.description ? <p className={styles.description}>{item.description}</p> : null}
+              {item.description ? <p className={styles.description}>{createPreviewText(item.description, PREVIEW_CHARS.archiveCategoryCard)}</p> : null}
             </article>
           ))}
           </div>

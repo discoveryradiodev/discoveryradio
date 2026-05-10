@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { getArchivedArtistSpotlights } from "@/lib/feed/get-feed-data";
+import { getSpotlightArchiveModules } from "@/lib/feed/get-feed-modules";
+import { PREVIEW_CHARS, createPreviewText } from "@/lib/feed/module-rules";
 import styles from "./page.module.css";
 
 function formatDate(dateString: string): string {
@@ -11,9 +12,7 @@ function formatDate(dateString: string): string {
 }
 
 export default async function SpotlightsArchivePage() {
-  const spotlightItems = (await getArchivedArtistSpotlights()).sort(
-    (a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime(),
-  );
+  const spotlightItems = await getSpotlightArchiveModules();
 
   return (
     <main className={styles.page}>
@@ -51,7 +50,7 @@ export default async function SpotlightsArchivePage() {
                     {item.artistLocation ? <span>{item.artistLocation}</span> : null}
                     {item.artistGenre ? <span>{item.artistGenre}</span> : null}
                   </p>
-                  <p className={styles.excerpt}>{item.excerpt}</p>
+                  <p className={styles.excerpt}>{createPreviewText(item.excerpt, PREVIEW_CHARS.archiveCategoryCard)}</p>
                 </div>
               </article>
             ))
