@@ -331,7 +331,7 @@ export function AssetLibraryPanel({
     setBackgroundOverride,
   ]);
 
-  const loadAssets = async () => {
+  const loadAssets = async (): Promise<WillardAsset[]> => {
     setIsLoading(true);
     setFetchError(null);
 
@@ -358,9 +358,12 @@ export function AssetLibraryPanel({
       if (selectedAssetId && !nextAssets.some((asset) => asset.id === selectedAssetId)) {
         setSelectedAssetId(nextAssets[0]?.id ?? null);
       }
+
+      return nextAssets;
     } catch (error) {
       const message = error instanceof Error ? error.message : "Failed to load assets.";
       setFetchError(message);
+      return [];
     } finally {
       setIsLoading(false);
     }
@@ -719,9 +722,7 @@ export function AssetLibraryPanel({
       return;
     }
 
-    const denyMessage = isInboxCandidate(asset)
-      ? `Deny ${asset.filename}? This will delete the inbox file.`
-      : `Deny ${asset.filename}? This will remove the local staging file when possible, otherwise mark it denied.`;
+    const denyMessage = `Deny ${asset.filename}? This will permanently delete the local asset file, derivatives, and manifest entry.`;
     if (!window.confirm(denyMessage)) {
       return;
     }
@@ -733,6 +734,8 @@ export function AssetLibraryPanel({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           localPath: asset.pathname ?? asset.url,
+          optimizedPath: asset.optimizedPath,
+          thumbnailPath: asset.thumbnailPath,
           sourceKind: asset.sourceKind,
           reason: "Denied in local review queue",
         }),
@@ -743,7 +746,10 @@ export function AssetLibraryPanel({
         throw new Error(payload?.error ?? "Deny failed.");
       }
 
-      await loadAssets();
+      const nextAssets = await loadAssets();
+      if (selectedAssetId === asset.id && !nextAssets.some((item) => item.id === asset.id)) {
+        setSelectedAssetId(null);
+      }
     } catch (error) {
       window.alert(error instanceof Error ? error.message : "Deny failed.");
     } finally {

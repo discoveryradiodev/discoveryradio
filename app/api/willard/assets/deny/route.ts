@@ -9,13 +9,15 @@ import { normalizePublicAssetPath, readWillardManifest, resolveAssetAbsolutePath
 
 export const runtime = "nodejs";
 
-const PUBLIC_ROOT = process.cwd();
+const PUBLIC_ROOT = path.resolve(process.cwd(), "public");
 const INBOX_PREFIX = "/willard-assets-inbox/";
 
 type DenyAssetRequest = {
   localPath?: string;
   pathname?: string;
   url?: string;
+  optimizedPath?: string;
+  thumbnailPath?: string;
   sourceKind?: string;
   actor?: string;
   reason?: string;
@@ -48,75 +50,43 @@ export async function POST(request: Request) {
   }
 
   const manifest = await readWillardManifest();
-  const now = new Date().toISOString();
-  const actor = sanitizeActor(body.actor) ?? "local-user";
-  const reason = String(body.reason || "").trim() || "Denied by curator";
-
   const index = manifest.assets.findIndex(
-    (item) => normalizePublicAssetPath(item.localPath).toLowerCase() === localPath.toLowerCase()
+    (item) => normalizeWillardPath(item.localPath).toLowerCase() === localPath.toLowerCase()
   );
   const existing = index >= 0 ? manifest.assets[index] : null;
 
-  const absolutePath = resolveWillardMutableAbsolutePath(localPath);
-  const isInboxAsset = localPath.startsWith(INBOX_PREFIX);
-  const isLocalProjectAsset = body.sourceKind === "project-public" || localPath.startsWith("/willard-assets/") || isInboxAsset;
+  const candidatePaths = collectCandidatePaths(body, existing, localPath);
+  const deletedPaths: string[] = [];
+  const failedDeletes: Array<{ path: string; error: string }> = [];
 
-  if (isLocalProjectAsset && absolutePath) {
+  for (const candidatePath of candidatePaths) {
+    const absolutePath = resolveWillardMutableAbsolutePath(candidatePath);
+    if (!absolutePath) {
+      failedDeletes.push({ path: candidatePath, error: "Path is outside allowed directories." });
+      continue;
+    }
+
     try {
       await fs.unlink(absolutePath);
-    } catch {
-      // Keep tombstone even when local file removal fails.
+      deletedPaths.push(candidatePath);
+    } catch (error) {
+      failedDeletes.push({ path: candidatePath, error: toErrorMessage(error) });
     }
   }
 
-  if (isInboxAsset) {
-    if (index >= 0) {
-      manifest.assets.splice(index, 1);
-      await writeWillardManifest(manifest);
-    }
-
-    return NextResponse.json({
-      ok: true,
-      denied: {
-        localPath,
-        status: "denied",
-        deniedAt: now,
-        deniedBy: actor,
-        rejectionReason: reason,
-      },
-    });
+  const removedFromManifest = index >= 0;
+  if (removedFromManifest) {
+    manifest.assets.splice(index, 1);
+    await writeWillardManifest(manifest);
   }
-
-  const tombstone = {
-    ...(existing ?? {}),
-    localPath,
-    filename: existing?.filename ?? localPath.split("/").pop() ?? "asset",
-    originalFilename: existing?.originalFilename ?? existing?.filename ?? localPath.split("/").pop() ?? "asset",
-    status: "denied",
-    reviewRequired: false,
-    deniedAt: now,
-    deniedBy: actor,
-    rejectionReason: reason,
-    createdAt: existing?.createdAt ?? existing?.importedAt ?? now,
-    importedAt: existing?.importedAt ?? now,
-  };
-
-  if (index >= 0) {
-    manifest.assets[index] = tombstone;
-  } else {
-    manifest.assets.push(tombstone);
-  }
-
-  await writeWillardManifest(manifest);
 
   return NextResponse.json({
     ok: true,
-    denied: {
+    deleted: {
       localPath,
-      status: "denied",
-      deniedAt: now,
-      deniedBy: actor,
-      rejectionReason: reason,
+      deletedPaths,
+      failedDeletes,
+      removedFromManifest,
     },
   });
 }
@@ -157,30 +127,119 @@ function normalizeWillardPath(value: string | undefined): string {
   return normalized;
 }
 
+function collectCandidatePaths(
+  body: DenyAssetRequest,
+  existing: {
+    localPath?: string;
+    optimizedPath?: string;
+    thumbnailPath?: string;
+    sourceUrl?: string;
+    originalStorage?: string;
+    originalFilename?: string;
+  } | null,
+  requestedLocalPath: string
+): string[] {
+  const rawCandidates = [
+    requestedLocalPath,
+    normalizeWillardPath(body.localPath),
+    normalizeWillardPath(body.pathname),
+    parseLocalPathFromUrl(body.url),
+    normalizeWillardPath(body.optimizedPath),
+    normalizeWillardPath(body.thumbnailPath),
+    normalizeWillardPath(existing?.localPath),
+    normalizeWillardPath(existing?.optimizedPath),
+    normalizeWillardPath(existing?.thumbnailPath),
+    extractInboxPathFromSourceUrl(existing?.sourceUrl),
+    existing?.originalStorage === "local-inbox"
+      ? normalizeWillardPath(`${INBOX_PREFIX}${String(existing.originalFilename || "").trim()}`)
+      : "",
+  ];
+
+  const deduped: string[] = [];
+  const seen = new Set<string>();
+
+  for (const candidate of rawCandidates) {
+    if (!candidate) {
+      continue;
+    }
+    const key = candidate.toLowerCase();
+    if (seen.has(key)) {
+      continue;
+    }
+    seen.add(key);
+    deduped.push(candidate);
+  }
+
+  return deduped;
+}
+
+function parseLocalPathFromUrl(value: string | undefined): string {
+  const raw = String(value || "").trim();
+  if (!raw) {
+    return "";
+  }
+
+  try {
+    const parsed = new URL(raw);
+    return normalizeWillardPath(parsed.pathname);
+  } catch {
+    return normalizeWillardPath(raw);
+  }
+}
+
+function extractInboxPathFromSourceUrl(value: string | undefined): string {
+  const raw = String(value || "").trim();
+  if (!raw) {
+    return "";
+  }
+
+  const inboxUrlPrefix = "inbox://local/";
+  if (raw.toLowerCase().startsWith(inboxUrlPrefix)) {
+    const relativePath = raw.slice(inboxUrlPrefix.length).trim();
+    if (!relativePath) {
+      return "";
+    }
+    return normalizeWillardPath(`${INBOX_PREFIX}${relativePath}`);
+  }
+
+  return normalizeWillardPath(raw);
+}
+
 function resolveWillardMutableAbsolutePath(localPath: string): string | null {
-  const normalAssetPath = normalizePublicAssetPath(localPath);
+  const normalizedPath = normalizeWillardPath(localPath);
+  if (!normalizedPath) {
+    return null;
+  }
+
+  const normalAssetPath = normalizePublicAssetPath(normalizedPath);
   if (normalAssetPath) {
-    return resolveAssetAbsolutePath(normalAssetPath);
-  }
-
-  const inboxPath = normalizeWillardPath(localPath);
-  if (!inboxPath || !inboxPath.startsWith(INBOX_PREFIX)) {
+    const assetAbsolutePath = resolveAssetAbsolutePath(normalAssetPath);
+    if (assetAbsolutePath && isWithinAllowedRoot(assetAbsolutePath, path.resolve(PUBLIC_ROOT, "willard-assets"))) {
+      return assetAbsolutePath;
+    }
     return null;
   }
 
-  const publicRoot = path.resolve(PUBLIC_ROOT, "public");
-  const inboxRoot = path.resolve(publicRoot, "willard-assets-inbox");
-  const resolved = path.resolve(publicRoot, inboxPath.slice(1));
-  if (!resolved.toLowerCase().startsWith((inboxRoot + path.sep).toLowerCase()) && resolved.toLowerCase() !== inboxRoot.toLowerCase()) {
+  const resolved = path.resolve(PUBLIC_ROOT, normalizedPath.slice(1));
+  if (
+    !isWithinAllowedRoot(resolved, path.resolve(PUBLIC_ROOT, "willard-assets")) &&
+    !isWithinAllowedRoot(resolved, path.resolve(PUBLIC_ROOT, "willard-assets-inbox"))
+  ) {
     return null;
   }
+
   return resolved;
 }
 
-function sanitizeActor(value: string | undefined): string | undefined {
-  const raw = String(value || "").trim();
-  if (!raw) {
-    return undefined;
+function isWithinAllowedRoot(value: string, root: string): boolean {
+  const normalizedValue = value.toLowerCase();
+  const normalizedRoot = root.toLowerCase();
+  return normalizedValue === normalizedRoot || normalizedValue.startsWith(`${normalizedRoot}${path.sep.toLowerCase()}`);
+}
+
+function toErrorMessage(error: unknown): string {
+  if (error instanceof Error && error.message.trim()) {
+    return error.message;
   }
-  return raw.slice(0, 120);
+  return "Unable to delete file.";
 }
