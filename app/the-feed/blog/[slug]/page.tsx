@@ -47,7 +47,6 @@ export default async function BlogPage({ params }: BlogPageProps) {
           <section className={`${styles.module} ${styles.contentModule}`}>
             <div className={styles.titleMetaGroup}>
               <h1 className={styles.title} data-style-target="blog-title">{blogPost.title}</h1>
-              <p className={styles.excerpt}>{blogPost.excerpt}</p>
               <div className={styles.metaRowGroup}>
                 <p className={styles.metaItem} data-style-target="blog-meta">Published {publishedDate}</p>
               </div>
@@ -56,13 +55,15 @@ export default async function BlogPage({ params }: BlogPageProps) {
 
           <section className={`${styles.module} ${styles.bodyModule}`} data-style-target="blog-body">
             <div className={styles.bodyGroup}>
-              <img
-                src={imageOverride?.url ?? blogPost.coverImageUrl ?? "/placeholder-blog-cover.jpg"}
-                alt={imageOverride?.altText ?? blogPost.coverImageAlt ?? "Weekly blog cover placeholder"}
-                className={styles.image}
-                data-style-target="blog-image"
-                style={blogImageStyle}
-              />
+              {blogPost.coverImageUrl ? (
+                <img
+                  src={blogPost.coverImageUrl}
+                  alt={blogPost.coverImageAlt ?? blogPost.title}
+                  className={styles.image}
+                  data-style-target="blog-image"
+                  style={blogImageStyle}
+                />
+              ) : null}
               <div className={styles.bodyContent}>
                 <ArticleBlocks blocks={blocks} />
               </div>

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { CSSProperties } from "react";
 import { WILLARD_IMAGE_OVERRIDES } from "@/app/the-feed/willard.generated.images";
 import type { WeeklyBlogPost } from "@/types/feed";
 import styles from "./feed.module.css";
@@ -14,21 +15,26 @@ export default function WeeklyBlogCard({ post }: Props) {
     month: "long",
     day: "numeric",
   });
+  const blogImageStyle = post.coverImageUrl
+    ? ({
+        "--homepage-blog-shape-url": `url("${post.coverImageUrl}")`,
+      } as CSSProperties)
+    : undefined;
 
   return (
     <article className={`${styles.card} ${styles.blogStrip}`}>
-      {post.coverImageUrl ? (
-        <div className={styles.blogImageWrap}>
-          <img
-            src={imageOverride?.url ?? post.coverImageUrl}
-            alt={(imageOverride?.altText ?? post.coverImageAlt) || post.title}
-            className={styles.blogImage}
-            data-style-target="homepage-blog-image"
-          />
-        </div>
-      ) : null}
-
       <div className={styles.blogContent}>
+        {post.coverImageUrl ? (
+          <div className={styles.blogImageWrap}>
+            <img
+              src={imageOverride?.url ?? post.coverImageUrl}
+              alt={(imageOverride?.altText ?? post.coverImageAlt) || post.title}
+              className={styles.blogImage}
+              data-style-target="homepage-blog-image"
+              style={blogImageStyle}
+            />
+          </div>
+        ) : null}
         <p className={styles.featureLabel}>Current Blog</p>
         <h3 className={styles.blogTitle} data-style-target="homepage-blog-title">{post.title}</h3>
         <p className={styles.published} data-style-target="homepage-blog-meta">{publishedDate}</p>
