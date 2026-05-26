@@ -86,5 +86,5 @@ export const mockFeedData: FeedPageData = {
     },
   ],
 
-  discordUrl: "https://discord.gg/placeholder",
+  discordUrl: "https://discord.gg/sPjzKgHaZy",
 };
