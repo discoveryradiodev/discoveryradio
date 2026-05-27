@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { ArchiveItem } from "@/types/feed";
 
 import styles from "./feed.module.css";
@@ -32,11 +33,19 @@ export default function ArchiveCard({ items }: Props) {
                 ? "Artist Spotlight"
                 : "Blog";
 
+          const isInternal = item.href.startsWith("/");
+
           return (
             <li key={item.id} className={styles.archiveItem}>
-              <a href={item.href} target="_blank" rel="noreferrer" data-style-target="archive-link">
-                <strong>{item.title}</strong>
-              </a>
+              {isInternal ? (
+                <Link href={item.href} data-style-target="archive-link">
+                  <strong>{item.title}</strong>
+                </Link>
+              ) : (
+                <a href={item.href} target="_blank" rel="noreferrer" data-style-target="archive-link">
+                  <strong>{item.title}</strong>
+                </a>
+              )}
               <small className={styles.archiveMeta}>{typeLabel} • {date}</small>
             </li>
           );

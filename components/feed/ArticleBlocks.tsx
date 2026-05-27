@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { ArticleBlock } from "@/types/article";
 
 type Props = {
@@ -50,7 +51,12 @@ export function ArticleBlocks({ blocks }: Props) {
 
           default:
             if (isLinkBlock(block)) {
-              return (
+              const isInternal = block.href.startsWith("/");
+              return isInternal ? (
+                <Link key={index} href={block.href}>
+                  {block.label ?? block.content ?? block.href}
+                </Link>
+              ) : (
                 <a key={index} href={block.href} target="_blank" rel="noopener noreferrer">
                   {block.label ?? block.content ?? block.href}
                 </a>
